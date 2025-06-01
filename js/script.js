@@ -1,14 +1,29 @@
 import {
-    getMalzemeler,
-    saveMalzeme,
-    deleteMalzeme,
-    getTedarikciler,
-    saveTedarikci,
-    deleteTedarikci,
-    getFiyatlar,
-    saveFiyat,
-    deleteFiyat
+    getMalzemeler as fetchMalzemeler,
+    saveMalzeme as saveMalzemeAPI,
+    deleteMalzeme as deleteMalzemeAPI,
+    getTedarikciler as fetchTedarikciler,
+    saveTedarikci as saveTedarikciAPI,
+    deleteTedarikci as deleteTedarikciAPI,
+    getFiyatlar as fetchFiyatlar,
+    saveFiyat as saveFiyatAPI,
+    deleteFiyat as deleteFiyatAPI
 } from './api.js';
+import {
+    subscribe,
+    getUrunler,
+    setUrunler,
+    removeUrunById,
+    getUrunById,
+    getTedarikciler,
+    setTedarikciler,
+    removeTedarikciById,
+    getTedarikciById,
+    getFiyatlar,
+    setFiyatlar,
+    saveFiyatStore,
+    removeFiyatById
+} from './store.js';
 import {
     temizleUrunFormu,
     temizleTedarikciFormu,
@@ -100,30 +115,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const zamanAraligiSecimi = document.getElementById('zamanAraligiSecimi');
     const fiyatGrafigiCanvas = document.getElementById('fiyatGrafigi');
     
-    // Global Değişkenler
-    let urunler = [];
-    let fiyatlar = [];
-    let tedarikciler = [];
     let fiyatGrafigi; // Chart.js nesnesi için
 
     // Fonksiyon Tanımlamaları
 
     function tedarikciAdiniGetir(tedarikciId) {
-        const tedarikci = tedarikciler.find(t => String(t.id) === String(tedarikciId));
+        const tedarikci = getTedarikciById(tedarikciId);
         return tedarikci ? tedarikci.ad : '-';
     }
 
     function urunListesiniGuncelle() {
-        guncelleUrunListesiTablosu(urunler, urunListesiTablosuBody);
-        populeEtUrunSecimDropdown(urunler, grafikUrunSecimi, "-- Ürün Seçiniz --", true, null);
+        guncelleUrunListesiTablosu(getUrunler(), urunListesiTablosuBody);
+        populeEtUrunSecimDropdown(getUrunler(), grafikUrunSecimi, "-- Ürün Seçiniz --", true, null);
         guncelleGrafikTedarikciFiltresi();
-        populeEtUrunSecimDropdown(urunler, fiyatGirisMalzemeSecimi, "-- Malzeme Seçiniz --", true, urun => ` (${urun.birim_adi || 'Tanımsız Birim'})`);
+        populeEtUrunSecimDropdown(getUrunler(), fiyatGirisMalzemeSecimi, "-- Malzeme Seçiniz --", true, urun => ` (${urun.birim_adi || 'Tanımsız Birim'})`);
         guncelleFiyatGirisBirimGostergesi();
     }
 
     function tedarikciListesiniGuncelle() {
-        guncelleTedarikciListesiTablosu(tedarikciler, tedarikciListesiTablosuBody);
-        populeTedarikciDropdown(tedarikciler, fiyatGirisTedarikciSecimi, "-- Tedarikçi Seçiniz --"); // Grafik tedarikçi dropdown'ı ayrı güncelleniyor
+        guncelleTedarikciListesiTablosu(getTedarikciler(), tedarikciListesiTablosuBody);
+        populeTedarikciDropdown(getTedarikciler(), fiyatGirisTedarikciSecimi, "-- Tedarikçi Seçiniz --"); // Grafik tedarikçi dropdown'ı ayrı güncelleniyor
         guncelleGrafikTedarikciFiltresi(); // Tedarikçiler değiştiğinde grafik filtresini de güncelle
     }
 
@@ -148,9 +159,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (urunBirimSecimi.value === 'diger' && !birimDegeri) return alert('Lütfen özel birim adını girin veya listeden bir birim seçin.');
         const malzemeVerisi = { ad, birim_adi: birimDegeri };
         try {
-            const sonuc = await saveMalzeme(malzemeVerisi, id);
-            showToast(sonuc?.message || (id ? 'Malzeme başarıyla güncellendi.' : 'Malzeme başarıyla eklendi.'), 'success');
+            const kaydedilenMalzeme = await saveMalzemeAPI(malzemeVerisi, id);
             await malzemeleriYukle();
+            showToast(kaydedilenMalzeme?.message || (id ? 'Malzeme başarıyla güncellendi.' : 'Malzeme başarıyla eklendi.'), 'success');
             temizleUrunFormu(urunForm, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton);
         } catch (error) {
             globalHataYakala(error, `Malzeme ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
@@ -168,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const urunId = target.dataset.id;
         if (!urunId && (target.classList.contains('edit-btn') || target.classList.contains('delete-btn'))) return; 
 
-        const urun = urunler.find(u => String(u.id) === String(urunId));
+        const urun = getUrunById(urunId);
         if (!urun && (target.classList.contains('edit-btn') || target.classList.contains('delete-btn'))) {
             return globalHataYakala(new Error("İşlem yapılacak ürün bulunamadı."), "Ürün işlemi sırasında");
         }
@@ -180,9 +191,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (target.classList.contains('delete-btn')) {
             if (confirm(`'${urun.ad}' malzemesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
                 try {
-                    const sonuc = await deleteMalzeme(urunId);
+                    const sonuc = await deleteMalzemeAPI(urunId);
+                    removeUrunById(urunId);
                     showToast(sonuc?.message || 'Malzeme başarıyla silindi.', 'success');
-                    await malzemeleriYukle();
                     temizleUrunFormu(urunForm, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton);
                 } catch (error) {
                     globalHataYakala(error, 'Malzeme silinirken bir sorun oluştu.');
@@ -207,9 +218,9 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             if (!tedarikciVerisi.ad) return alert('Tedarikçi adı boş bırakılamaz!');
             try {
-                const sonuc = await saveTedarikci(tedarikciVerisi, id);
-                showToast(sonuc?.message || (id ? 'Tedarikçi başarıyla güncellendi.' : 'Tedarikçi başarıyla eklendi.'), 'success');
+                const kaydedilenTedarikci = await saveTedarikciAPI(tedarikciVerisi, id);
                 await tedarikcileriYukle();
+                showToast(kaydedilenTedarikci?.message || (id ? 'Tedarikçi başarıyla güncellendi.' : 'Tedarikçi başarıyla eklendi.'), 'success');
                 temizleTedarikciFormu(tedarikciForm, tedarikciIdInput, tedarikciAdiInput, tedarikciYetkiliKisiInput, tedarikciTelefonInput, tedarikciEmailInput, tedarikciAdresInput, tedarikciNotInput, tedarikciFormTemizleButton);
             } catch (error) {
                 globalHataYakala(error, `Tedarikçi ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
@@ -231,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const tedarikciId = target.dataset.id;
             if (!tedarikciId && (target.classList.contains('edit-btn') || target.classList.contains('delete-btn'))) return;
 
-            const tedarikci = tedarikciler.find(t => String(t.id) === String(tedarikciId));
+            const tedarikci = getTedarikciById(tedarikciId);
             if (!tedarikci && (target.classList.contains('edit-btn') || target.classList.contains('delete-btn'))) {
                 return globalHataYakala(new Error("İşlem yapılacak tedarikçi bulunamadı."), "Tedarikçi işlemi sırasında");
             }
@@ -243,9 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (target.classList.contains('delete-btn')) {
                 if (confirm(`'${tedarikci.ad}' tedarikçisini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tedarikçiye ait tüm fiyat kayıtları da silinecektir!`)) {
                     try {
-                        const sonuc = await deleteTedarikci(tedarikciId);
+                        const sonuc = await deleteTedarikciAPI(tedarikciId);
+                        removeTedarikciById(tedarikciId);
                         showToast(sonuc?.message || 'Tedarikçi başarıyla silindi.', 'success');
-                        await tedarikcileriYukle();
                         if (fiyatGirisTedarikciSecimi.value === tedarikciId) fiyatGirisTedarikciSecimi.value = "";
                         if (grafikTedarikciSecimi.value === tedarikciId) grafikTedarikciSecimi.value = "";
                     } catch (error) {
@@ -258,31 +269,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function guncelleGrafikTedarikciFiltresi() {
         const seciliUrunId = grafikUrunSecimi.value;
-        let filtrelenecekTedarikciler = tedarikciler;
+        const tumTedarikciler = getTedarikciler();
+        const tumFiyatlar = getFiyatlar();
+        let filtrelenecekTedarikciler = tumTedarikciler;
+
         if (seciliUrunId) {
-            const urunFiyatlari = fiyatlar.filter(f => String(f.malzeme_id) === String(seciliUrunId));
+            const urunFiyatlari = tumFiyatlar.filter(f => String(f.malzeme_id) === String(seciliUrunId));
             const buUrununTedarikciIdleri = [...new Set(urunFiyatlari.map(f => String(f.tedarikci_id)))];
-            filtrelenecekTedarikciler = tedarikciler.filter(t => buUrununTedarikciIdleri.includes(String(t.id)));
+            filtrelenecekTedarikciler = tumTedarikciler.filter(t => buUrununTedarikciIdleri.includes(String(t.id)));
             tedarikciFilterGrafikDiv.style.display = filtrelenecekTedarikciler.length > 0 ? 'block' : 'none';
         } else {
             tedarikciFilterGrafikDiv.style.display = 'none';
         }
         populeTedarikciDropdown(filtrelenecekTedarikciler, grafikTedarikciSecimi, "-- Tüm Tedarikçiler --", true);
-        fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(fiyatGrafigiCanvas, seciliUrunId, grafikTedarikciSecimi.value, zamanAraligiSecimi.value, fiyatlar, urunler, tedarikciler, fiyatGrafigi);
+        fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(fiyatGrafigiCanvas, seciliUrunId, grafikTedarikciSecimi.value, zamanAraligiSecimi.value, tumFiyatlar, getUrunler(), tumTedarikciler, fiyatGrafigi);
     }
 
     grafikUrunSecimi.addEventListener('change', guncelleGrafikTedarikciFiltresi);
     grafikTedarikciSecimi.addEventListener('change', () => {
-        fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(fiyatGrafigiCanvas, grafikUrunSecimi.value, grafikTedarikciSecimi.value, zamanAraligiSecimi.value, fiyatlar, urunler, tedarikciler, fiyatGrafigi);
+        fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(fiyatGrafigiCanvas, grafikUrunSecimi.value, grafikTedarikciSecimi.value, zamanAraligiSecimi.value, getFiyatlar(), getUrunler(), getTedarikciler(), fiyatGrafigi);
     });
     zamanAraligiSecimi.addEventListener('change', () => {
-        fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(fiyatGrafigiCanvas, grafikUrunSecimi.value, grafikTedarikciSecimi.value, zamanAraligiSecimi.value, fiyatlar, urunler, tedarikciler, fiyatGrafigi);
+        fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(fiyatGrafigiCanvas, grafikUrunSecimi.value, grafikTedarikciSecimi.value, zamanAraligiSecimi.value, getFiyatlar(), getUrunler(), getTedarikciler(), fiyatGrafigi);
     });
 
     function guncelleFiyatGirisBirimGostergesi() {
         const seciliUrunId = fiyatGirisMalzemeSecimi.value;
         if (seciliUrunId) {
-            const seciliUrun = urunler.find(u => String(u.id) === String(seciliUrunId));
+            const seciliUrun = getUrunById(seciliUrunId);
             fiyatGirisBirimGostergesi.textContent = seciliUrun ? (seciliUrun.birim_adi || '-') : '-';
         } else {
             fiyatGirisBirimGostergesi.textContent = '-';
@@ -300,9 +314,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const fiyatDegeri = trElement?.cells[1]?.textContent || 'Bilinmeyen Fiyat';
                 if (confirm(`'${malzemeAdi}' için girilen ${fiyatDegeri} TL değerindeki fiyat kaydını silmek istediğinize emin misiniz?`)) {
                     try {
-                        const sonuc = await deleteFiyat(fiyatId);
+                        const sonuc = await deleteFiyatAPI(fiyatId);
+                        removeFiyatById(fiyatId);
                         showToast(sonuc?.message || 'Fiyat kaydı başarıyla silindi.', 'success');
-                        await sonFiyatlariGuncelle();
                     } catch (error) {
                         globalHataYakala(error, 'Fiyat silinirken bir sorun oluştu.');
                     }
@@ -324,12 +338,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isNaN(fiyatFloat)) return alert('Fiyat geçerli bir sayı olmalıdır.');
         const fiyatVerisi = { malzeme_id, tedarikci_id, fiyat: fiyatFloat, tarih };
         try {
-            const sonuc = await saveFiyat(fiyatVerisi);
-            showToast(sonuc?.message || 'Fiyat başarıyla kaydedildi.', 'success');
+            const kaydedilenFiyat = await saveFiyatAPI(fiyatVerisi);
+            saveFiyatStore(kaydedilenFiyat.data);
+            showToast(kaydedilenFiyat?.message || 'Fiyat başarıyla kaydedildi.', 'success');
             gunlukFiyatForm.reset();
             guncelleFiyatGirisBirimGostergesi();
             document.getElementById('gunlukTarihInput').value = new Date().toISOString().split('T')[0];
-            await sonFiyatlariGuncelle();
         } catch (error) {
             globalHataYakala(error, 'Fiyat kaydedilirken bir sorun oluştu.');
         } finally {
@@ -339,61 +353,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function malzemeleriYukle() {
         try {
-            const apiUrunler = await getMalzemeler();
-            urunler = apiUrunler && Array.isArray(apiUrunler) ? apiUrunler : [];
-            // console.log("Malzemeler API'den yüklendi:", urunler); // Kontrol için
-            urunListesiniGuncelle();
+            const apiUrunler = await fetchMalzemeler();
+            setUrunler(apiUrunler && Array.isArray(apiUrunler) ? apiUrunler : []);
         } catch (error) {
             globalHataYakala(error, 'Malzemeler yüklenirken bir sorun oluştu.');
+            setUrunler([]);
             if (urunListesiTablosuBody) urunListesiTablosuBody.innerHTML = '<tr><td colspan="3">Malzemeler yüklenemedi.</td></tr>';
-            urunler = [];
-            urunListesiniGuncelle(); // Hata durumunda da UI güncellensin
         }
     }
 
     async function tedarikcileriYukle() {
         try {
-            const apiTedarikciler = await getTedarikciler();
-            tedarikciler = apiTedarikciler && Array.isArray(apiTedarikciler) ? apiTedarikciler : [];
-            // console.log("API'den gelen tedarikçiler:", tedarikciler); // Kontrol için
-            tedarikciListesiniGuncelle();
+            const apiTedarikciler = await fetchTedarikciler();
+            setTedarikciler(apiTedarikciler && Array.isArray(apiTedarikciler) ? apiTedarikciler : []);
         } catch (error) {
             globalHataYakala(error, 'Tedarikçiler yüklenirken bir sorun oluştu.');
             if (tedarikciListesiTablosuBody) tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="7">Tedarikçiler yüklenemedi.</td></tr>';
-            tedarikciler = [];
-            tedarikciListesiniGuncelle();
+            setTedarikciler([]);
         }
     }
 
-    async function sonFiyatlariGuncelle(tabloLimiti = 5) {
+    async function fiyatlariYukle() {
         try {
-            const tumGelenFiyatlar = await getFiyatlar();
-            fiyatlar = (tumGelenFiyatlar && Array.isArray(tumGelenFiyatlar) ? tumGelenFiyatlar : []).sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
-            // console.log("Global fiyatlar güncellendi, toplam:", fiyatlar.length, "adet."); // Kontrol için
-            gosterSonFiyatlarTablosu(fiyatlar, sonFiyatlarTablosuBody, urunler, tedarikciler, tabloLimiti);
-            fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(fiyatGrafigiCanvas, grafikUrunSecimi.value, grafikTedarikciSecimi.value, zamanAraligiSecimi.value, fiyatlar, urunler, tedarikciler, fiyatGrafigi);
+            const tumGelenFiyatlar = await fetchFiyatlar();
+            setFiyatlar(tumGelenFiyatlar && Array.isArray(tumGelenFiyatlar) ? tumGelenFiyatlar : []);
         } catch (error) {
-            globalHataYakala(error, 'Fiyatlar güncellenirken bir sorun oluştu.');
+            globalHataYakala(error, 'Fiyatlar yüklenirken bir sorun oluştu.');
             if (sonFiyatlarTablosuBody) sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="6">Fiyatlar yüklenemedi.</td></tr>';
-            fiyatlar = [];
-            fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(fiyatGrafigiCanvas, grafikUrunSecimi.value, grafikTedarikciSecimi.value, zamanAraligiSecimi.value, fiyatlar, urunler, tedarikciler, fiyatGrafigi); // Hata durumunda grafiği boşalt
+            setFiyatlar([]);
         }
     }
 
     async function initializePageData() {
-        // console.log("Sayfa verileri yükleniyor..."); // Kontrol için
         try {
             await Promise.all([
-                tedarikcileriYukle(),
-                malzemeleriYukle()
+                malzemeleriYukle(),
+                tedarikcileriYukle()
             ]);
-            await sonFiyatlariGuncelle(); // Malzemeler ve tedarikçiler yüklendikten sonra fiyatları yükle
+            await fiyatlariYukle();
             
             const gunlukTarihInput = document.getElementById('gunlukTarihInput');
             if (gunlukTarihInput) {
                 gunlukTarihInput.value = new Date().toISOString().split('T')[0];
             }
-            // console.log("Sayfa verileri başarıyla yüklendi."); // Kontrol için
         } catch (error) {
             globalHataYakala(error, "Sayfa başlatılırken genel bir hata oluştu. Lütfen sayfayı yenileyin.");
         }
