@@ -115,10 +115,10 @@ function getMusteri($conn, $id) {
 function addMusteri($conn) {
     $data = json_decode(file_get_contents("php://input"));
 
-    // Gerekli alan kontrolü
-    if (empty($data->id) || empty($data->adi)) {
+    // Gerekli alan kontrolü (sadece adi zorunlu)
+    if (empty($data->adi)) {
         http_response_code(400); // Bad Request
-        echo json_encode(array("message" => "Müşteri eklemek için gerekli alanlar (id, adi) eksik."));
+        echo json_encode(array("message" => "Müşteri eklemek için 'adi' alanı zorunludur."));
         if (ob_get_level() > 0) {
             ob_end_clean();
         }
@@ -126,7 +126,7 @@ function addMusteri($conn) {
     }
 
     // Veri temizleme ve atama
-    $id = $conn->real_escape_string(trim($data->id));
+    $id = isset($data->id) && !empty(trim($data->id)) ? $conn->real_escape_string(trim($data->id)) : null;
     $adi = $conn->real_escape_string(trim($data->adi));
     $yetkiliKisi = isset($data->yetkiliKisi) ? $conn->real_escape_string(trim($data->yetkiliKisi)) : null;
     $telefon = isset($data->telefon) ? $conn->real_escape_string(trim($data->telefon)) : null;
@@ -135,39 +135,52 @@ function addMusteri($conn) {
     $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string(trim($data->vergiNo)) : null;
     $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
 
-    // ID\'nin benzersiz olup olmadığını kontrol et
-    $checkSql = "SELECT id FROM musteriler WHERE id = ?";
-    $stmt_check = $conn->prepare($checkSql);
-    if (!$stmt_check) {
-        http_response_code(500);
-        echo json_encode(array("message" => "ID kontrolü SQL hazırlama hatası.", "error" => $conn->error));
-        if (ob_get_level() > 0) { ob_end_clean(); }
-        return;
-    }
-    $stmt_check->bind_param("s", $id);
-    $stmt_check->execute();
-    $result_check = $stmt_check->get_result();
-    if ($result_check->num_rows > 0) {
-        http_response_code(409); // Conflict
-        echo json_encode(array("message" => "Bu ID (\'$id\') ile zaten bir müşteri kayıtlı."));
+    if ($id) {
+        // ID verilmişse, benzersiz olup olmadığını kontrol et
+        $checkSql = "SELECT id FROM musteriler WHERE id = ?";
+        $stmt_check = $conn->prepare($checkSql);
+        if (!$stmt_check) {
+            http_response_code(500);
+            echo json_encode(array("message" => "ID kontrolü SQL hazırlama hatası.", "error" => $conn->error));
+            if (ob_get_level() > 0) { ob_end_clean(); }
+            return;
+        }
+        $stmt_check->bind_param("s", $id);
+        $stmt_check->execute();
+        $result_check = $stmt_check->get_result();
+        if ($result_check->num_rows > 0) {
+            http_response_code(409); // Conflict
+            echo json_encode(array("message" => "Bu ID ('$id') ile zaten bir müşteri kayıtlı."));
+            $stmt_check->close();
+            if (ob_get_level() > 0) { ob_end_clean(); }
+            return;
+        }
         $stmt_check->close();
-        if (ob_get_level() > 0) { ob_end_clean(); }
-        return;
+        
+        $sql = "INSERT INTO musteriler (id, adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $bind_types = "ssssssss";
+        $bind_params = array(&$bind_types, &$id, &$adi, &$yetkiliKisi, &$telefon, &$email, &$adres, &$vergiNo, &$notlar);
+
+    } else {
+        // ID verilmemişse, ID olmadan ekle (veritabanı otomatik ID atayacak varsayımı)
+        $sql = "INSERT INTO musteriler (adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $bind_types = "sssssss";
+        $bind_params = array(&$bind_types, &$adi, &$yetkiliKisi, &$telefon, &$email, &$adres, &$vergiNo, &$notlar);
     }
-    $stmt_check->close();
-    
-    $sql = "INSERT INTO musteriler (id, adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        // s = string, d = double, i = integer, b = blob
-        $stmt->bind_param("ssssssss", $id, $adi, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar);
+        // call_user_func_array ile bind_param çağrısı
+        call_user_func_array(array($stmt, 'bind_param'), $bind_params);
+
         if ($stmt->execute()) {
+            $inserted_id = $id ? $id : $conn->insert_id; // Eğer ID biz verdiysek onu, değilse veritabanının atadığı ID'yi al
             http_response_code(201); // Created
             echo json_encode(array(
                 "message" => "Müşteri başarıyla eklendi.", 
                 "data" => array(
-                    "id" => $id, // Frontend\'den gelen ID\'yi geri dönüyoruz
+                    "id" => $inserted_id,
                     "adi" => $adi,
                     "yetkiliKisi" => $yetkiliKisi,
                     "telefon" => $telefon,
