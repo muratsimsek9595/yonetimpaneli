@@ -76,12 +76,167 @@ switch ($method) {
 }
 // --- switch bloğu sonu ---
 
-/* // FONKSİYON TANIMLARI VE BAĞLANTI KAPATMA HALA DEVRE DIŞI
-// Fonksiyon tanımları da geçici olarak burada kalabilir veya silinebilir, nasılsa çağrılmıyorlar.
-// ... (getMusteriler, getMusteri, addMusteri, updateMusteri, deleteMusteri fonksiyonları) ...
+// --- FONKSİYON TANIMLARI VE BAĞLANTI KAPATMA ETKİNLEŞTİRİLDİ ---
+function getMusteriler($conn) {
+    $sql = "SELECT id, ad, yetkiliKisi, telefon, email, adres, vergiNo, notlar, created_at, updated_at FROM musteriler ORDER BY ad";
+    $result = $conn->query($sql);
+    $musteriler = array();
+    if ($result) {
+        while($row = $result->fetch_assoc()) {
+            $musteriler[] = $row;
+        }
+        echo json_encode(array("status" => "success", "data" => $musteriler));
+    } else {
+        http_response_code(500);
+        echo json_encode(array("status" => "error", "message" => "Müşteriler getirilirken sunucu hatası oluştu: " . $conn->error));
+    }
+}
+
+function getMusteri($conn, $id) {
+    $stmt = $conn->prepare("SELECT id, ad, yetkiliKisi, telefon, email, adres, vergiNo, notlar, created_at, updated_at FROM musteriler WHERE id = ?");
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(array("status" => "error", "message" => "Sorgu hazırlanırken hata: " . $conn->error));
+        return;
+    }
+    $stmt->bind_param("i", $id);
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $musteri = $result->fetch_assoc();
+            echo json_encode(array("status" => "success", "data" => $musteri));
+        } else {
+            http_response_code(404);
+            echo json_encode(array("status" => "error", "message" => "Müşteri bulunamadı."));
+        }
+    } else {
+        http_response_code(500);
+        echo json_encode(array("status" => "error", "message" => "Müşteri getirilirken hata: " . $stmt->error));
+    }
+    $stmt->close();
+}
+
+function addMusteri($conn) {
+    $data = json_decode(file_get_contents("php://input"));
+
+    if (empty($data->ad)) {
+        http_response_code(400); 
+        echo json_encode(array("status" => "error", "message" => "Müşteri adı boş olamaz."));
+        return;
+    }
+
+    $ad = $conn->real_escape_string($data->ad);
+    $yetkiliKisi = isset($data->yetkiliKisi) ? $conn->real_escape_string($data->yetkiliKisi) : null;
+    $telefon = isset($data->telefon) ? $conn->real_escape_string($data->telefon) : null;
+    $email = isset($data->email) ? $conn->real_escape_string($data->email) : null;
+    $adres = isset($data->adres) ? $conn->real_escape_string($data->adres) : null;
+    $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string($data->vergiNo) : null;
+    $notlar = isset($data->notlar) ? $conn->real_escape_string($data->notlar) : null;
+    $created_at = date('Y-m-d H:i:s');
+    $updated_at = date('Y-m-d H:i:s');
+
+    $stmt = $conn->prepare("INSERT INTO musteriler (ad, yetkiliKisi, telefon, email, adres, vergiNo, notlar, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(array("status" => "error", "message" => "Sorgu hazırlanırken hata: " . $conn->error));
+        return;
+    }
+
+    $stmt->bind_param("sssssssss", $ad, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar, $created_at, $updated_at);
+
+    if ($stmt->execute()) {
+        $yeniMusteriId = $conn->insert_id; 
+        http_response_code(201);
+        echo json_encode(array("status" => "success", "message" => "Müşteri başarıyla eklendi.", "id" => $yeniMusteriId));
+    } else {
+        http_response_code(500);
+        echo json_encode(array("status" => "error", "message" => "Müşteri eklenirken hata: " . $stmt->error));
+    }
+    $stmt->close();
+}
+
+function updateMusteri($conn, $id) {
+    if (empty($id)) {
+        http_response_code(400);
+        echo json_encode(array("status" => "error", "message" => "Güncellenecek müşteri ID'si belirtilmedi."));
+        return;
+    }
+
+    $data = json_decode(file_get_contents("php://input"));
+
+    if (empty($data->ad)) {
+        http_response_code(400);
+        echo json_encode(array("status" => "error", "message" => "Müşteri adı boş olamaz."));
+        return;
+    }
+
+    $ad = $conn->real_escape_string($data->ad);
+    $yetkiliKisi = isset($data->yetkiliKisi) ? $conn->real_escape_string($data->yetkiliKisi) : null;
+    $telefon = isset($data->telefon) ? $conn->real_escape_string($data->telefon) : null;
+    $email = isset($data->email) ? $conn->real_escape_string($data->email) : null;
+    $adres = isset($data->adres) ? $conn->real_escape_string($data->adres) : null;
+    $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string($data->vergiNo) : null;
+    $notlar = isset($data->notlar) ? $conn->real_escape_string($data->notlar) : null;
+    $updated_at = date('Y-m-d H:i:s');
+
+    $stmt = $conn->prepare("UPDATE musteriler SET ad = ?, yetkiliKisi = ?, telefon = ?, email = ?, adres = ?, vergiNo = ?, notlar = ?, updated_at = ? WHERE id = ?");
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(array("status" => "error", "message" => "Sorgu hazırlanırken hata: " . $conn->error));
+        return;
+    }
+    $stmt->bind_param("ssssssssi", $ad, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar, $updated_at, $id);
+
+    if ($stmt->execute()) {
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(array("status" => "success", "message" => "Müşteri başarıyla güncellendi."));
+        } else {
+            // Etkilenen satır yoksa, ID bulunamamış olabilir veya veriler aynı olabilir.
+            // İsteğe bağlı olarak 404 veya farklı bir mesaj döndürülebilir.
+            echo json_encode(array("status" => "info", "message" => "Müşteri bilgileri güncel ya da belirtilen ID bulunamadı."));
+        }
+    } else {
+        http_response_code(500);
+        echo json_encode(array("status" => "error", "message" => "Müşteri güncellenirken hata: " . $stmt->error));
+    }
+    $stmt->close();
+}
+
+function deleteMusteri($conn, $id) {
+    if (empty($id)) {
+        http_response_code(400);
+        echo json_encode(array("status" => "error", "message" => "Silinecek müşteri ID'si belirtilmedi."));
+        return;
+    }
+
+    $stmt = $conn->prepare("DELETE FROM musteriler WHERE id = ?");
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(array("status" => "error", "message" => "Sorgu hazırlanırken hata: " . $conn->error));
+        return;
+    }
+    $stmt->bind_param("i", $id);
+
+    if ($stmt->execute()) {
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(array("status" => "success", "message" => "Müşteri başarıyla silindi."));
+        } else {
+            http_response_code(404); // ID bulunamadı
+            echo json_encode(array("status" => "error", "message" => "Silinecek müşteri bulunamadı veya zaten silinmiş."));
+        }
+    } else {
+        http_response_code(500);
+        // Yabancı anahtar kısıtlaması hatası olup olmadığını kontrol et
+        if ($conn->errno == 1451) { // MySQL error code for foreign key constraint
+             echo json_encode(array("status" => "error", "message" => "Bu müşteri silinemez çünkü ilişkili teklifleri bulunmaktadır.", "detail" => $stmt->error));
+        } else {
+             echo json_encode(array("status" => "error", "message" => "Müşteri silinirken hata: " . $stmt->error));
+        }
+    }
+    $stmt->close();
+}
 
 if (isset($conn)) {
     $conn->close();
 }
-*/ // GEÇİCİ OLARAK DEVRE DIŞI BIRAKILDI SONU
 ?> 
