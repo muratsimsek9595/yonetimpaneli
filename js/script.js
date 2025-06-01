@@ -412,11 +412,12 @@ document.addEventListener('DOMContentLoaded', function() {
         grafikTedarikciSecimi.innerHTML = '<option value="">-- Tüm Tedarikçiler --</option>'; // Resetle
 
         if (seciliUrunId) {
-            const urunFiyatlari = fiyatlar.filter(f => f.urunId === seciliUrunId);
-            const buUrununTedarikcileri = [...new Set(urunFiyatlari.map(f => f.tedarikciId))];
+            // API'den gelen fiyatlarda malzeme_id ve tedarikci_id olacak
+            const urunFiyatlari = fiyatlar.filter(f => String(f.malzeme_id) === String(seciliUrunId));
+            const buUrununTedarikcileri = [...new Set(urunFiyatlari.map(f => String(f.tedarikci_id)))];
             
-            buUrununTedarikcileri.forEach(tedarikciId => {
-                const tedarikci = tedarikciler.find(t => t.id === tedarikciId);
+            buUrununTedarikcileri.forEach(id => { // tedarikciId -> id olarak değiştirdim, zaten string
+                const tedarikci = tedarikciler.find(t => String(t.id) === id);
                 if (tedarikci) {
                     const option = document.createElement('option');
                     option.value = tedarikci.id;
@@ -460,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function grafigiOlusturVeyaGuncelle() {
         const seciliUrunId = grafikUrunSecimi.value;
-        const seciliTedarikciId = grafikTedarikciSecimi.value; // "" ise "Tüm Tedarikçiler"
+        const seciliTedarikciIdString = grafikTedarikciSecimi.value; // String olarak gelir "" veya "id"
         const seciliZamanAraligi = zamanAraligiSecimi.value;
 
         if (fiyatGrafigi) {
@@ -470,11 +471,10 @@ document.addEventListener('DOMContentLoaded', function() {
         context.clearRect(0, 0, fiyatGrafigiCanvas.width, fiyatGrafigiCanvas.height);
 
         if (!seciliUrunId) {
-            // Seçili ürün yoksa canvas'ı temizle (zaten yapıldı ama garanti) ve çık
             return;
         }
 
-        const seciliUrun = urunler.find(u => u.id === seciliUrunId);
+        const seciliUrun = urunler.find(u => String(u.id) === String(seciliUrunId));
         if (!seciliUrun) {
             context.fillText("Ürün bulunamadı.", fiyatGrafigiCanvas.width / 2, fiyatGrafigiCanvas.height / 2);
             return;
@@ -482,8 +482,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const urunAdi = seciliUrun.ad;
         const urunBirimi = seciliUrun.birim_adi || '';
 
-        let urunFiyatlari = fiyatlar.filter(f => f.urunId === seciliUrunId);
-        const filtrelenmisFiyatlarTumTedarikciler = tarihiFiltrele([...urunFiyatlari], seciliZamanAraligi); // Kopyasını gönder
+        // API'den gelen fiyatlarda malzeme_id olacak
+        let urunFiyatlari = fiyatlar.filter(f => String(f.malzeme_id) === String(seciliUrunId));
+        const filtrelenmisFiyatlarTumTedarikciler = tarihiFiltrele([...urunFiyatlari], seciliZamanAraligi);
 
         if (filtrelenmisFiyatlarTumTedarikciler.length === 0) {
             context.font = "16px Arial";
@@ -495,11 +496,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let datasets = [];
         let grafikEtiketiAnaBaslik = `${urunAdi} Fiyat Değişimi`;
         
-        // Renk paleti (gerekirse daha fazla renk eklenebilir)
         const renkPaleti = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED', '#839192'];
 
-        if (seciliTedarikciId) { // Tek bir tedarikçi seçili
-            const tedarikciFiyatlari = filtrelenmisFiyatlarTumTedarikciler.filter(f => f.tedarikciId === seciliTedarikciId);
+        if (seciliTedarikciIdString) { // Tek bir tedarikçi seçili (ID'si string olarak geliyor)
+            const tedarikciFiyatlari = filtrelenmisFiyatlarTumTedarikciler.filter(f => String(f.tedarikci_id) === seciliTedarikciIdString);
             if (tedarikciFiyatlari.length === 0) {
                 context.font = "16px Arial";
                 context.textAlign = "center";
@@ -512,15 +512,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return `${tarihObj.getDate().toString().padStart(2, '0')}.${(tarihObj.getMonth() + 1).toString().padStart(2, '0')}.${tarihObj.getFullYear()}`;
             });
             const veriNoktalari = tedarikciFiyatlari.map(f => f.fiyat);
-            const seciliTedarikci = tedarikciler.find(t => t.id === seciliTedarikciId);
+            const seciliTedarikci = tedarikciler.find(t => String(t.id) === seciliTedarikciIdString);
             const tedarikciAdi = seciliTedarikci ? seciliTedarikci.ad : 'Bilinmeyen Tedarikçi';
             grafikEtiketiAnaBaslik = `${urunAdi} (${tedarikciAdi}) Fiyat Değişimi`;
 
             datasets.push({
                 label: `${tedarikciAdi} (${urunBirimi})`,
                 data: veriNoktalari,
-                borderColor: renkPaleti[0], // İlk rengi kullan
-                backgroundColor: 'rgba(92, 184, 92, 0.1)', // Yeşilimsi dolgu
+                borderColor: renkPaleti[0],
+                backgroundColor: 'rgba(92, 184, 92, 0.1)',
                 tension: 0.1,
                 fill: true,
             });
@@ -569,11 +569,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-        } else { // "Tüm Tedarikçiler" seçili
+        } else { // "Tüm Tedarikçiler" seçili (seciliTedarikciIdString === "")
             grafikEtiketiAnaBaslik = `${urunAdi} Fiyat Değişimi (Tüm Tedarikçiler)`;
-            const tedarikciIdleri = [...new Set(filtrelenmisFiyatlarTumTedarikciler.map(f => f.tedarikciId))];
+            // API'den gelen fiyatlarda tedarikci_id olacak
+            const tedarikciIdleri = [...new Set(filtrelenmisFiyatlarTumTedarikciler.map(f => String(f.tedarikci_id)))];
             
-            // Tüm verilerdeki benzersiz tarihleri alıp sıralayalım
             const tumTarihler = [...new Set(filtrelenmisFiyatlarTumTedarikciler.map(f => f.tarih))]
                                 .sort((a, b) => new Date(a) - new Date(b))
                                 .map(tarih => {
@@ -581,36 +581,35 @@ document.addEventListener('DOMContentLoaded', function() {
                                     return `${tarihObj.getDate().toString().padStart(2, '0')}.${(tarihObj.getMonth() + 1).toString().padStart(2, '0')}.${tarihObj.getFullYear()}`;
                                 });
 
-            tedarikciIdleri.forEach((tdrId, index) => {
-                const tedarikci = tedarikciler.find(t => t.id === tdrId);
+            tedarikciIdleri.forEach((id, index) => { // tdrId -> id
+                const tedarikci = tedarikciler.find(t => String(t.id) === id);
                 const tedarikciAdi = tedarikci ? tedarikci.ad : 'Bilinmeyen Tedarikçi';
-                const buTedarikcininFiyatlari = filtrelenmisFiyatlarTumTedarikciler.filter(f => f.tedarikciId === tdrId);
+                const buTedarikcininFiyatlari = filtrelenmisFiyatlarTumTedarikciler.filter(f => String(f.tedarikci_id) === id);
 
-                // Her tedarikçinin verisini, tüm benzersiz tarihlere göre eşleştir
                 const veriNoktalari = tumTarihler.map(etiketTarih => {
-                    const tarihObjFormatli = `${etiketTarih.split('.')[2]}-${etiketTarih.split('.')[1]}-${etiketTarih.split('.')[0]}`; // YYYY-MM-DD formatına çevir
+                    const tarihObjFormatli = `${etiketTarih.split('.')[2]}-${etiketTarih.split('.')[1]}-${etiketTarih.split('.')[0]}`;
                     const fiyatKaydi = buTedarikcininFiyatlari.find(f => {
                         const kayitTarihObj = new Date(f.tarih);
                         const kayitTarihFormatli = `${kayitTarihObj.getFullYear()}-${(kayitTarihObj.getMonth() + 1).toString().padStart(2, '0')}-${kayitTarihObj.getDate().toString().padStart(2, '0')}`;
                         return kayitTarihFormatli === tarihObjFormatli;
                     });
-                    return fiyatKaydi ? fiyatKaydi.fiyat : null; // O tarihte fiyat yoksa null
+                    return fiyatKaydi ? fiyatKaydi.fiyat : null;
                 });
                 
                 datasets.push({
                     label: `${tedarikciAdi} (${urunBirimi})`,
                     data: veriNoktalari,
-                    borderColor: renkPaleti[index % renkPaleti.length], // Renk paletinden sırayla ata
+                    borderColor: renkPaleti[index % renkPaleti.length],
                     tension: 0.1,
-                    fill: false, // Çoklu çizgiler için dolguyu kapatmak daha iyi görünür
-                    spanGaps: true, // null olan noktalarda çizgiyi birleştir
+                    fill: false,
+                    spanGaps: true,
                 });
             });
 
             fiyatGrafigi = new Chart(fiyatGrafigiCanvas, {
                 type: 'line',
                 data: {
-                    labels: tumTarihler, // Ortak X ekseni etiketleri
+                    labels: tumTarihler,
                     datasets: datasets
                 },
                 options: {
@@ -707,40 +706,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
     fiyatGirisMalzemeSecimi.addEventListener('change', guncelleFiyatGirisBirimGostergesi);
 
-    async function sonFiyatlariGuncelle(limit = 5) {
-        console.log("sonFiyatlariGuncelle fonksiyonu çağrıldı. Limit:", limit); // Kontrol için eklendi
-        sonFiyatlarTablosuBody.innerHTML = '';
+    async function sonFiyatlariGuncelle(tabloLimiti = 5) { // Parametre adı değişti: limit -> tabloLimiti
+        console.log("sonFiyatlariGuncelle fonksiyonu çağrıldı. Tablo için limit:", tabloLimiti);
+        
         try {
-            const apiUrl = `api/fiyatlar.php?limit=${limit}`; // sortBy ve order parametreleri şimdilik kaldırıldı
-            console.log("Son fiyatlar için API isteği yapılacak:", apiUrl); // Kontrol için eklendi
-            const response = await fetch(apiUrl); 
+            // Adım 1: API'den TÜM fiyatları çek (limit parametresi olmadan)
+            const tumFiyatlarApiUrl = 'api/fiyatlar.php'; // Limit yok
+            console.log("Tüm fiyatlar için API isteği yapılacak:", tumFiyatlarApiUrl);
+            const response = await fetch(tumFiyatlarApiUrl); 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.message || `Son fiyatlar API hatası: ${response.status} - ${response.statusText}`);
+                throw new Error(errorData?.message || `Tüm fiyatlar API hatası: ${response.status} - ${response.statusText}`);
             }
-            const sonGirilenler = await response.json();
-            fiyatlar = sonGirilenler; // Global fiyatlar dizisini de güncelleyebiliriz veya sadece bu fonksiyon için kullanabiliriz.
+            const tumGelenFiyatlar = await response.json();
+            
+            // Global `fiyatlar` dizisini güncelle (önce tarihe göre sıralayalım, en yeni en başta)
+            fiyatlar = tumGelenFiyatlar.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
+            console.log("Global fiyatlar güncellendi (API\'den çekildi), toplam:", fiyatlar.length, "adet.");
 
-            if (sonGirilenler.length === 0) {
+            // Adım 2: "Son Fiyat Girişleri" tablosunu güncelle
+            sonFiyatlarTablosuBody.innerHTML = '';
+            const gosterilecekFiyatlar = fiyatlar.slice(0, tabloLimiti); // Global diziden ilk 'tabloLimiti' kadarını al
+
+            if (gosterilecekFiyatlar.length === 0) {
                 sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="5">Kayıtlı fiyat girişi bulunamadı.</td></tr>';
-                return;
+            } else {
+                gosterilecekFiyatlar.forEach(fiyat => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${fiyat.malzeme_adi || '-'}</td>
+                        <td>${parseFloat(fiyat.fiyat).toFixed(2)}</td>
+                        <td>${fiyat.malzeme_birim_adi || '-'}</td>
+                        <td>${new Date(fiyat.tarih).toLocaleDateString('tr-TR')}</td>
+                        <td>${fiyat.tedarikci_adi || '-'}</td>
+                    `;
+                    sonFiyatlarTablosuBody.appendChild(tr);
+                });
+            }
+            // Grafiklerin de güncellenmesi için tetikleme. 
+            // Bu, fiyatlar yüklendikten sonra yapılmalı.
+            // Eğer grafikUrunSecimi'nde bir ürün seçiliyse, grafiği güncelle.
+            if (grafikUrunSecimi.value) {
+                 guncelleGrafikTedarikciFiltresi(); // Bu zaten grafigiOlusturVeyaGuncelle'yi çağırır
+            } else {
+                 grafigiOlusturVeyaGuncelle(); // Seçili ürün yoksa bile boş grafik için çağır.
             }
 
-            sonGirilenler.forEach(fiyat => {
-                // API yanıtında malzeme_adi, malzeme_birim_adi, tedarikci_adi zaten geliyor olmalı (JOIN ile)
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${fiyat.malzeme_adi || '-'}</td>
-                    <td>${parseFloat(fiyat.fiyat).toFixed(2)}</td>
-                    <td>${fiyat.malzeme_birim_adi || '-'}</td>
-                    <td>${new Date(fiyat.tarih).toLocaleDateString('tr-TR')}</td>
-                    <td>${fiyat.tedarikci_adi || '-'}</td>
-                `;
-                sonFiyatlarTablosuBody.appendChild(tr);
-            });
         } catch (error) {
-            console.error('Son fiyatlar yüklenirken hata:', error);
-            sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="5">Son fiyatlar yüklenirken bir hata oluştu.</td></tr>';
+            console.error('Fiyatlar yüklenirken veya tablo güncellenirken hata:', error);
+            sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="5">Fiyatlar yüklenirken bir hata oluştu.</td></tr>';
+            // Global fiyatlar dizisini de boşaltmak iyi olabilir hata durumunda
+            fiyatlar = []; 
+            grafigiOlusturVeyaGuncelle(); // Hata durumunda grafiği de temizle/güncelle
         }
     }
 
@@ -847,12 +864,12 @@ document.addEventListener('DOMContentLoaded', function() {
         await tedarikciListesiniGuncelle();
         await malzemeleriYukle();
         
-        console.log("initializePageData: sonFiyatlariGuncelle ÇAĞRILMADAN ÖNCE"); // YENİ LOG
+        console.log("initializePageData: sonFiyatlariGuncelle ÇAĞRILMADAN ÖNCE (Tüm fiyatlar yüklenecek)");
         try {
-            await sonFiyatlariGuncelle();
-            console.log("initializePageData: sonFiyatlariGuncelle BAŞARIYLA TAMAMLANDI"); // YENİ LOG
+            await sonFiyatlariGuncelle(); // Parametresiz çağrı tüm fiyatları yükler, tabloyu varsayılan limitle (5) günceller
+            console.log("initializePageData: sonFiyatlariGuncelle (Tüm fiyatlar) BAŞARIYLA TAMAMLANDI");
         } catch (error) {
-            console.error("initializePageData: sonFiyatlariGuncelle ÇAĞRISINDA HATA:", error); // YENİ LOG
+            console.error("initializePageData: sonFiyatlariGuncelle (Tüm fiyatlar) ÇAĞRISINDA HATA:", error);
         }
         
         const gunlukTarihInput = document.getElementById('gunlukTarihInput');
