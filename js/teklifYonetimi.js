@@ -76,16 +76,27 @@ function initTeklifYonetimi() {
             
             const sonuc = await saveTeklifAPI(teklifData, id);
             
-            if (sonuc && sonuc.data) {
-                if (id) {
-                    updateTeklifInStore(sonuc.data);
+            // API'dan gelen yanıtı daha esnek kontrol et
+            if (sonuc && (sonuc.data || (sonuc.message && (sonuc.message.toLowerCase().includes('başarıyla eklendi') || sonuc.message.toLowerCase().includes('başarıyla güncellendi'))))) {
+                const basariMesaji = sonuc.message || (id ? 'Teklif başarıyla güncellendi.' : 'Teklif başarıyla eklendi.');
+                showToast(basariMesaji, 'success');
+
+                if (sonuc.data) {
+                    if (id) {
+                        updateTeklifInStore(sonuc.data);
+                    } else {
+                        addTeklifToStore(sonuc.data);
+                    }
                 } else {
-                    addTeklifToStore(sonuc.data);
+                    console.warn('Başarılı işlem mesajı alındı ancak API yanıtında güncel veri (sonuc.data) bulunamadı. Teklif listesi güncellenmemiş olabilir. Tüm teklifleri yeniden yüklemek gerekebilir.');
+                    // İdeal olarak burada tüm teklif listesini yeniden yüklemek için bir fonksiyon çağrılmalı
+                    // Örneğin: fetchAndRenderAllTeklifler(); 
                 }
-                showToast(sonuc.message || (id ? 'Teklif başarıyla güncellendi.' : 'Teklif başarıyla eklendi.'), 'success');
                 formuTemizle();
             } else {
-                throw new Error(sonuc.message || 'Teklif kaydedilirken bilinmeyen bir hata oluştu.');
+                // Hata durumu veya beklenmedik yanıt
+                const hataMesaji = sonuc && sonuc.message ? sonuc.message : 'Teklif kaydedilirken bilinmeyen bir hata oluştu.';
+                throw new Error(hataMesaji);
             }
         } catch (error) {
             globalHataYakala(error, 'Teklif kaydedilirken bir sorun oluştu.');
@@ -205,7 +216,7 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
             </div>
             <div class="form-group birim-fiyat">
                 <label for="birimFiyat_${urunSatirSayaci}">Birim Fiyat:</label>
-                <input type="number" id="birimFiyat_${urunSatirSayaci}" name="birimFiyat" class="teklif-urun-birim-fiyat" min="0" step="0.01" required value="${urunVerisi ? urunVerisi.birimFiyat.toFixed(2) : '0.00'}">
+                <input type="number" id="birimFiyat_${urunSatirSayaci}" name="birimFiyat" class="teklif-urun-birim-fiyat" min="0" step="0.01" required value="${(urunVerisi && typeof urunVerisi.kaydedilen_birim_satis_fiyati === 'number') ? urunVerisi.kaydedilen_birim_satis_fiyati.toFixed(2) : '0.00'}">
             </div>
             <div class="form-group satir-toplami">
                 <label>Satır Toplamı:</label>
