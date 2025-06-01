@@ -30,7 +30,20 @@ if (!$conn || $conn->connect_error) {
 }
 // --- db_config.php ve bağlantı kontrolü sonu ---
 
-echo json_encode(["status" => "musteriler_api_test_with_db_config", "message" => "db_config.php yüklendi ve bağlantı başarılı görünüyor."]);
+// --- İstek metodu ve ID parametresini almayı etkinleştir ---
+$method = $_SERVER['REQUEST_METHOD'];
+$id_param = null;
+if (isset($_GET['id'])) {
+    $id_param = trim($_GET['id']); 
+}
+// --- İstek metodu ve ID parametresi alma sonu ---
+
+echo json_encode([
+    "status" => "musteriler_api_method_id_parsed", 
+    "message" => "db_config yüklendi, metod ve ID parse edildi.",
+    "detected_method" => $method,
+    "detected_id_param" => $id_param
+]);
 exit();
 
 /* // GERİ KALAN KISIM HALA DEVRE DIŞI
