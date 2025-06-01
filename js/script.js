@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tedarikciListesiTablosuBody.appendChild(tr);
             });
         }
-        tedarikcileriGunlukFiyatGirisSecimineYukle();
+        urunTedarikciSeciminiDoldur();
         guncelleGrafikTedarikciFiltresi();
     }
 
