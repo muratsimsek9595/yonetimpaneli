@@ -750,14 +750,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const eskiTedarikciListesiniGuncelle = tedarikciListesiniGuncelle;
 
-    // Sayfa yüklendiğinde ve "Fiyat Grafikleri" sekmesi aktif olduğunda dropdown'u doldur.
-    tedarikciListesiniGuncelle(); 
-    urunListesiniGuncelle(); // Bu, ürünleri ve ilişkili dropdownları (grafik, günlük fiyat) yükler
-    sonFiyatlariGuncelle(); // Sayfa ilk yüklendiğinde son fiyatları göster
-    const today = new Date().toISOString().split('T')[0];
-    gunlukTarihInput.value = today; // Günlük fiyat girişi tarihini bugüne ayarla
+    // ----------- Genel Başlangıç Fonksiyonları -----------
+    async function initializePageData() {
+        console.log("Sayfa verileri yükleniyor...");
+        await tedarikciListesiniGuncelle(); // API'den tedarikçileri yükle
+        urunListesiniGuncelle(); // Lokal depolamadan ürünleri yükle
+        sonFiyatlariGuncelle(); // Lokal depolamadan son fiyatları yükle
+        // Grafik ve diğer UI elemanları için başlangıç durumları burada ayarlanabilir
+        // Örneğin, ilk ürün seçiliyse grafiği direkt çizdirebilirsiniz.
+        // grafigiOlusturVeyaGuncelle(); // Eğer başlangıçta bir grafik gösterilecekse
+        console.log("Sayfa verileri yüklendi.");
+    }
 
-    grafigiOlusturVeyaGuncelle(); 
+    // Sayfa yüklendiğinde verileri ve UI'ı hazırla
+    initializePageData();
 });
 
 // Daha fazla JavaScript kodu eklenebilir. 
