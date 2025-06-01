@@ -88,4 +88,40 @@ if (isset($conn)) {
     $conn->close();
 }
 */ // GEÇİCİ OLARAK DEVRE DIŞI BIRAKILDI SONU
+
+// --- switch bloğunu etkinleştir, içindeki asıl çağrılar yorumlu kalsın ---
+switch ($method) {
+    case 'GET':
+        if ($id_param !== null) {
+            // getMusteri($conn, $id_param); // Devre dışı
+            echo json_encode(["status" => "switch_case_get_with_id", "id_param" => $id_param]); 
+            exit();
+        } else {
+            // getMusteriler($conn); // Devre dışı
+            echo json_encode(["status" => "switch_case_get_all"]); 
+            exit();
+        }
+        break;
+    case 'POST':
+        // addMusteri($conn); // Devre dışı
+        echo json_encode(["status" => "switch_case_post"]); 
+        exit();
+        break;
+    case 'PUT':
+        // updateMusteri($conn, $id_param); // Devre dışı
+        echo json_encode(["status" => "switch_case_put", "id_param" => $id_param]); 
+        exit();
+        break;
+    case 'DELETE':
+        // deleteMusteri($conn, $id_param); // Devre dışı
+        echo json_encode(["status" => "switch_case_delete", "id_param" => $id_param]); 
+        exit();
+        break;
+    default:
+        http_response_code(405); 
+        echo json_encode(["status" => "switch_case_default", "message" => "Desteklenmeyen Metod: " . $method]);
+        exit(); // default case için de exit eklendi
+        break;
+}
+// --- switch bloğu sonu ---
 ?> 
