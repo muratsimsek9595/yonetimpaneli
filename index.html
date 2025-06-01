@@ -48,11 +48,11 @@
                     <h3>Yeni Malzeme Ekle / Güncelle</h3>
                     <form id="urunForm">
                         <input type="hidden" id="urunId" name="urunId">
-                        <div>
+                        <div class="form-group">
                             <label for="urunAdi">Malzeme Adı:</label>
                             <input type="text" id="urunAdi" name="urunAdi" required>
                         </div>
-                        <div>
+                        <div class="form-group">
                             <label for="urunBirimSecimi">Birim Seçin:</label>
                             <select id="urunBirimSecimi" name="urunBirimSecimi">
                                 <option value="">-- Birim Seçiniz --</option>
@@ -67,7 +67,7 @@
                                 <option value="diger">-- Diğer (Aşağıya Yazın) --</option>
                             </select>
                         </div>
-                        <div id="ozelBirimContainer" style="display: none;">
+                        <div id="ozelBirimContainer" class="form-group" style="display: none;">
                             <label for="urunBirimAdi">Özel Birim Adı:</label>
                             <input type="text" id="urunBirimAdi" name="urunBirimAdi" placeholder="Kendi biriminizi yazın">
                         </div>
