@@ -199,4 +199,5 @@ function deleteTedarikci($conn, $id) {
     }
 }
 
-$conn->close(); 
+$conn->close();
+?> 

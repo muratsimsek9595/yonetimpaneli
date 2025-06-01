@@ -38,7 +38,7 @@ switch ($method) {
         } elseif (isset($_GET['malzeme_id']) || isset($_GET['tedarikci_id'])) {
             handleBulkDelete($conn, $_GET);
         } else {
-            ob_clean();
+            ob_end_clean();
             http_response_code(400);
             echo json_encode(array("message" => "Silme için id, malzeme_id veya tedarikci_id belirtilmedi."));
         }
