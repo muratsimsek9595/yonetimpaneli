@@ -248,6 +248,19 @@ export function resetButtonLoading(buttonElement) {
 }
 
 /**
+ * Genel bir formu temizler.
+ * @param {HTMLFormElement} formElement - Temizlenecek form elementi.
+ */
+export function clearForm(formElement) {
+    if (formElement && typeof formElement.reset === 'function') {
+        formElement.reset();
+    }
+    // Form içindeki gizli ID inputlarını ve "Formu Temizle" butonlarını ayrıca ele almak
+    // her modülün kendi sorumluluğunda olabilir veya bu fonksiyona opsiyonel parametreler eklenebilir.
+    // Şimdilik sadece reset işlemini yapıyor.
+}
+
+/**
  * Verilen ürün bilgileriyle malzeme tanımlama formunu doldurur.
  * @param {object} urun - Doldurulacak ürün nesnesi.
  * @param {HTMLInputElement} urunIdInput - Ürün ID input elementi.
