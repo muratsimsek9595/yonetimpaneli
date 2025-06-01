@@ -206,16 +206,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function tedarikciListesiniGuncelle() {
         try {
-            const response = await fetch('http://localhost:3000/api/tedarikciler'); // Backend adresiniz farklıysa güncelleyin
+            const response = await fetch('api/get_tedarikciler.php'); // PHP API endpoint'i
             if (!response.ok) {
-                throw new Error(`API hatası: ${response.status}`);
+                // HTTP durum kodu 200-299 aralığında değilse hata fırlat
+                let errorText = `API hatası: ${response.status}`;
+                try {
+                    const errorData = await response.json(); // Sunucudan gelen JSON hata mesajını almaya çalış
+                    errorText = errorData.message || errorText;
+                } catch (e) { /* JSON parse edilemezse statusText'i kullan */ errorText = response.statusText; }
+                throw new Error(errorText);
             }
             const apiTedarikciler = await response.json();
             tedarikciler = apiTedarikciler; // Global tedarikçiler listesini güncelle
 
             tedarikciListesiTablosuBody.innerHTML = '';
-            if (tedarikciler.length === 0) {
-                tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="2">Kayıtlı tedarikçi bulunamadı.</td></tr>';
+            if (!Array.isArray(tedarikciler) || tedarikciler.length === 0) {
+                tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="6">Kayıtlı tedarikçi bulunamadı.</td></tr>'; // colspan güncellendi
             } else {
                 tedarikciler.forEach(tedarikci => {
                     const tr = document.createElement('tr');
