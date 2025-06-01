@@ -911,9 +911,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function tedarikcileriYukle() {
+        console.log("tedarikcileriYukle fonksiyonu çağrıldı.");
+        try {
+            const response = await fetch('api/tedarikciler.php');
+            if (!response.ok) {
+                let errorText = `Tedarikçi API hatası: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorText = errorData.message || errorText;
+                } catch (e) { 
+                    // JSON parse edilemezse veya mesaj yoksa statusText'i kullan
+                    errorText = response.statusText || errorText;
+                }
+                throw new Error(errorText);
+            }
+            const apiTedarikciler = await response.json();
+            console.log("API'den gelen tedarikçiler:", apiTedarikciler); // API yanıtını kontrol et
+            tedarikciler = Array.isArray(apiTedarikciler) ? apiTedarikciler : []; // Global tedarikçiler listesini güncelle, array değilse boş array ata
+            tedarikciListesiniGuncelle(); // Listeyi ve ilgili dropdownları güncelle
+        } catch (error) {
+            console.error('Tedarikçiler API\'den getirilirken hata:', error);
+            tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="7">Tedarikçiler yüklenirken bir hata oluştu.</td></tr>';
+            tedarikciler = []; // Hata durumunda global diziyi de boşalt
+            tedarikciListesiniGuncelle(); // Hata olsa bile listeyi (boş haliyle) güncelle
+        }
+    }
+
     async function initializePageData() {
         console.log("Sayfa verileri yükleniyor...");
-        await tedarikciListesiniGuncelle();
+        await tedarikcileriYukle(); // Değişiklik burada: tedarikciListesiniGuncelle -> tedarikcileriYukle
         await malzemeleriYukle();
         
         console.log("initializePageData: sonFiyatlariGuncelle ÇAĞRILMADAN ÖNCE (Tüm fiyatlar yüklenecek)");
