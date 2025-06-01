@@ -406,4 +406,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initializePageData();
 
+    // Ürünler değiştiğinde UI'ı güncelle
+    subscribe('urunlerChanged', (guncelUrunler) => {
+        console.log("[script.js] 'urunlerChanged' aboneliği tetiklendi, alınan ürünler:", guncelUrunler);
+        guncelleUrunListesiTablosu(guncelUrunler, urunListesiTablosuBody);
+        populeEtUrunSecimDropdown(guncelUrunler, grafikUrunSecimi, "-- Ürün Seçiniz --", true, null);
+        guncelleGrafikTedarikciFiltresi();
+        populeEtUrunSecimDropdown(guncelUrunler, fiyatGirisMalzemeSecimi, "-- Malzeme Seçiniz --", true, urun => ` (${urun.birim_adi || 'Tanımsız Birim'})`);
+        guncelleFiyatGirisBirimGostergesi();
+    });
+
+    // Tedarikçiler değiştiğinde UI'ı güncelle
+    subscribe('tedarikcilerChanged', (guncelTedarikciler) => {
+        console.log("[script.js] 'tedarikcilerChanged' aboneliği tetiklendi, alınan tedarikçiler:", guncelTedarikciler);
+        guncelleTedarikciListesiTablosu(guncelTedarikciler, tedarikciListesiTablosuBody);
+        populeTedarikciDropdown(guncelTedarikciler, fiyatGirisTedarikciSecimi, "-- Tedarikçi Seçiniz --");
+        guncelleGrafikTedarikciFiltresi();
+    });
+
+    // Fiyatlar değiştiğinde UI'ı güncelle
+    subscribe('fiyatlarChanged', (guncelFiyatlar) => {
+        console.log("[script.js] 'fiyatlarChanged' aboneliği tetiklendi, alınan fiyatlar:", guncelFiyatlar);
+        // guncelFiyatlar zaten store'dan sıralı geliyor
+    });
+
 }); // DOMContentLoaded kapanışı 

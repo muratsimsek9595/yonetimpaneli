@@ -38,7 +38,7 @@ export function unsubscribe(eventName, callback) {
  * @param {*} data Abonelere gönderilecek veri.
  */
 function notify(eventName, data) {
-    // console.log(`Olay tetiklendi: ${eventName}`, data);
+    console.log(`[store.js] Olay tetiklendi (notify): ${eventName}`, data);
     if (listeners[eventName]) {
         listeners[eventName].forEach(callback => {
             try {
