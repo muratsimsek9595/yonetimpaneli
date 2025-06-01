@@ -116,16 +116,36 @@ function getMusteri($conn, $id) {
 }
 
 function addMusteri($conn) {
-    // Teşhis kodları kaldırıldı
-
     $data = json_decode(file_get_contents("php://input"));
 
-    // json_decode başarısız olursa $data null olabilir, bunu da kontrol edelim.
     if (!$data) {
         http_response_code(400);
         echo json_encode(array("status" => "error", "message" => "Geçersiz JSON formatı.", "json_error" => json_last_error_msg()));
         exit();
     }
+
+    // --- TRIM TEŞHİS BAŞLANGICI ---
+    header("Content-Type: text/plain; charset=UTF-8"); // Yanıtın JSON olmadığını belirt
+    echo "Data nesnesi:\n";
+    var_dump($data);
+    echo "\n\n";
+
+    if (isset($data->ad)) {
+        echo "data->ad mevcut.\n";
+        $trimmed_ad = trim((string)$data->ad);
+        echo "(string)data->ad değeri:\n";
+        var_dump((string)$data->ad);
+        echo "\n\ntrim((string)data->ad) sonucu:\n";
+        var_dump($trimmed_ad);
+        echo "\n\nstrlen(trim((string)data->ad)): " . strlen($trimmed_ad) . "\n";
+        echo "trim((string)data->ad) === \'\': ";
+        var_dump($trimmed_ad === '');
+        echo "\n\n";
+    } else {
+        echo "data->ad mevcut DEĞİL.\n";
+    }
+    // --- TRIM TEŞHİS SONU ---
+    exit(); // Sadece teşhis için çıkış
 
     // Müşteri adı kontrolünü değiştir
     if (!isset($data->ad) || trim((string)$data->ad) === '') { // (string) cast eklendi
