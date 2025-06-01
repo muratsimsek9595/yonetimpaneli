@@ -193,4 +193,120 @@ export function populeEtTedarikciSecimDropdown(tedarikcilerListesi, selectElemen
     }
 }
 
+/**
+ * Kullanıcıya bir toast bildirimi gösterir.
+ * @param {string} message Gösterilecek mesaj.
+ * @param {string} type Bildirim tipi ('success', 'error', 'info'). Varsayılan 'info'.
+ * @param {number} duration Bildirimin ekranda kalma süresi (milisaniye cinsinden). Varsayılan 3000ms.
+ */
+export function showToast(message, type = 'info', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Göstermek için .show sınıfını ekle
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100); // Küçük bir gecikme animasyonun düzgün çalışmasını sağlar
+
+    // Belirtilen süre sonunda kaldır
+    setTimeout(() => {
+        toast.classList.remove('show');
+        // Animasyon bittikten sonra DOM'dan kaldır
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 500); // CSS transition süresiyle eşleşmeli
+    }, duration);
+}
+
+/**
+ * Bir butonu yükleme durumuna alır (devre dışı bırakır ve metnini değiştirir).
+ * @param {HTMLButtonElement} buttonElement - Yükleme durumuna alınacak buton.
+ * @param {string} loadingText - Yükleme sırasında gösterilecek metin (örn: "Kaydediliyor...").
+ */
+export function setButtonLoading(buttonElement, loadingText = "Yükleniyor...") {
+    if (buttonElement) {
+        buttonElement.disabled = true;
+        buttonElement.dataset.originalText = buttonElement.textContent;
+        buttonElement.textContent = loadingText;
+        // İsteğe bağlı: Butona bir spinner ikonu da eklenebilir.
+    }
+}
+
+/**
+ * Bir butonu yükleme durumundan çıkarır (etkinleştirir ve orijinal metnini geri yükler).
+ * @param {HTMLButtonElement} buttonElement - Yükleme durumundan çıkarılacak buton.
+ */
+export function resetButtonLoading(buttonElement) {
+    if (buttonElement && typeof buttonElement.dataset.originalText !== 'undefined') {
+        buttonElement.disabled = false;
+        buttonElement.textContent = buttonElement.dataset.originalText;
+    }
+}
+
+/**
+ * Verilen ürün bilgileriyle malzeme tanımlama formunu doldurur.
+ * @param {object} urun - Doldurulacak ürün nesnesi.
+ * @param {HTMLInputElement} urunIdInput - Ürün ID input elementi.
+ * @param {HTMLInputElement} urunAdiInput - Ürün adı input elementi.
+ * @param {HTMLSelectElement} urunBirimSecimi - Birim seçimi select elementi.
+ * @param {HTMLElement} ozelBirimContainer - Özel birim container div'i.
+ * @param {HTMLInputElement} urunBirimAdiInput - Özel birim adı input elementi.
+ * @param {HTMLButtonElement} formTemizleButton - Formu temizle butonu.
+ */
+export function doldurUrunFormu(urun, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton) {
+    if (!urun) return;
+
+    urunIdInput.value = urun.id;
+    urunAdiInput.value = urun.ad;
+
+    if (urunBirimSecimi) {
+        const seceneklerdeVar = Array.from(urunBirimSecimi.options).some(option => option.value === urun.birim_adi);
+        if (seceneklerdeVar && urun.birim_adi !== 'diger') {
+            urunBirimSecimi.value = urun.birim_adi;
+            ozelBirimContainer.style.display = 'none';
+            urunBirimAdiInput.value = '';
+        } else {
+            urunBirimSecimi.value = 'diger';
+            ozelBirimContainer.style.display = 'block';
+            urunBirimAdiInput.value = urun.birim_adi || '';
+        }
+    } else if (urunBirimAdiInput) { // Eğer sadece text input varsa (eski yapı veya birim seçimi dropdown'ı yoksa)
+        urunBirimAdiInput.value = urun.birim_adi || '';
+    }
+
+    if (formTemizleButton) formTemizleButton.style.display = 'inline-block';
+    if (urunAdiInput) urunAdiInput.focus();
+}
+
+/**
+ * Verilen tedarikçi bilgileriyle tedarikçi yönetimi formunu doldurur.
+ * @param {object} tedarikci - Doldurulacak tedarikçi nesnesi.
+ * @param {HTMLInputElement} tedarikciIdInput - Tedarikçi ID input elementi.
+ * @param {HTMLInputElement} tedarikciAdiInput - Tedarikçi adı input elementi.
+ * @param {HTMLInputElement} tedarikciYetkiliKisiInput - Yetkili kişi input elementi.
+ * @param {HTMLInputElement} tedarikciTelefonInput - Telefon input elementi.
+ * @param {HTMLInputElement} tedarikciEmailInput - Email input elementi.
+ * @param {HTMLTextAreaElement} tedarikciAdresInput - Adres textarea elementi.
+ * @param {HTMLTextAreaElement} tedarikciNotInput - Not textarea elementi.
+ * @param {HTMLButtonElement} tedarikciFormTemizleButton - Formu temizle butonu.
+ */
+export function doldurTedarikciFormu(tedarikci, tedarikciIdInput, tedarikciAdiInput, tedarikciYetkiliKisiInput, tedarikciTelefonInput, tedarikciEmailInput, tedarikciAdresInput, tedarikciNotInput, tedarikciFormTemizleButton) {
+    if (!tedarikci) return;
+
+    tedarikciIdInput.value = tedarikci.id;
+    tedarikciAdiInput.value = tedarikci.ad || '';
+    tedarikciYetkiliKisiInput.value = tedarikci.yetkili_kisi || '';
+    tedarikciTelefonInput.value = tedarikci.telefon || '';
+    tedarikciEmailInput.value = tedarikci.email || '';
+    tedarikciAdresInput.value = tedarikci.adres || '';
+    tedarikciNotInput.value = tedarikci.not_alani || '';
+
+    if (tedarikciFormTemizleButton) tedarikciFormTemizleButton.style.display = 'inline-block';
+    if (tedarikciAdiInput) tedarikciAdiInput.focus();
+}
+
 // Diğer UI fonksiyonları buraya eklenecek... 

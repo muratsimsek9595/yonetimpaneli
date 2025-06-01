@@ -16,7 +16,12 @@ import {
     guncelleUrunListesiTablosu,
     populeEtUrunSecimDropdown,
     guncelleTedarikciListesiTablosu,
-    populeEtTedarikciSecimDropdown as populeTedarikciDropdown
+    populeEtTedarikciSecimDropdown as populeTedarikciDropdown,
+    showToast,
+    setButtonLoading,
+    resetButtonLoading,
+    doldurUrunFormu,
+    doldurTedarikciFormu
 } from './ui.js';
 import {
     cizVeyaGuncelleFiyatGrafigi
@@ -134,6 +139,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     urunForm.addEventListener('submit', async function(event) {
         event.preventDefault();
+        const submitButton = urunForm.querySelector('button[type="submit"]');
+        setButtonLoading(submitButton, 'Kaydediliyor...');
         const id = urunIdInput.value;
         const ad = urunAdiInput.value.trim();
         let birimDegeri = urunBirimSecimi.value === 'diger' ? urunBirimAdiInput.value.trim() : urunBirimSecimi.value;
@@ -142,11 +149,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const malzemeVerisi = { ad, birim_adi: birimDegeri };
         try {
             const sonuc = await saveMalzeme(malzemeVerisi, id);
-            console.log(sonuc?.message || (id ? 'Malzeme güncellendi.' : 'Malzeme eklendi.'), sonuc);
+            showToast(sonuc?.message || (id ? 'Malzeme başarıyla güncellendi.' : 'Malzeme başarıyla eklendi.'), 'success');
             await malzemeleriYukle();
             temizleUrunFormu(urunForm, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton);
         } catch (error) {
             globalHataYakala(error, `Malzeme ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
+        } finally {
+            resetButtonLoading(submitButton);
         }
     });
 
@@ -157,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
     urunListesiTablosuBody.addEventListener('click', async function(event) {
         const target = event.target;
         const urunId = target.dataset.id;
-        if (!urunId) return; 
+        if (!urunId && (target.classList.contains('edit-btn') || target.classList.contains('delete-btn'))) return; 
 
         const urun = urunler.find(u => String(u.id) === String(urunId));
         if (!urun && (target.classList.contains('edit-btn') || target.classList.contains('delete-btn'))) {
@@ -165,25 +174,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (target.classList.contains('edit-btn')) {
-            urunIdInput.value = urun.id;
-            urunAdiInput.value = urun.ad;
-            const seceneklerdeVar = Array.from(urunBirimSecimi.options).some(option => option.value === urun.birim_adi);
-            if (seceneklerdeVar && urun.birim_adi !== 'diger') {
-                urunBirimSecimi.value = urun.birim_adi;
-                ozelBirimContainer.style.display = 'none';
-                urunBirimAdiInput.value = '';
-            } else {
-                urunBirimSecimi.value = 'diger';
-                ozelBirimContainer.style.display = 'block';
-                urunBirimAdiInput.value = urun.birim_adi || '';
+            if (urun) {
+                doldurUrunFormu(urun, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton);
             }
-            formTemizleButton.style.display = 'inline-block';
-            urunAdiInput.focus();
         } else if (target.classList.contains('delete-btn')) {
             if (confirm(`'${urun.ad}' malzemesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
                 try {
                     const sonuc = await deleteMalzeme(urunId);
-                    console.log(sonuc?.message || 'Malzeme silindi.', sonuc);
+                    showToast(sonuc?.message || 'Malzeme başarıyla silindi.', 'success');
                     await malzemeleriYukle();
                     temizleUrunFormu(urunForm, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton);
                 } catch (error) {
@@ -196,6 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tedarikciForm) {
         tedarikciForm.addEventListener('submit', async function(event) {
             event.preventDefault();
+            const submitButton = tedarikciForm.querySelector('button[type="submit"]');
+            setButtonLoading(submitButton, 'Kaydediliyor...');
             const id = tedarikciIdInput.value;
             const tedarikciVerisi = {
                 ad: tedarikciAdiInput.value.trim(),
@@ -208,11 +208,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!tedarikciVerisi.ad) return alert('Tedarikçi adı boş bırakılamaz!');
             try {
                 const sonuc = await saveTedarikci(tedarikciVerisi, id);
-                console.log(id ? 'Tedarikçi güncellendi.' : 'Yeni tedarikçi eklendi.', sonuc?.message || 'İşlem başarılı.', sonuc);
+                showToast(sonuc?.message || (id ? 'Tedarikçi başarıyla güncellendi.' : 'Tedarikçi başarıyla eklendi.'), 'success');
                 await tedarikcileriYukle();
                 temizleTedarikciFormu(tedarikciForm, tedarikciIdInput, tedarikciAdiInput, tedarikciYetkiliKisiInput, tedarikciTelefonInput, tedarikciEmailInput, tedarikciAdresInput, tedarikciNotInput, tedarikciFormTemizleButton);
             } catch (error) {
                 globalHataYakala(error, `Tedarikçi ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
+            } finally {
+                resetButtonLoading(submitButton);
             }
         });
     }
@@ -227,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tedarikciListesiTablosuBody.addEventListener('click', async function(event) {
             const target = event.target;
             const tedarikciId = target.dataset.id;
-            if (!tedarikciId) return;
+            if (!tedarikciId && (target.classList.contains('edit-btn') || target.classList.contains('delete-btn'))) return;
 
             const tedarikci = tedarikciler.find(t => String(t.id) === String(tedarikciId));
             if (!tedarikci && (target.classList.contains('edit-btn') || target.classList.contains('delete-btn'))) {
@@ -235,20 +237,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (target.classList.contains('edit-btn')) {
-                tedarikciIdInput.value = tedarikci.id;
-                tedarikciAdiInput.value = tedarikci.ad || '';
-                tedarikciYetkiliKisiInput.value = tedarikci.yetkili_kisi || '';
-                tedarikciTelefonInput.value = tedarikci.telefon || '';
-                tedarikciEmailInput.value = tedarikci.email || '';
-                tedarikciAdresInput.value = tedarikci.adres || '';
-                tedarikciNotInput.value = tedarikci.not_alani || '';
-                tedarikciFormTemizleButton.style.display = 'inline-block';
-                tedarikciAdiInput.focus();
+                if (tedarikci) {
+                    doldurTedarikciFormu(tedarikci, tedarikciIdInput, tedarikciAdiInput, tedarikciYetkiliKisiInput, tedarikciTelefonInput, tedarikciEmailInput, tedarikciAdresInput, tedarikciNotInput, tedarikciFormTemizleButton);
+                }
             } else if (target.classList.contains('delete-btn')) {
                 if (confirm(`'${tedarikci.ad}' tedarikçisini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tedarikçiye ait tüm fiyat kayıtları da silinecektir!`)) {
                     try {
                         const sonuc = await deleteTedarikci(tedarikciId);
-                        console.log(sonuc?.message || 'Tedarikçi silindi.', sonuc);
+                        showToast(sonuc?.message || 'Tedarikçi başarıyla silindi.', 'success');
                         await tedarikcileriYukle();
                         if (fiyatGirisTedarikciSecimi.value === tedarikciId) fiyatGirisTedarikciSecimi.value = "";
                         if (grafikTedarikciSecimi.value === tedarikciId) grafikTedarikciSecimi.value = "";
@@ -305,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (confirm(`'${malzemeAdi}' için girilen ${fiyatDegeri} TL değerindeki fiyat kaydını silmek istediğinize emin misiniz?`)) {
                     try {
                         const sonuc = await deleteFiyat(fiyatId);
-                        console.log(sonuc?.message || 'Fiyat silindi.', sonuc);
+                        showToast(sonuc?.message || 'Fiyat kaydı başarıyla silindi.', 'success');
                         await sonFiyatlariGuncelle();
                     } catch (error) {
                         globalHataYakala(error, 'Fiyat silinirken bir sorun oluştu.');
@@ -317,6 +313,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     gunlukFiyatForm.addEventListener('submit', async function(event) {
         event.preventDefault();
+        const submitButton = gunlukFiyatForm.querySelector('button[type="submit"]');
+        setButtonLoading(submitButton, 'Kaydediliyor...');
         const malzeme_id = fiyatGirisMalzemeSecimi.value;
         const tedarikci_id = fiyatGirisTedarikciSecimi.value;
         const fiyatValue = document.getElementById('gunlukFiyatInput').value;
@@ -327,13 +325,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const fiyatVerisi = { malzeme_id, tedarikci_id, fiyat: fiyatFloat, tarih };
         try {
             const sonuc = await saveFiyat(fiyatVerisi);
-            console.log(sonuc?.message || 'Fiyat eklendi.', sonuc);
+            showToast(sonuc?.message || 'Fiyat başarıyla kaydedildi.', 'success');
             gunlukFiyatForm.reset();
             guncelleFiyatGirisBirimGostergesi();
             document.getElementById('gunlukTarihInput').value = new Date().toISOString().split('T')[0];
             await sonFiyatlariGuncelle();
         } catch (error) {
             globalHataYakala(error, 'Fiyat kaydedilirken bir sorun oluştu.');
+        } finally {
+            resetButtonLoading(submitButton);
         }
     });
 

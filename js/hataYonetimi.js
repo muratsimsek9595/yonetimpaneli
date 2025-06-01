@@ -1,6 +1,8 @@
+import { showToast } from './ui.js'; // showToast fonksiyonunu ui.js'den import et
+
 /**
  * Global hata yakalayıcı.
- * Hataları konsola loglar ve kullanıcıya bir uyarı gösterir.
+ * Hataları konsola loglar ve kullanıcıya bir toast bildirimi gösterir.
  * @param {Error} error - Yakalanan hata nesnesi.
  * @param {string} [contextMessage] - Hatanın oluştuğu bağlam hakkında ek bilgi (örn: "Malzeme eklenirken").
  */
@@ -17,6 +19,5 @@ export function globalHataYakala(error, contextMessage = "Bir sorun oluştu") {
         // Ancak bu, kullanıcıya çok teknik bilgi verebilir. Şimdilik sabit mesajda kalalım.
     }
 
-    // TODO: alert yerine daha kullanıcı dostu bir bildirim sistemi (toast) kullanılabilir.
-    alert(kullaniciMesaji);
+    showToast(kullaniciMesaji, 'error'); // alert yerine showToast kullan
 } 
