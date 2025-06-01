@@ -354,6 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function malzemeleriYukle() {
         try {
             const apiUrunler = await fetchMalzemeler();
+            console.log("[script.js] API'den gelen ürünler:", apiUrunler);
             setUrunler(apiUrunler && Array.isArray(apiUrunler) ? apiUrunler : []);
         } catch (error) {
             globalHataYakala(error, 'Malzemeler yüklenirken bir sorun oluştu.');
@@ -365,22 +366,24 @@ document.addEventListener('DOMContentLoaded', function() {
     async function tedarikcileriYukle() {
         try {
             const apiTedarikciler = await fetchTedarikciler();
+            console.log("[script.js] API'den gelen tedarikçiler:", apiTedarikciler);
             setTedarikciler(apiTedarikciler && Array.isArray(apiTedarikciler) ? apiTedarikciler : []);
         } catch (error) {
             globalHataYakala(error, 'Tedarikçiler yüklenirken bir sorun oluştu.');
-            if (tedarikciListesiTablosuBody) tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="7">Tedarikçiler yüklenemedi.</td></tr>';
             setTedarikciler([]);
+            if (tedarikciListesiTablosuBody) tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="7">Tedarikçiler yüklenemedi.</td></tr>';
         }
     }
 
     async function fiyatlariYukle() {
         try {
             const tumGelenFiyatlar = await fetchFiyatlar();
+            console.log("[script.js] API'den gelen fiyatlar:", tumGelenFiyatlar);
             setFiyatlar(tumGelenFiyatlar && Array.isArray(tumGelenFiyatlar) ? tumGelenFiyatlar : []);
         } catch (error) {
             globalHataYakala(error, 'Fiyatlar yüklenirken bir sorun oluştu.');
-            if (sonFiyatlarTablosuBody) sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="6">Fiyatlar yüklenemedi.</td></tr>';
             setFiyatlar([]);
+            if (sonFiyatlarTablosuBody) sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="6">Fiyatlar yüklenemedi.</td></tr>';
         }
     }
 
