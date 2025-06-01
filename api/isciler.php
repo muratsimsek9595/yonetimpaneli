@@ -78,8 +78,8 @@ function getIsciler($conn) {
         http_response_code(500);
         $isciler = array("message" => "İşçiler getirilirken SQL hatası oluştu.", "error" => $conn->error);
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
     echo json_encode($isciler);
+    if (ob_get_level() > 0) { ob_end_clean(); }
 }
 
 function getIsci($conn, $id) {
@@ -199,7 +199,7 @@ function updateIsci($conn, $id_param) {
 
     if (empty($data->adSoyad)) {
         http_response_code(400);
-        echo json_encode(array("message" => "İşçi güncellemek için \'adSoyad\' alanı gereklidir."));
+        echo json_encode(array("message" => "İşçi güncellemek için 'adSoyad' alanı gereklidir."));
         if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
@@ -271,8 +271,8 @@ function updateIsci($conn, $id_param) {
             if ($stmt->affected_rows > 0) {
                 http_response_code(200);
                 // Güncellenmiş işçi verisini geri döndür
-                getIsci($conn, $isci_id_url); // Bu fonksiyon zaten JSON çıktısı verip ob_end_clean yapıyor
-                return; // getIsci'den sonra tekrar çıktı vermemek için
+                getIsci($conn, $isci_id_url);
+                exit();
             } else {
                 http_response_code(200); // Veya 304 Not Modified
                 echo json_encode(array("message" => "İşçi bilgileri güncellendi ancak gönderilen veriler mevcut verilerle aynıydı veya güncellenecek alan yoktu."));

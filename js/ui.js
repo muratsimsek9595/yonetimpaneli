@@ -391,4 +391,40 @@ export function doldurIsciFormu(isci, formElement, idInputElement) {
     }
 }
 
+// --- Müşteri UI Fonksiyonları (Yeni Eklendi) ---
+
+/**
+ * Bir select dropdown elementini verilen müşteri listesiyle doldurur.
+ * @param {Array} musterilerListesi - Dropdown'a eklenecek müşteriler dizisi.
+ * @param {HTMLSelectElement} selectElement - Doldurulacak select HTML elementi.
+ * @param {string} placeholderMetni - İlk seçenek için gösterilecek metin (örn: "-- Müşteri Seçiniz --").
+ * @param {boolean} seciliDegeriKoru - Eğer select elementinin mevcut bir değeri varsa ve bu değer yeni listede de varsa korunsun mu?
+ */
+export function populeEtMusteriDropdown(musterilerListesi, selectElement, placeholderMetni = "-- Müşteri Seçiniz --", seciliDegeriKoru = true) {
+    if (!selectElement) {
+        console.error("populeEtMusteriDropdown: Select elementi bulunamadı.");
+        return;
+    }
+
+    const mevcutDeger = seciliDegeriKoru ? selectElement.value : null;
+    selectElement.innerHTML = `<option value="">${placeholderMetni}</option>`; // Temizle ve varsayılanı ekle
+
+    if (Array.isArray(musterilerListesi)) {
+        musterilerListesi.forEach(musteri => {
+            const option = document.createElement('option');
+            option.value = musteri.id;
+            // Müşteri nesnesinde 'ad' veya 'firmaAdi' gibi bir alan olduğunu varsayalım.
+            // Eğer farklıysa burası müşteri verisine göre güncellenmeli.
+            option.textContent = musteri.ad || musteri.firmaAdi || `Müşteri ID: ${musteri.id}`;
+            selectElement.appendChild(option);
+        });
+    }
+
+    if (seciliDegeriKoru && mevcutDeger && Array.isArray(musterilerListesi) && musterilerListesi.some(m => String(m.id) === String(mevcutDeger))) {
+        selectElement.value = mevcutDeger;
+    } else if (!seciliDegeriKoru && mevcutDeger) {
+        selectElement.value = "";
+    }
+}
+
 // Diğer UI fonksiyonları buraya eklenecek... 
