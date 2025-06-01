@@ -65,9 +65,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response && response.status === 'success' && response.data && response.data.length > 0) {
                 response.data.forEach(musteri => { // response.data dizisini kullan
+                    console.log('Rendering musteri (ilk bakış):', JSON.parse(JSON.stringify(musteri))); // Nesnenin bir kopyasını logla
+                    
+                    console.log("--- Iterating Musteri Object Keys ---");
+                    for (const key of Object.keys(musteri)) {
+                        console.log(`Key: '${key}', Value: '${musteri[key]}', Type: ${typeof musteri[key]}`);
+                    }
+                    console.log("--- End Iterating ---");
+
+                    // Kontrol amaçlı, doğrudan boşluklu ve boşluksuz anahtarla erişim logları:
+                    console.log("musteri[' ad'] (boşluklu erişim) değeri:", musteri[' ad']);
+                    console.log("musteri.ad (boşluksuz erişim) değeri:", musteri.ad);
+
                     const row = musteriListesiTablosuBody.insertRow();
                     row.innerHTML = `
-                        <td>AD: ${musteri[' ad'] || 'YOK'}</td>
+                        <td>AD: ${musteri.ad || 'YOK'}</td>
                         <td>YETKILI: ${musteri.yetkiliKisi || 'YOK'}</td>
                         <td>TEL: ${musteri.telefon || 'YOK'}</td>
                         <td>EMAIL: ${musteri.email || 'YOK'}</td>
