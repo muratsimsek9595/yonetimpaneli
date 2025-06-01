@@ -116,39 +116,31 @@ function getMusteri($conn, $id) {
 }
 
 function addMusteri($conn) {
-    // --- GEÇİCİ TEŞHİS KODU BAŞLANGICI ---
-    header("Content-Type: text/plain; charset=UTF-8"); // Yanıtın JSON olmadığını belirt
-    $raw_input = file_get_contents("php://input");
-    echo "Ham input:\n";
-    var_dump($raw_input);
-    echo "\n\nInput string uzunluğu: " . strlen($raw_input) . "\n";
-    
-    $data = json_decode($raw_input);
-    
-    echo "\n\njson_decode sonrası \$data:\n";
-    var_dump($data);
-    
-    echo "\n\njson_last_error(): " . json_last_error() . "\n";
-    echo "json_last_error_msg(): " . json_last_error_msg() . "\n";
-    // --- GEÇİCİ TEŞHİS KODU SONU ---
-    
-    // Asıl mantık geçici olarak devre dışı bırakıldı, sadece test için exit();
-    exit();
+    // Teşhis kodları kaldırıldı
 
-    /* // ASIL KOD GEÇİCİ OLARAK DEVRE DIŞI
-    if (empty($data->ad)) {
-        http_response_code(400); 
-        echo json_encode(array("status" => "error", "message" => "Müşteri adı boş olamaz."));
+    $data = json_decode(file_get_contents("php://input"));
+
+    // json_decode başarısız olursa $data null olabilir, bunu da kontrol edelim.
+    if (!$data) {
+        http_response_code(400);
+        echo json_encode(array("status" => "error", "message" => "Geçersiz JSON formatı.", "json_error" => json_last_error_msg()));
         exit();
     }
 
-    $ad = $conn->real_escape_string($data->ad);
-    $yetkiliKisi = isset($data->yetkiliKisi) ? $conn->real_escape_string($data->yetkiliKisi) : null;
-    $telefon = isset($data->telefon) ? $conn->real_escape_string($data->telefon) : null;
-    $email = isset($data->email) ? $conn->real_escape_string($data->email) : null;
-    $adres = isset($data->adres) ? $conn->real_escape_string($data->adres) : null;
-    $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string($data->vergiNo) : null;
-    $notlar = isset($data->notlar) ? $conn->real_escape_string($data->notlar) : null;
+    // Müşteri adı kontrolünü değiştir
+    if (!isset($data->ad) || trim((string)$data->ad) === '') { // (string) cast eklendi
+        http_response_code(400); 
+        echo json_encode(array("status" => "error", "message" => "Müşteri adı boş olamaz veya sadece boşluk içeremez."));
+        exit();
+    }
+
+    $ad = $conn->real_escape_string(trim((string)$data->ad)); // (string) cast ve trim eklendi
+    $yetkiliKisi = isset($data->yetkiliKisi) ? $conn->real_escape_string(trim((string)$data->yetkiliKisi)) : null;
+    $telefon = isset($data->telefon) ? $conn->real_escape_string(trim((string)$data->telefon)) : null;
+    $email = isset($data->email) ? $conn->real_escape_string(trim((string)$data->email)) : null;
+    $adres = isset($data->adres) ? $conn->real_escape_string(trim((string)$data->adres)) : null;
+    $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string(trim((string)$data->vergiNo)) : null;
+    $notlar = isset($data->notlar) ? $conn->real_escape_string(trim((string)$data->notlar)) : null;
     $created_at = date('Y-m-d H:i:s');
     $updated_at = date('Y-m-d H:i:s');
 
@@ -159,19 +151,20 @@ function addMusteri($conn) {
         exit(); 
     }
 
+    // bind_param için tipler: ad (s), yetkiliKisi (s), telefon (s), email (s), adres (s), vergiNo (s), notlar (s), created_at (s), updated_at (s)
     $stmt->bind_param("sssssssss", $ad, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar, $created_at, $updated_at);
 
     if ($stmt->execute()) {
         $yeniMusteriId = $conn->insert_id; 
         http_response_code(201);
+        // Content-Type başlığı dosyanın en başında zaten ayarlandı.
         echo json_encode(array("status" => "success", "message" => "Müşteri başarıyla eklendi.", "id" => $yeniMusteriId));
     } else {
         http_response_code(500);
         echo json_encode(array("status" => "error", "message" => "Müşteri eklenirken hata: " . $stmt->error . " (Query: INSERT ...)"));
     }
     $stmt->close();
-    exit();
-    */ // ASIL KOD GEÇİCİ OLARAK DEVRE DIŞI SONU
+    // exit(); // Bu exit genellikle gereksizdir çünkü script zaten burada sonlanır ve $conn->close() dışarıda çağrılır.
 }
 
 function updateMusteri($conn, $id) {
