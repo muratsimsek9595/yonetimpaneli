@@ -758,12 +758,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     fiyatGirisMalzemeSecimi.addEventListener('change', guncelleFiyatGirisBirimGostergesi);
 
-    async function sonFiyatlariGuncelle(tabloLimiti = 5) { // Parametre adı değişti: limit -> tabloLimiti
+    async function sonFiyatlariGuncelle(tabloLimiti = 5) { 
         console.log("sonFiyatlariGuncelle fonksiyonu çağrıldı. Tablo için limit:", tabloLimiti);
         
         try {
-            // Adım 1: API'den TÜM fiyatları çek (limit parametresi olmadan)
-            const tumFiyatlarApiUrl = 'api/fiyatlar.php'; // Limit yok
+            const tumFiyatlarApiUrl = 'api/fiyatlar.php'; 
             console.log("Tüm fiyatlar için API isteği yapılacak:", tumFiyatlarApiUrl);
             const response = await fetch(tumFiyatlarApiUrl); 
             if (!response.ok) {
@@ -772,16 +771,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const tumGelenFiyatlar = await response.json();
             
-            // Global `fiyatlar` dizisini güncelle (önce tarihe göre sıralayalım, en yeni en başta)
             fiyatlar = tumGelenFiyatlar.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
             console.log("Global fiyatlar güncellendi (API\'den çekildi), toplam:", fiyatlar.length, "adet.");
 
-            // Adım 2: "Son Fiyat Girişleri" tablosunu güncelle
             sonFiyatlarTablosuBody.innerHTML = '';
-            const gosterilecekFiyatlar = fiyatlar.slice(0, tabloLimiti); // Global diziden ilk 'tabloLimiti' kadarını al
+            const gosterilecekFiyatlar = fiyatlar.slice(0, tabloLimiti);
 
             if (gosterilecekFiyatlar.length === 0) {
-                sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="5">Kayıtlı fiyat girişi bulunamadı.</td></tr>';
+                sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="6">Kayıtlı fiyat girişi bulunamadı.</td></tr>'; // colspan güncellendi
             } else {
                 gosterilecekFiyatlar.forEach(fiyat => {
                     const tr = document.createElement('tr');
@@ -791,26 +788,59 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${fiyat.malzeme_birim_adi || '-'}</td>
                         <td>${new Date(fiyat.tarih).toLocaleDateString('tr-TR')}</td>
                         <td>${fiyat.tedarikci_adi || '-'}</td>
+                        <td class="actions">
+                            <button class="delete-fiyat-btn" data-id="${fiyat.id}">Sil</button>
+                        </td>
                     `;
                     sonFiyatlarTablosuBody.appendChild(tr);
                 });
             }
-            // Grafiklerin de güncellenmesi için tetikleme. 
-            // Bu, fiyatlar yüklendikten sonra yapılmalı.
-            // Eğer grafikUrunSecimi'nde bir ürün seçiliyse, grafiği güncelle.
             if (grafikUrunSecimi.value) {
-                 guncelleGrafikTedarikciFiltresi(); // Bu zaten grafigiOlusturVeyaGuncelle'yi çağırır
+                 guncelleGrafikTedarikciFiltresi(); 
             } else {
-                 grafigiOlusturVeyaGuncelle(); // Seçili ürün yoksa bile boş grafik için çağır.
+                 grafigiOlusturVeyaGuncelle(); 
             }
 
         } catch (error) {
             console.error('Fiyatlar yüklenirken veya tablo güncellenirken hata:', error);
-            sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="5">Fiyatlar yüklenirken bir hata oluştu.</td></tr>';
-            // Global fiyatlar dizisini de boşaltmak iyi olabilir hata durumunda
+            sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="6">Fiyatlar yüklenirken bir hata oluştu.</td></tr>'; // colspan güncellendi
             fiyatlar = []; 
-            grafigiOlusturVeyaGuncelle(); // Hata durumunda grafiği de temizle/güncelle
+            grafigiOlusturVeyaGuncelle(); 
         }
+    }
+
+    // Son Fiyatlar Tablosu için silme olay dinleyicisi
+    if (sonFiyatlarTablosuBody) {
+        sonFiyatlarTablosuBody.addEventListener('click', async function(event) {
+            const target = event.target;
+            if (target.classList.contains('delete-fiyat-btn')) {
+                const fiyatId = target.dataset.id;
+                const malzemeAdi = target.closest('tr').cells[0].textContent;
+                const fiyatDegeri = target.closest('tr').cells[1].textContent;
+
+                if (confirm(`'${malzemeAdi}' için girilen ${fiyatDegeri} TL değerindeki fiyat kaydını silmek istediğinize emin misiniz?`)) {
+                    try {
+                        const response = await fetch(`api/fiyatlar.php?id=${fiyatId}`, {
+                            method: 'DELETE'
+                        });
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
+                            throw new Error(errorData.message || `Fiyat silinirken API hatası: ${response.status}`);
+                        }
+                        const sonuc = await response.json();
+                        console.log(sonuc.message);
+                        // alert(sonuc.message); // İsteğe bağlı olarak kullanıcıya bildirim gösterilebilir
+
+                        // Fiyat listesini ve grafikleri güncelle
+                        await sonFiyatlariGuncelle(); 
+
+                    } catch (error) {
+                        console.error('Fiyat silinirken hata:', error);
+                        alert(`Hata: ${error.message}`);
+                    }
+                }
+            }
+        });
     }
 
     gunlukFiyatForm.addEventListener('submit', async function(event) {

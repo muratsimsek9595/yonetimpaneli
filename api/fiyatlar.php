@@ -27,8 +27,17 @@ switch ($method) {
     case 'POST':
         addFiyat($conn);
         break;
-    case 'DELETE': // Özel silme işlemleri için (malzeme veya tedarikçi ID'si ile)
-        handleBulkDelete($conn, $_GET);
+    case 'DELETE':
+        if (isset($_GET['id'])) {
+            $id = $conn->real_escape_string($_GET['id']);
+            deleteFiyat($conn, $id);
+        } elseif (isset($_GET['malzeme_id']) || isset($_GET['tedarikci_id'])) {
+            handleBulkDelete($conn, $_GET);
+        } else {
+            ob_clean();
+            http_response_code(400);
+            echo json_encode(array("message" => "Silme için id, malzeme_id veya tedarikci_id belirtilmedi."));
+        }
         break;
     default:
         http_response_code(405); // Method Not Allowed
@@ -135,6 +144,52 @@ function getFiyatlar($conn, $params) {
             array("message" => "Fiyatlar getirilirken bir SQL hatası oluştu.", "error" => $conn->error, "sql_debug" => $sql)
         );
     }
+}
+
+function deleteFiyat($conn, $id) {
+    if (empty($id)) {
+        ob_clean();
+        http_response_code(400);
+        echo json_encode(array("message" => "Silinecek fiyat ID'si belirtilmedi."));
+        return;
+    }
+
+    // Fiyatın var olup olmadığını kontrol et (opsiyonel ama iyi bir pratik)
+    $checkSql = "SELECT id FROM fiyatlar WHERE id = ?";
+    $stmtCheck = $conn->prepare($checkSql);
+    $stmtCheck->bind_param("i", $id);
+    $stmtCheck->execute();
+    $resultCheck = $stmtCheck->get_result();
+
+    if ($resultCheck->num_rows === 0) {
+        ob_clean();
+        http_response_code(404); // Not Found
+        echo json_encode(array("message" => "Silinecek fiyat kaydı bulunamadı."));
+        $stmtCheck->close();
+        return;
+    }
+    $stmtCheck->close();
+
+    $sql = "DELETE FROM fiyatlar WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+
+    if ($stmt->execute()) {
+        if ($stmt->affected_rows > 0) {
+            ob_clean();
+            echo json_encode(array("message" => "Fiyat kaydı başarıyla silindi."));
+        } else {
+            // Bu durum normalde yukarıdaki varlık kontrolü ile yakalanmalı, ama bir güvenlik önlemi
+            ob_clean();
+            http_response_code(404);
+            echo json_encode(array("message" => "Silinecek fiyat kaydı bulunamadı veya zaten silinmiş."));
+        }
+    } else {
+        ob_clean();
+        http_response_code(500);
+        echo json_encode(array("message" => "Fiyat kaydı silinirken SQL hatası oluştu.", "error" => $stmt->error));
+    }
+    $stmt->close();
 }
 
 function handleBulkDelete($conn, $params) {
