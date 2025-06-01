@@ -128,7 +128,10 @@ function addMusteri($conn) {
     }
 
     // Veri temizleme ve atama
-    $id = isset($data->id) && !empty(trim($data->id)) ? $conn->real_escape_string(trim($data->id)) : null;
+    // Yeni müşteri eklendiği için ID sunucuda üretilecek.
+    // İstemciden gelen $data->id (eğer varsa) bu fonksiyonda dikkate alınmayacak.
+    $new_musteri_id = uniqid('musteri_', true); // Benzersiz bir ID oluştur (örn: musteri_60c725b0a31a05.03678597)
+
     $adi = $conn->real_escape_string(trim($data->adi));
     $yetkiliKisi = isset($data->yetkiliKisi) ? $conn->real_escape_string(trim($data->yetkiliKisi)) : null;
     $telefon = isset($data->telefon) ? $conn->real_escape_string(trim($data->telefon)) : null;
@@ -136,51 +139,22 @@ function addMusteri($conn) {
     $adres = isset($data->adres) ? $conn->real_escape_string(trim($data->adres)) : null;
     $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string(trim($data->vergiNo)) : null;
     $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
-
-    if ($id) {
-        // ID verilmişse, benzersiz olup olmadığını kontrol et
-        $checkSql = "SELECT id FROM musteriler WHERE id = ?";
-        $stmt_check = $conn->prepare($checkSql);
-        if (!$stmt_check) {
-            http_response_code(500);
-            echo json_encode(array("message" => "ID kontrolü SQL hazırlama hatası.", "error" => $conn->error));
-            return;
-        }
-        $stmt_check->bind_param("s", $id);
-        $stmt_check->execute();
-        $result_check = $stmt_check->get_result();
-        if ($result_check->num_rows > 0) {
-            http_response_code(409); // Conflict
-            echo json_encode(array("message" => "Bu ID ('$id') ile zaten bir müşteri kayıtlı."));
-            $stmt_check->close();
-            return;
-        }
-        $stmt_check->close();
-        
-        $sql = "INSERT INTO musteriler (id, adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $bind_types = "ssssssss";
-        $bind_params = array(&$bind_types, &$id, &$adi, &$yetkiliKisi, &$telefon, &$email, &$adres, &$vergiNo, &$notlar);
-
-    } else {
-        // ID verilmemişse, ID olmadan ekle (veritabanı otomatik ID atayacak varsayımı)
-        $sql = "INSERT INTO musteriler (adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $bind_types = "sssssss";
-        $bind_params = array(&$bind_types, &$adi, &$yetkiliKisi, &$telefon, &$email, &$adres, &$vergiNo, &$notlar);
-    }
+    
+    // SQL sorgusu her zaman üretilen yeni ID'yi içerecek
+    $sql = "INSERT INTO musteriler (id, adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+    $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        // call_user_func_array ile bind_param çağrısı
-        call_user_func_array(array($stmt, 'bind_param'), $bind_params);
+        // s = string (id, adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar)
+        $bind_types = "ssssssss"; 
+        $stmt->bind_param($bind_types, $new_musteri_id, $adi, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar);
 
         if ($stmt->execute()) {
-            $inserted_id = $id ? $id : $conn->insert_id; // Eğer ID biz verdiysek onu, değilse veritabanının atadığı ID'yi al
             http_response_code(201); // Created
             echo json_encode(array(
                 "message" => "Müşteri başarıyla eklendi.", 
                 "data" => array(
-                    "id" => $inserted_id,
+                    "id" => $new_musteri_id, // Üretilen ID'yi geri dönüyoruz
                     "adi" => $adi,
                     "yetkiliKisi" => $yetkiliKisi,
                     "telefon" => $telefon,
@@ -188,11 +162,12 @@ function addMusteri($conn) {
                     "adres" => $adres,
                     "vergiNo" => $vergiNo,
                     "notlar" => $notlar
+                    // created_at ve updated_at veritabanında NOW() ile ayarlandığı için burada tekrar göndermeye gerek yok
                 )
             ));
         } else {
             http_response_code(500); // Internal Server Error
-            echo json_encode(array("message" => "Müşteri eklenirken SQL hatası oluştu.", "error" => $stmt->error));
+            echo json_encode(array("message" => "Müşteri eklenirken SQL hatası oluştu.", "error" => $stmt->error, "sql_errno" => $stmt->errno));
         }
         $stmt->close();
     } else {
