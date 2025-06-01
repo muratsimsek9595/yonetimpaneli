@@ -5,6 +5,9 @@ if (ob_get_level() > 0) {
     ob_clean();
 }
 
+// ÖNEMLİ: Content-Type başlığını, olası HTML hata çıktılarından önce ayarla
+header("Content-Type: application/json; charset=UTF-8");
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -17,11 +20,19 @@ require_once '../config/db_config.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 // ID string olabileceği için real_escape_string uyguluyoruz.
-$id = isset($_GET['id']) ? $conn->real_escape_string(trim($_GET['id'])) : null;
+// $conn nesnesinin db_config.php yüklendikten sonra var olduğundan emin olun
+$id = null;
+if (isset($conn) && $conn instanceof mysqli && isset($_GET['id'])) {
+    $id = $conn->real_escape_string(trim($_GET['id']));
+} elseif (isset($_GET['id'])) {
+    // $conn düzgün başlatılmadıysa veya $_GET['id'] varsa ama $conn yoksa hata durumu
+    // Bu durum, db_config.php hatası veya $conn'in başlatılmaması anlamına gelebilir.
+    // Güvenlik için burada bir JSON hatası döndürebiliriz veya loglayabiliriz.
+    // Şimdilik null bırakıyoruz, switch case içinde $id kontrolü yapılacaktır.
+}
 
-// CORS Başlıkları
+// CORS Başlıkları (Content-Type zaten yukarıda ayarlandı)
 header("Access-Control-Allow-Origin: *"); // Geliştirme için *, canlı ortamda kendi domaininizle değiştirin
-header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
