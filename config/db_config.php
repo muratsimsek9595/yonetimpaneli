@@ -32,4 +32,4 @@ if (!$conn->set_charset("utf8mb4")) {
 // Bu dosya başka PHP dosyaları tarafından 'require' veya 'include' edileceği için,
 // burada doğrudan bir çıktı üretmemelidir (HTML vb.).
 // Bağlantı nesnesi ($conn) bu dosyayı include eden script'ler tarafından kullanılabilir olacak.
-?> 
+?>
