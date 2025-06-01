@@ -55,7 +55,7 @@ switch ($method) {
 }
 
 function getMalzemeler($conn) {
-    $sql = "SELECT id, ad, birim_tipi, birim_adi FROM malzemeler ORDER BY ad ASC";
+    $sql = "SELECT id, ad, birim_adi FROM malzemeler ORDER BY ad ASC";
     $result = $conn->query($sql);
     $malzemeler = array();
     if ($result && $result->num_rows > 0) {
@@ -68,7 +68,7 @@ function getMalzemeler($conn) {
 }
 
 function getMalzeme($conn, $id) {
-    $sql = "SELECT id, ad, birim_tipi, birim_adi FROM malzemeler WHERE id = '$id'";
+    $sql = "SELECT id, ad, birim_adi FROM malzemeler WHERE id = '$id'";
     $result = $conn->query($sql);
     if ($result && $result->num_rows > 0) {
         $malzeme = $result->fetch_assoc();
@@ -83,17 +83,16 @@ function getMalzeme($conn, $id) {
 
 function addMalzeme($conn) {
     $data = json_decode(file_get_contents("php://input"));
-    if (!empty($data->ad) && isset($data->birim_tipi)) {
+    if (!empty($data->ad)) {
         $ad = $conn->real_escape_string($data->ad);
-        $birim_tipi = $conn->real_escape_string($data->birim_tipi);
         $birim_adi = isset($data->birim_adi) ? $conn->real_escape_string($data->birim_adi) : '';
 
-        $sql = "INSERT INTO malzemeler (ad, birim_tipi, birim_adi) VALUES ('$ad', '$birim_tipi', '$birim_adi')";
+        $sql = "INSERT INTO malzemeler (ad, birim_adi) VALUES ('$ad', '$birim_adi')";
         if ($conn->query($sql) === TRUE) {
             $last_id = $conn->insert_id;
             ob_clean();
             http_response_code(201);
-            echo json_encode(array("message" => "Malzeme başarıyla eklendi.", "id" => $last_id, "ad" => $ad, "birim_tipi" => $birim_tipi, "birim_adi" => $birim_adi));
+            echo json_encode(array("message" => "Malzeme başarıyla eklendi.", "id" => $last_id, "ad" => $ad, "birim_adi" => $birim_adi));
         } else {
             ob_clean();
             http_response_code(500);
@@ -102,24 +101,23 @@ function addMalzeme($conn) {
     } else {
         ob_clean();
         http_response_code(400);
-        echo json_encode(array("message" => "Malzeme eklemek için gerekli alanlar (ad, birim_tipi) eksik."));
+        echo json_encode(array("message" => "Malzeme eklemek için gerekli alan (ad) eksik."));
     }
 }
 
 function updateMalzeme($conn, $id) {
     $data = json_decode(file_get_contents("php://input"));
-    if (!empty($data->ad) && isset($data->birim_tipi)) {
+    if (!empty($data->ad)) {
         $ad = $conn->real_escape_string($data->ad);
-        $birim_tipi = $conn->real_escape_string($data->birim_tipi);
         $birim_adi = isset($data->birim_adi) ? $conn->real_escape_string($data->birim_adi) : '';
 
         $checkSql = "SELECT id FROM malzemeler WHERE id = '$id'";
         $checkResult = $conn->query($checkSql);
         if ($checkResult->num_rows > 0) {
-            $sql = "UPDATE malzemeler SET ad = '$ad', birim_tipi = '$birim_tipi', birim_adi = '$birim_adi' WHERE id = '$id'";
+            $sql = "UPDATE malzemeler SET ad = '$ad', birim_adi = '$birim_adi' WHERE id = '$id'";
             if ($conn->query($sql) === TRUE) {
                 ob_clean();
-                echo json_encode(array("message" => "Malzeme başarıyla güncellendi.", "id" => $id, "ad" => $ad, "birim_tipi" => $birim_tipi, "birim_adi" => $birim_adi));
+                echo json_encode(array("message" => "Malzeme başarıyla güncellendi.", "id" => $id, "ad" => $ad, "birim_adi" => $birim_adi));
             } else {
                 ob_clean();
                 http_response_code(500);
@@ -133,7 +131,7 @@ function updateMalzeme($conn, $id) {
     } else {
         ob_clean();
         http_response_code(400);
-        echo json_encode(array("message" => "Malzeme güncellemek için gerekli alanlar (ad, birim_tipi) eksik."));
+        echo json_encode(array("message" => "Malzeme güncellemek için gerekli alan (ad) eksik."));
     }
 }
 

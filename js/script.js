@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const urunForm = document.getElementById('urunForm');
     const urunIdInput = document.getElementById('urunId');
     const urunAdiInput = document.getElementById('urunAdi');
-    const urunBirimTipiInput = document.getElementById('urunBirimTipi');
     const urunBirimAdiInput = document.getElementById('urunBirimAdi');
     const urunListesiTablosuBody = document.querySelector('#urunListesiTablosu tbody');
     const formTemizleButton = document.getElementById('formTemizleButton');
@@ -119,8 +118,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function formuTemizle() { // urunForm için
         urunForm.reset();
         urunIdInput.value = '';
-        // urunBirimTipiInput.value = ''; // Form reset ile temizleniyor
-        // urunBirimAdiInput.value = ''; // Form reset ile temizleniyor
         formTemizleButton.style.display = 'none';
         urunAdiInput.focus();
     }
@@ -129,18 +126,16 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         const id = urunIdInput.value;
         const ad = urunAdiInput.value.trim();
-        const birimTipi = urunBirimTipiInput.value;
-        const birimAdi = urunBirimAdiInput.value.trim(); // Boş olabilir
+        const birimAdi = urunBirimAdiInput.value.trim(); // Boş olabilir, genel birim alanı
 
-        if (!ad || !birimTipi) { // birimAdi kontrolü kaldırıldı
-            alert('Malzeme adı ve birim tipi boş bırakılamaz!');
+        if (!ad) { // Sadece 'ad' zorunlu, birimAdi isteğe bağlı
+            alert('Malzeme adı boş bırakılamaz!');
             return;
         }
 
         const malzemeVerisi = {
             ad: ad,
-            birim_tipi: birimTipi, // API'ye göndereceğimiz isimler DB ile aynı olmalı
-            birim_adi: birimAdi
+            birim_adi: birimAdi // API bu ismi bekliyor
         };
 
         let url = 'api/malzemeler.php';
@@ -184,12 +179,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const urunId = target.dataset.id;
 
         if (target.classList.contains('edit-btn')) {
-            const urun = urunler.find(u => String(u.id) === String(urunId)); // API'den gelen ID'ler string olabilir
+            const urun = urunler.find(u => String(u.id) === String(urunId));
             if (urun) {
                 urunIdInput.value = urun.id;
                 urunAdiInput.value = urun.ad;
-                urunBirimTipiInput.value = urun.birim_tipi || ''; // API'den gelen isim
-                urunBirimAdiInput.value = urun.birim_adi || '';   // API'den gelen isim
+                urunBirimAdiInput.value = urun.birim_adi || '';   // Artık tek birim alanı
                 formTemizleButton.style.display = 'inline-block';
                 urunAdiInput.focus();
             }
