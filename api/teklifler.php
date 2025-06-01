@@ -1,36 +1,36 @@
 <?php
-// Çıktı tamponlamasını başlat ve mevcut çıktıları temizle
-ob_start();
-if (ob_get_level() > 0) {
-    ob_clean();
-}
+header("Content-Type: application/json; charset=UTF-8");
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require_once '../config/db_config.php'; // Veritabanı bağlantısı
+require_once '../config/db_config.php';
+
+if ($conn === null || $conn->connect_error) {
+    http_response_code(503);
+    echo json_encode(array("message" => "Veritabanı bağlantısı kurulamadı.", "error" => ($conn ? $conn->connect_error : "Bağlantı nesnesi null.")));
+    exit();
+}
 
 $method = $_SERVER['REQUEST_METHOD'];
-$id = isset($_GET['id']) ? $conn->real_escape_string(trim($_GET['id'])) : null;
+$id_url = isset($_GET['id']) ? trim($_GET['id']) : null; // String ID, intval yok
 
 // CORS Başlıkları
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($method == 'OPTIONS') {
     http_response_code(200);
-    if (ob_get_level() > 0) { ob_end_clean(); }
     exit();
 }
 
 switch ($method) {
     case 'GET':
-        if ($id) {
-            getTeklif($conn, $id);
+        if ($id_url) {
+            getTeklif($conn, $id_url);
         } else {
             getTeklifler($conn);
         }
@@ -39,19 +39,19 @@ switch ($method) {
         addTeklif($conn);
         break;
     case 'PUT':
-        if ($id) {
-            updateTeklif($conn, $id);
+        if ($id_url) {
+            updateTeklif($conn, $id_url);
         } else {
             http_response_code(400);
-            echo json_encode(array("message" => "Güncellenecek teklif ID\'si belirtilmedi."));
+            echo json_encode(array("message" => "Güncellenecek teklif ID'si belirtilmedi."));
         }
         break;
     case 'DELETE':
-        if ($id) {
-            deleteTeklif($conn, $id);
+        if ($id_url) {
+            deleteTeklif($conn, $id_url);
         } else {
             http_response_code(400);
-            echo json_encode(array("message" => "Silinecek teklif ID\'si belirtilmedi."));
+            echo json_encode(array("message" => "Silinecek teklif ID'si belirtilmedi."));
         }
         break;
     default:
@@ -61,20 +61,19 @@ switch ($method) {
 }
 
 function getTeklifler($conn) {
-    $sql = "SELECT t.*, m.adi as musteri_adi_tablodan 
+    $sql = "SELECT t.*, m.ad as musteri_adi_tablodan 
             FROM teklifler t 
             LEFT JOIN musteriler m ON t.musteri_id = m.id 
-            ORDER BY t.teklifTarihi DESC, t.teklifNo DESC";
+            ORDER BY t.teklifTarihi DESC, t.id DESC"; // id'ye göre sıralama daha tutarlı olabilir teklifNo yerine
     $result = $conn->query($sql);
     $teklifler = array();
 
     if ($result) {
         while($row = $result->fetch_assoc()) {
-            // Her bir teklif için ürünleri (kalemleri) çek
             $urunler_sql = "SELECT * FROM teklif_urunleri WHERE teklif_id = ?";
             $stmt_urunler = $conn->prepare($urunler_sql);
             if ($stmt_urunler) {
-                $stmt_urunler->bind_param("s", $row['id']);
+                $stmt_urunler->bind_param("s", $row['id']); // teklifler.id VARCHAR(64)
                 $stmt_urunler->execute();
                 $urunler_result = $stmt_urunler->get_result();
                 $row['urunler'] = array();
@@ -83,39 +82,37 @@ function getTeklifler($conn) {
                 }
                 $stmt_urunler->close();
             } else {
-                 $row['urunler'] = array("error" => "Teklif ürünleri getirilirken SQL hazırlama hatası: " . $conn->error);
+                 $row['urunler'] = array("error_detail" => "Teklif ürünleri SQL hazırlama hatası: " . $conn->error);
             }
             $teklifler[] = $row;
         }
         http_response_code(200);
+        echo json_encode($teklifler);
     } else {
         http_response_code(500);
-        $teklifler = array("message" => "Teklifler getirilirken SQL hatası oluştu.", "error" => $conn->error);
+        echo json_encode(array("message" => "Teklifler getirilirken SQL hatası oluştu.", "error_detail" => $conn->error));
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
-    echo json_encode($teklifler);
 }
 
 function getTeklif($conn, $id) {
-    $sql = "SELECT t.*, m.adi as musteri_adi_tablodan 
+    $id_escaped = $conn->real_escape_string($id);
+    $sql = "SELECT t.*, m.ad as musteri_adi_tablodan 
             FROM teklifler t 
             LEFT JOIN musteriler m ON t.musteri_id = m.id 
             WHERE t.id = ?";
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        $stmt->bind_param("s", $id);
+        $stmt->bind_param("s", $id_escaped); // teklifler.id VARCHAR(64)
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
             $teklif = $result->fetch_assoc();
-            
-            // Teklif ürünlerini çek
             $urunler_sql = "SELECT * FROM teklif_urunleri WHERE teklif_id = ?";
             $stmt_urunler = $conn->prepare($urunler_sql);
             if ($stmt_urunler) {
-                $stmt_urunler->bind_param("s", $teklif['id']);
+                $stmt_urunler->bind_param("s", $teklif['id']); // teklifler.id VARCHAR(64)
                 $stmt_urunler->execute();
                 $urunler_result = $stmt_urunler->get_result();
                 $teklif['urunler'] = array();
@@ -124,7 +121,7 @@ function getTeklif($conn, $id) {
                 }
                 $stmt_urunler->close();
             } else {
-                 $teklif['urunler'] = array("error" => "Teklif ürünleri getirilirken SQL hazırlama hatası: " . $conn->error);
+                 $teklif['urunler'] = array("error_detail" => "Teklif ürünleri SQL hazırlama hatası: " . $conn->error);
             }
             http_response_code(200);
             echo json_encode($teklif);
@@ -135,259 +132,411 @@ function getTeklif($conn, $id) {
         $stmt->close();
     } else {
         http_response_code(500);
-        echo json_encode(array("message" => "Teklif getirilirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
+        echo json_encode(array("message" => "Teklif getirilirken SQL hazırlama hatası oluştu.", "error_detail" => $conn->error));
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
 }
 
 function addTeklif($conn) {
     $data = json_decode(file_get_contents("php://input"));
 
-    if (empty($data->id) || empty($data->teklifNo) || empty($data->teklifTarihi) || !isset($data->urunler) || !is_array($data->urunler)) {
+    if (!isset($data->teklifNo, $data->teklifTarihi, $data->urunler) || !is_array($data->urunler)) {
         http_response_code(400);
-        echo json_encode(array("message" => "Teklif eklemek için gerekli alanlar (id, teklifNo, teklifTarihi, urunler dizisi) eksik veya hatalı."));
-        if (ob_get_level() > 0) { ob_end_clean(); }
+        echo json_encode(array("message" => "Teklif eklemek için gerekli alanlar (teklifNo, teklifTarihi, urunler dizisi) eksik veya hatalı. ID sunucu tarafında üretilecek."));
         return;
     }
 
     $conn->begin_transaction();
 
-    try {
-        $id = $conn->real_escape_string(trim($data->id));
-        $teklifNo = $conn->real_escape_string(trim($data->teklifNo));
-        $musteri_id = isset($data->musteri_id) ? $conn->real_escape_string(trim($data->musteri_id)) : null;
-        $musteriAdi = isset($data->musteriAdi) ? $conn->real_escape_string(trim($data->musteriAdi)) : null;
-        $musteriIletisim = isset($data->musteriIletisim) ? $conn->real_escape_string(trim($data->musteriIletisim)) : null;
-        $teklifTarihi = $conn->real_escape_string(trim($data->teklifTarihi));
-        $gecerlilikTarihi = isset($data->gecerlilikTarihi) ? $conn->real_escape_string(trim($data->gecerlilikTarihi)) : null;
-        $araToplam = isset($data->araToplam) ? floatval($data->araToplam) : 0.00;
-        $indirimOrani = isset($data->indirimOrani) ? floatval($data->indirimOrani) : 0.00;
-        $indirimTutari = isset($data->indirimTutari) ? floatval($data->indirimTutari) : 0.00;
-        $kdvOrani = isset($data->kdvOrani) ? floatval($data->kdvOrani) : 0.00;
-        $kdvTutari = isset($data->kdvTutari) ? floatval($data->kdvTutari) : 0.00;
-        $genelToplam = isset($data->genelToplam) ? floatval($data->genelToplam) : 0.00;
-        $paraBirimi = isset($data->paraBirimi) ? $conn->real_escape_string(trim($data->paraBirimi)) : 'TL';
-        $durum = isset($data->durum) ? $conn->real_escape_string(trim($data->durum)) : 'Hazırlanıyor';
-        $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
+    $id = uniqid('teklif_', true); // Benzersiz ID sunucuda üretiliyor
+    $teklifNo = $conn->real_escape_string(trim($data->teklifNo));
+    $musteri_id = isset($data->musteri_id) && !empty(trim($data->musteri_id)) ? intval(trim($data->musteri_id)) : null;
+    $musteriAdi = isset($data->musteriAdi) ? $conn->real_escape_string(trim($data->musteriAdi)) : null;
+    $musteriIletisim = isset($data->musteriIletisim) ? $conn->real_escape_string(trim($data->musteriIletisim)) : null;
+    $projeAdi = isset($data->projeAdi) ? $conn->real_escape_string(trim($data->projeAdi)) : null;
+    $teklifTarihi = $conn->real_escape_string(trim($data->teklifTarihi));
+    $gecerlilikTarihi = isset($data->gecerlilikTarihi) ? $conn->real_escape_string(trim($data->gecerlilikTarihi)) : null;
+    $hazirlayan = isset($data->hazirlayan) ? $conn->real_escape_string(trim($data->hazirlayan)) : null;
+    $paraBirimi = isset($data->paraBirimi) ? $conn->real_escape_string(trim($data->paraBirimi)) : 'TL';
+    $araToplamMaliyet = isset($data->araToplamMaliyet) ? floatval($data->araToplamMaliyet) : 0.00;
+    $araToplamSatis = isset($data->araToplamSatis) ? floatval($data->araToplamSatis) : 0.00;
+    $indirimOrani = isset($data->indirimOrani) ? floatval($data->indirimOrani) : 0.00;
+    $indirimTutari = isset($data->indirimTutari) ? floatval($data->indirimTutari) : 0.00;
+    $kdvOrani = isset($data->kdvOrani) ? floatval($data->kdvOrani) : 0.00;
+    $kdvTutari = isset($data->kdvTutari) ? floatval($data->kdvTutari) : 0.00;
+    $genelToplamSatis = isset($data->genelToplamSatis) ? floatval($data->genelToplamSatis) : 0.00;
+    $durum = isset($data->durum) ? $conn->real_escape_string(trim($data->durum)) : 'Hazırlanıyor';
+    $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
 
-        // Teklif ID ve Teklif No benzersizlik kontrolü
-        $checkSql = "SELECT id FROM teklifler WHERE id = ? OR teklifNo = ?";
-        $stmt_check = $conn->prepare($checkSql);
-        $stmt_check->bind_param("ss", $id, $teklifNo);
-        $stmt_check->execute();
-        if ($stmt_check->get_result()->num_rows > 0) {
-            $stmt_check->close();
-            throw new Exception("Bu ID (\'$id\') veya Teklif No (\'$teklifNo\') ile zaten bir teklif kayıtlı.", 409);
-        }
-        $stmt_check->close();
-
-        $sql_teklif = "INSERT INTO teklifler (id, teklifNo, musteri_id, musteriAdi, musteriIletisim, teklifTarihi, gecerlilikTarihi, araToplam, indirimOrani, indirimTutari, kdvOrani, kdvTutari, genelToplam, paraBirimi, durum, notlar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt_teklif = $conn->prepare($sql_teklif);
-        $stmt_teklif->bind_param("ssssssddddddssss", $id, $teklifNo, $musteri_id, $musteriAdi, $musteriIletisim, $teklifTarihi, $gecerlilikTarihi, $araToplam, $indirimOrani, $indirimTutari, $kdvOrani, $kdvTutari, $genelToplam, $paraBirimi, $durum, $notlar);
-        
-        if (!$stmt_teklif->execute()) {
-            throw new Exception("Ana teklif kaydedilirken SQL hatası: " . $stmt_teklif->error, 500);
-        }
-        $stmt_teklif->close();
-
-        $sql_urun = "INSERT INTO teklif_urunleri (teklif_id, urun_id, malzemeAdi, miktar, birim, birimFiyat, satirToplami) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt_urun = $conn->prepare($sql_urun);
-
-        foreach ($data->urunler as $urun) {
-            if (empty($urun->malzemeAdi) || !isset($urun->miktar) || !isset($urun->birimFiyat) || !isset($urun->satirToplami)) {
-                 throw new Exception("Teklif ürünü için gerekli alanlar (malzemeAdi, miktar, birimFiyat, satirToplami) eksik.", 400);
-            }
-            $urun_id_item = isset($urun->urunId) ? $conn->real_escape_string(trim($urun->urunId)) : (isset($urun->urun_id) ? $conn->real_escape_string(trim($urun->urun_id)) : null);
-            $malzemeAdi_item = $conn->real_escape_string(trim($urun->malzemeAdi));
-            $miktar_item = floatval($urun->miktar);
-            $birim_item = isset($urun->birim) ? $conn->real_escape_string(trim($urun->birim)) : null;
-            $birimFiyat_item = floatval($urun->birimFiyat);
-            $satirToplami_item = floatval($urun->satirToplami);
-
-            $stmt_urun->bind_param("sssdsdd", $id, $urun_id_item, $malzemeAdi_item, $miktar_item, $birim_item, $birimFiyat_item, $satirToplami_item);
-            if (!$stmt_urun->execute()) {
-                throw new Exception("Teklif ürünü kaydedilirken SQL hatası: " . $stmt_urun->error, 500);
-            }
-        }
-        $stmt_urun->close();
-        $conn->commit();
-        http_response_code(201);
-        // Kaydedilen teklifin tamamını (ürünleriyle) geri döndürmek daha iyi olabilir.
-        // Bunun için getTeklif($conn, $id) fonksiyonunu burada çağırıp çıktısını verebilirsiniz.
-        // Şimdilik basit bir mesaj dönüyoruz:
-        echo json_encode(array("message" => "Teklif başarıyla eklendi.", "id" => $id, "teklifNo" => $teklifNo));
-
-    } catch (Exception $e) {
+    $checkSqlNo = "SELECT id FROM teklifler WHERE teklifNo = ?";
+    $stmt_check_no = $conn->prepare($checkSqlNo);
+    if (!$stmt_check_no) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Teklif No kontrol sorgusu hazırlanamadı.", "error_detail" => $conn->error));
         $conn->rollback();
-        http_response_code($e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500);
-        echo json_encode(array("message" => $e->getMessage()));
+        return;
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
+    $stmt_check_no->bind_param("s", $teklifNo);
+    $stmt_check_no->execute();
+    if ($stmt_check_no->get_result()->num_rows > 0) {
+        $stmt_check_no->close();
+        http_response_code(409);
+        echo json_encode(array("message" => "Bu Teklif No ('$teklifNo') ile zaten bir teklif kayıtlı."));
+        $conn->rollback();
+        return;
+    }
+    $stmt_check_no->close();
+
+    $sql_teklif = "INSERT INTO teklifler (id, teklifNo, musteri_id, musteriAdi, musteriIletisim, projeAdi, teklifTarihi, gecerlilikTarihi, hazirlayan, paraBirimi, araToplamMaliyet, araToplamSatis, indirimOrani, indirimTutari, kdvOrani, kdvTutari, genelToplamSatis, durum, notlar, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+    $stmt_teklif = $conn->prepare($sql_teklif);
+    if (!$stmt_teklif) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Ana teklif ekleme sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+        $conn->rollback();
+        return;
+    }
+    // Tipler: id(s), teklifNo(s), musteri_id(i), musteriAdi(s), musteriIletisim(s), projeAdi(s), teklifTarihi(s), gecerlilikTarihi(s), hazirlayan(s), paraBirimi(s), araToplamMaliyet(d), araToplamSatis(d), indirimOrani(d), indirimTutari(d), kdvOrani(d), kdvTutari(d), genelToplamSatis(d), durum(s), notlar(s)
+    $stmt_teklif->bind_param("ssissssssdddddddsss", $id, $teklifNo, $musteri_id, $musteriAdi, $musteriIletisim, $projeAdi, $teklifTarihi, $gecerlilikTarihi, $hazirlayan, $paraBirimi, $araToplamMaliyet, $araToplamSatis, $indirimOrani, $indirimTutari, $kdvOrani, $kdvTutari, $genelToplamSatis, $durum, $notlar);
+    
+    if (!$stmt_teklif->execute()) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Ana teklif kaydedilirken SQL hatası.", "error_detail" => $stmt_teklif->error));
+        $conn->rollback();
+        $stmt_teklif->close();
+        return;
+    }
+    $stmt_teklif->close();
+
+    $sql_urun = "INSERT INTO teklif_urunleri (teklif_id, kalemTipi, referans_id, aciklama, miktar, birim, kaydedilen_birim_maliyet, kaydedilen_birim_satis_fiyati, kdv_orani_kalem, satir_toplam_maliyet, satir_toplam_satis_fiyati_kdv_haric, satir_kdv_tutari, satir_toplam_satis_fiyati_kdv_dahil, siraNo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+    $stmt_urun = $conn->prepare($sql_urun);
+    if (!$stmt_urun) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Teklif ürünü ekleme sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+        $conn->rollback();
+        return;
+    }
+
+    foreach ($data->urunler as $key => $urun) {
+        if (!isset($urun->kalemTipi, $urun->aciklama, $urun->miktar, $urun->birim, $urun->kaydedilen_birim_satis_fiyati)) {
+             http_response_code(400);
+             echo json_encode(array("message" => "Teklif ürünü için gerekli alanlar eksik (kalemTipi, aciklama, miktar, birim, kaydedilen_birim_satis_fiyati). Ürün: " . json_encode($urun)));
+             $conn->rollback();
+             $stmt_urun->close();
+             return;
+        }
+        $kalemTipi = $conn->real_escape_string(trim($urun->kalemTipi));
+        $referans_id = isset($urun->referans_id) ? $conn->real_escape_string(trim($urun->referans_id)) : null; // VARCHAR(64)
+        $aciklama = $conn->real_escape_string(trim($urun->aciklama));
+        $miktar = floatval($urun->miktar);
+        $birim = $conn->real_escape_string(trim($urun->birim));
+        $kaydedilen_birim_maliyet = isset($urun->kaydedilen_birim_maliyet) ? floatval($urun->kaydedilen_birim_maliyet) : 0.00;
+        $kaydedilen_birim_satis_fiyati = floatval($urun->kaydedilen_birim_satis_fiyati);
+        $kdv_orani_kalem = isset($urun->kdv_orani_kalem) ? floatval($urun->kdv_orani_kalem) : $kdvOrani; // Ana KDV veya kaleme özel
+        $satir_toplam_maliyet = $miktar * $kaydedilen_birim_maliyet;
+        $satir_toplam_satis_fiyati_kdv_haric = $miktar * $kaydedilen_birim_satis_fiyati;
+        $satir_kdv_tutari = $satir_toplam_satis_fiyati_kdv_haric * ($kdv_orani_kalem / 100);
+        $satir_toplam_satis_fiyati_kdv_dahil = $satir_toplam_satis_fiyati_kdv_haric + $satir_kdv_tutari;
+        $siraNo = isset($urun->siraNo) ? intval($urun->siraNo) : ($key + 1);
+
+        // Tipler: teklif_id(s), kalemTipi(s), referans_id(s), aciklama(s), miktar(d), birim(s), kaydedilen_birim_maliyet(d), kaydedilen_birim_satis_fiyati(d), kdv_orani_kalem(d), satir_toplam_maliyet(d), satir_toplam_satis_fiyati_kdv_haric(d), satir_kdv_tutari(d), satir_toplam_satis_fiyati_kdv_dahil(d), siraNo(i)
+        $stmt_urun->bind_param("ssssdsdddddddi", $id, $kalemTipi, $referans_id, $aciklama, $miktar, $birim, $kaydedilen_birim_maliyet, $kaydedilen_birim_satis_fiyati, $kdv_orani_kalem, $satir_toplam_maliyet, $satir_toplam_satis_fiyati_kdv_haric, $satir_kdv_tutari, $satir_toplam_satis_fiyati_kdv_dahil, $siraNo);
+        if (!$stmt_urun->execute()) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Teklif ürünü kaydedilirken SQL hatası.", "error_detail" => $stmt_urun->error, "urun_data" => $urun));
+            $conn->rollback();
+            $stmt_urun->close();
+            return;
+        }
+    }
+    $stmt_urun->close();
+    $conn->commit();
+    http_response_code(201);
+    // Kaydedilen teklifi geri döndür (getTeklif çağrılabilir veya manuel oluşturulabilir)
+    // Şimdilik basit mesaj:
+    echo json_encode(array("message" => "Teklif başarıyla eklendi.", "id" => $id, "teklifNo" => $teklifNo));
 }
 
 
-function updateTeklif($conn, $id_param) {
+function updateTeklif($conn, $id_url_param) {
     $data = json_decode(file_get_contents("php://input"));
-    $teklif_id_url = $conn->real_escape_string(trim($id_param)); // URL'den gelen ID
+    $teklif_id_url = $conn->real_escape_string(trim($id_url_param));
 
-    if (empty($data->teklifNo) || empty($data->teklifTarihi) || !isset($data->urunler) || !is_array($data->urunler)) {
+    if (empty($data)) {
         http_response_code(400);
-        echo json_encode(array("message" => "Teklif güncellemek için gerekli alanlar (teklifNo, teklifTarihi, urunler dizisi) eksik veya hatalı."));
-        if (ob_get_level() > 0) { ob_end_clean(); }
+        echo json_encode(array("message" => "Güncelleme için veri bulunamadı."));
+        return;
+    }
+
+    // ID payload içinde geliyorsa URL ile eşleşmeli (isteğe bağlı, UUID'ler genellikle payload'da olmaz)
+    if (isset($data->id) && $conn->real_escape_string(trim($data->id)) !== $teklif_id_url) {
+        http_response_code(400);
+        echo json_encode(array("message" => "URL'deki teklif ID'si ile istek gövdesindeki ID uyuşmuyor."));
         return;
     }
     
-    // ID eşleşmesini kontrol et (URL'den gelen ID ile payload içindeki ID aynı olmalı)
-    if (isset($data->id) && $conn->real_escape_string(trim($data->id)) !== $teklif_id_url) {
-        http_response_code(400);
-        echo json_encode(array("message" => "URL'deki teklif ID\'si ile istek gövdesindeki ID uyuşmuyor."));
-        if (ob_get_level() > 0) { ob_end_clean(); }
+    $conn->begin_transaction();
+
+    // Teklifin var olup olmadığını kontrol et
+    $check_exists_sql = "SELECT id, kdvOrani FROM teklifler WHERE id = ?"; // Mevcut KDV oranını da alalım
+    $stmt_check_exists = $conn->prepare($check_exists_sql);
+    if (!$stmt_check_exists) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Teklif varlık kontrol sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+        $conn->rollback();
         return;
     }
-
-    $conn->begin_transaction();
-    try {
-        // Teklifin var olup olmadığını kontrol et
-        $checkTeklifSql = "SELECT id FROM teklifler WHERE id = ?";
-        $stmt_check_teklif = $conn->prepare($checkTeklifSql);
-        $stmt_check_teklif->bind_param("s", $teklif_id_url);
-        $stmt_check_teklif->execute();
-        if ($stmt_check_teklif->get_result()->num_rows == 0) {
-            $stmt_check_teklif->close();
-            throw new Exception("Güncellenecek teklif bulunamadı. ID: " . $teklif_id_url, 404);
+    $stmt_check_exists->bind_param("s", $teklif_id_url);
+    $stmt_check_exists->execute();
+    $check_result = $stmt_check_exists->get_result();
+    if ($check_result->num_rows === 0) {
+        $stmt_check_exists->close();
+        http_response_code(404);
+        echo json_encode(array("message" => "Güncellenecek teklif bulunamadı. ID: " . $teklif_id_url));
+        $conn->rollback();
+        return;
+    }
+    $existingTeklif = $check_result->fetch_assoc();
+    $stmt_check_exists->close();
+    
+    // Teklif No benzersizlik kontrolü (kendisi hariç)
+    if (isset($data->teklifNo)) {
+        $newTeklifNo = $conn->real_escape_string(trim($data->teklifNo));
+        $checkSqlNo = "SELECT id FROM teklifler WHERE teklifNo = ? AND id != ?";
+        $stmt_check_no = $conn->prepare($checkSqlNo);
+        if (!$stmt_check_no) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Güncelleme için Teklif No kontrol sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+            $conn->rollback();
+            return;
         }
-        $stmt_check_teklif->close();
-
-        // Teklif No benzersizlik kontrolü (kendisi hariç)
-        $teklifNo = $conn->real_escape_string(trim($data->teklifNo));
-        $checkNoSql = "SELECT id FROM teklifler WHERE teklifNo = ? AND id != ?";
-        $stmt_check_no = $conn->prepare($checkNoSql);
-        $stmt_check_no->bind_param("ss", $teklifNo, $teklif_id_url);
+        $stmt_check_no->bind_param("ss", $newTeklifNo, $teklif_id_url);
         $stmt_check_no->execute();
         if ($stmt_check_no->get_result()->num_rows > 0) {
             $stmt_check_no->close();
-            throw new Exception("Bu Teklif No (\'$teklifNo\') başka bir teklife ait.", 409);
+            http_response_code(409);
+            echo json_encode(array("message" => "Başka bir teklif zaten bu Teklif No ('$newTeklifNo') ile kayıtlı."));
+            $conn->rollback();
+            return;
         }
         $stmt_check_no->close();
-        
-        // Ana teklif bilgilerini güncelle
-        $musteri_id = isset($data->musteri_id) ? $conn->real_escape_string(trim($data->musteri_id)) : null;
-        $musteriAdi = isset($data->musteriAdi) ? $conn->real_escape_string(trim($data->musteriAdi)) : null;
-        $musteriIletisim = isset($data->musteriIletisim) ? $conn->real_escape_string(trim($data->musteriIletisim)) : null;
-        $teklifTarihi = $conn->real_escape_string(trim($data->teklifTarihi));
-        $gecerlilikTarihi = isset($data->gecerlilikTarihi) ? $conn->real_escape_string(trim($data->gecerlilikTarihi)) : null;
-        $araToplam = isset($data->araToplam) ? floatval($data->araToplam) : 0.00;
-        $indirimOrani = isset($data->indirimOrani) ? floatval($data->indirimOrani) : 0.00;
-        $indirimTutari = isset($data->indirimTutari) ? floatval($data->indirimTutari) : 0.00;
-        $kdvOrani = isset($data->kdvOrani) ? floatval($data->kdvOrani) : 0.00;
-        $kdvTutari = isset($data->kdvTutari) ? floatval($data->kdvTutari) : 0.00;
-        $genelToplam = isset($data->genelToplam) ? floatval($data->genelToplam) : 0.00;
-        $paraBirimi = isset($data->paraBirimi) ? $conn->real_escape_string(trim($data->paraBirimi)) : 'TL';
-        $durum = isset($data->durum) ? $conn->real_escape_string(trim($data->durum)) : 'Hazırlanıyor';
-        $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
+    }
 
-        $sql_update_teklif = "UPDATE teklifler SET teklifNo = ?, musteri_id = ?, musteriAdi = ?, musteriIletisim = ?, teklifTarihi = ?, gecerlilikTarihi = ?, araToplam = ?, indirimOrani = ?, indirimTutari = ?, kdvOrani = ?, kdvTutari = ?, genelToplam = ?, paraBirimi = ?, durum = ?, notlar = ? WHERE id = ?";
-        $stmt_update_teklif = $conn->prepare($sql_update_teklif);
-        $stmt_update_teklif->bind_param("ssssssddddddssss", $teklifNo, $musteri_id, $musteriAdi, $musteriIletisim, $teklifTarihi, $gecerlilikTarihi, $araToplam, $indirimOrani, $indirimTutari, $kdvOrani, $kdvTutari, $genelToplam, $paraBirimi, $durum, $notlar, $teklif_id_url);
+    $fields = [];
+    $params = [];
+    $types = "";
 
-        if (!$stmt_update_teklif->execute()) {
-            throw new Exception("Ana teklif güncellenirken SQL hatası: " . $stmt_update_teklif->error, 500);
+    // Güncellenecek alanları dinamik olarak oluştur
+    if (isset($data->teklifNo)) { $fields[] = "teklifNo = ?"; $params[] = $conn->real_escape_string(trim($data->teklifNo)); $types .= "s"; }
+    if (isset($data->musteri_id)) { $fields[] = "musteri_id = ?"; $params[] = (empty(trim($data->musteri_id))) ? null : intval(trim($data->musteri_id)); $types .= "i"; }
+    if (isset($data->musteriAdi)) { $fields[] = "musteriAdi = ?"; $params[] = $conn->real_escape_string(trim($data->musteriAdi)); $types .= "s"; }
+    if (isset($data->musteriIletisim)) { $fields[] = "musteriIletisim = ?"; $params[] = $conn->real_escape_string(trim($data->musteriIletisim)); $types .= "s"; }
+    if (isset($data->projeAdi)) { $fields[] = "projeAdi = ?"; $params[] = $conn->real_escape_string(trim($data->projeAdi)); $types .= "s"; }
+    if (isset($data->teklifTarihi)) { $fields[] = "teklifTarihi = ?"; $params[] = $conn->real_escape_string(trim($data->teklifTarihi)); $types .= "s"; }
+    if (isset($data->gecerlilikTarihi)) { $fields[] = "gecerlilikTarihi = ?"; $params[] = $conn->real_escape_string(trim($data->gecerlilikTarihi)); $types .= "s"; }
+    if (isset($data->hazirlayan)) { $fields[] = "hazirlayan = ?"; $params[] = $conn->real_escape_string(trim($data->hazirlayan)); $types .= "s"; }
+    if (isset($data->paraBirimi)) { $fields[] = "paraBirimi = ?"; $params[] = $conn->real_escape_string(trim($data->paraBirimi)); $types .= "s"; }
+    if (isset($data->araToplamMaliyet)) { $fields[] = "araToplamMaliyet = ?"; $params[] = floatval($data->araToplamMaliyet); $types .= "d"; }
+    if (isset($data->araToplamSatis)) { $fields[] = "araToplamSatis = ?"; $params[] = floatval($data->araToplamSatis); $types .= "d"; }
+    if (isset($data->indirimOrani)) { $fields[] = "indirimOrani = ?"; $params[] = floatval($data->indirimOrani); $types .= "d"; }
+    if (isset($data->indirimTutari)) { $fields[] = "indirimTutari = ?"; $params[] = floatval($data->indirimTutari); $types .= "d"; }
+    
+    $kdvOraniToUseForCalculations = $existingTeklif['kdvOrani']; // Mevcut KDV'yi al
+    if (isset($data->kdvOrani)) { 
+        $fields[] = "kdvOrani = ?"; 
+        $params[] = floatval($data->kdvOrani); 
+        $types .= "d"; 
+        $kdvOraniToUseForCalculations = floatval($data->kdvOrani); // Yeni KDV'yi kullan
+    }
+
+    if (isset($data->kdvTutari)) { $fields[] = "kdvTutari = ?"; $params[] = floatval($data->kdvTutari); $types .= "d"; }
+    if (isset($data->genelToplamSatis)) { $fields[] = "genelToplamSatis = ?"; $params[] = floatval($data->genelToplamSatis); $types .= "d"; }
+    if (isset($data->durum)) { $fields[] = "durum = ?"; $params[] = $conn->real_escape_string(trim($data->durum)); $types .= "s"; }
+    if (array_key_exists('notlar', (array)$data)) { $fields[] = "notlar = ?"; $params[] = ($data->notlar === null) ? null : $conn->real_escape_string(trim($data->notlar)); $types .= "s"; }
+    
+    if (empty($fields) && !isset($data->urunler)) { // Ürünler de güncellenmiyorsa ve hiç field yoksa
+        http_response_code(400);
+        echo json_encode(array("message" => "Güncellenecek alan bulunamadı."));
+        $conn->rollback();
+        return;
+    }
+
+    if (!empty($fields)) {
+        $fields[] = "updated_at = NOW()";
+        $sql_teklif_update = "UPDATE teklifler SET " . implode(", ", $fields) . " WHERE id = ?";
+        $types .= "s"; 
+        $params[] = $teklif_id_url;
+
+        $stmt_teklif_update = $conn->prepare($sql_teklif_update);
+        if (!$stmt_teklif_update) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Ana teklif güncelleme sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+            $conn->rollback();
+            return;
         }
-        $stmt_update_teklif->close();
+        $stmt_teklif_update->bind_param($types, ...$params);
+        if (!$stmt_teklif_update->execute()) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Ana teklif güncellenirken SQL hatası.", "error_detail" => $stmt_teklif_update->error));
+            $conn->rollback();
+            $stmt_teklif_update->close();
+            return;
+        }
+        $stmt_teklif_update->close();
+    } else {
+        // Sadece ürünler güncelleniyorsa ana tabloya updated_at ekleyelim
+        $stmt_touch_update = $conn->prepare("UPDATE teklifler SET updated_at = NOW() WHERE id = ?");
+        if ($stmt_touch_update) {
+            $stmt_touch_update->bind_param("s", $teklif_id_url);
+            $stmt_touch_update->execute();
+            $stmt_touch_update->close();
+        }
+    }
 
-        // Mevcut ürünleri sil
-        $sql_delete_urunler = "DELETE FROM teklif_urunleri WHERE teklif_id = ?";
-        $stmt_delete_urunler = $conn->prepare($sql_delete_urunler);
+    // Ürünler varsa, mevcutları sil ve yenilerini ekle
+    if (isset($data->urunler) && is_array($data->urunler)) {
+        $delete_urunler_sql = "DELETE FROM teklif_urunleri WHERE teklif_id = ?";
+        $stmt_delete_urunler = $conn->prepare($delete_urunler_sql);
+        if (!$stmt_delete_urunler) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Mevcut teklif ürünleri silme sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+            $conn->rollback();
+            return;
+        }
         $stmt_delete_urunler->bind_param("s", $teklif_id_url);
         if (!$stmt_delete_urunler->execute()) {
-             throw new Exception("Mevcut teklif ürünleri silinirken SQL hatası: " . $stmt_delete_urunler->error, 500);
+            http_response_code(500);
+            echo json_encode(array("message" => "Mevcut teklif ürünler silinirken SQL hatası.", "error_detail" => $stmt_delete_urunler->error));
+            $conn->rollback();
+            $stmt_delete_urunler->close();
+            return;
         }
         $stmt_delete_urunler->close();
 
-        // Yeni ürünleri ekle
-        $sql_insert_urun = "INSERT INTO teklif_urunleri (teklif_id, urun_id, malzemeAdi, miktar, birim, birimFiyat, satirToplami) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt_insert_urun = $conn->prepare($sql_insert_urun);
-        foreach ($data->urunler as $urun) {
-            if (empty($urun->malzemeAdi) || !isset($urun->miktar) || !isset($urun->birimFiyat) || !isset($urun->satirToplami)) {
-                 throw new Exception("Teklif ürünü için gerekli alanlar (malzemeAdi, miktar, birimFiyat, satirToplami) eksik.", 400);
-            }
-            $urun_id_item = isset($urun->urunId) ? $conn->real_escape_string(trim($urun->urunId)) : (isset($urun->urun_id) ? $conn->real_escape_string(trim($urun->urun_id)) : null);
-            $malzemeAdi_item = $conn->real_escape_string(trim($urun->malzemeAdi));
-            $miktar_item = floatval($urun->miktar);
-            $birim_item = isset($urun->birim) ? $conn->real_escape_string(trim($urun->birim)) : null;
-            $birimFiyat_item = floatval($urun->birimFiyat);
-            $satirToplami_item = floatval($urun->satirToplami);
+        $sql_urun_insert = "INSERT INTO teklif_urunleri (teklif_id, kalemTipi, referans_id, aciklama, miktar, birim, kaydedilen_birim_maliyet, kaydedilen_birim_satis_fiyati, kdv_orani_kalem, satir_toplam_maliyet, satir_toplam_satis_fiyati_kdv_haric, satir_kdv_tutari, satir_toplam_satis_fiyati_kdv_dahil, siraNo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+        $stmt_urun_insert = $conn->prepare($sql_urun_insert);
+        if (!$stmt_urun_insert) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Güncellenmiş teklif ürünü ekleme sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+            $conn->rollback();
+            return;
+        }
 
-            $stmt_insert_urun->bind_param("sssdsdd", $teklif_id_url, $urun_id_item, $malzemeAdi_item, $miktar_item, $birim_item, $birimFiyat_item, $satirToplami_item);
-            if (!$stmt_insert_urun->execute()) {
-                throw new Exception("Yeni teklif ürünü kaydedilirken SQL hatası: " . $stmt_insert_urun->error, 500);
+        foreach ($data->urunler as $key => $urun) {
+            if (!isset($urun->kalemTipi, $urun->aciklama, $urun->miktar, $urun->birim, $urun->kaydedilen_birim_satis_fiyati)) {
+                 http_response_code(400);
+                 echo json_encode(array("message" => "Güncellenen teklif ürünü için gerekli alanlar eksik. Ürün: " . json_encode($urun)));
+                 $conn->rollback();
+                 $stmt_urun_insert->close();
+                 return;
+            }
+            $kalemTipi = $conn->real_escape_string(trim($urun->kalemTipi));
+            $referans_id = isset($urun->referans_id) ? $conn->real_escape_string(trim($urun->referans_id)) : null;
+            $aciklama = $conn->real_escape_string(trim($urun->aciklama));
+            $miktar = floatval($urun->miktar);
+            $birim = $conn->real_escape_string(trim($urun->birim));
+            $kaydedilen_birim_maliyet = isset($urun->kaydedilen_birim_maliyet) ? floatval($urun->kaydedilen_birim_maliyet) : 0.00;
+            $kaydedilen_birim_satis_fiyati = floatval($urun->kaydedilen_birim_satis_fiyati);
+            $kdv_orani_kalem = isset($urun->kdv_orani_kalem) ? floatval($urun->kdv_orani_kalem) : $kdvOraniToUseForCalculations;
+            $satir_toplam_maliyet = $miktar * $kaydedilen_birim_maliyet;
+            $satir_toplam_satis_fiyati_kdv_haric = $miktar * $kaydedilen_birim_satis_fiyati;
+            $satir_kdv_tutari = $satir_toplam_satis_fiyati_kdv_haric * ($kdv_orani_kalem / 100);
+            $satir_toplam_satis_fiyati_kdv_dahil = $satir_toplam_satis_fiyati_kdv_haric + $satir_kdv_tutari;
+            $siraNo = isset($urun->siraNo) ? intval($urun->siraNo) : ($key + 1);
+
+            $stmt_urun_insert->bind_param("ssssdsdddddddi", $teklif_id_url, $kalemTipi, $referans_id, $aciklama, $miktar, $birim, $kaydedilen_birim_maliyet, $kaydedilen_birim_satis_fiyati, $kdv_orani_kalem, $satir_toplam_maliyet, $satir_toplam_satis_fiyati_kdv_haric, $satir_kdv_tutari, $satir_toplam_satis_fiyati_kdv_dahil, $siraNo);
+            if (!$stmt_urun_insert->execute()) {
+                http_response_code(500);
+                echo json_encode(array("message" => "Teklif ürünü güncellenirken/eklenirken SQL hatası.", "error_detail" => $stmt_urun_insert->error, "urun_data" => $urun));
+                $conn->rollback();
+                $stmt_urun_insert->close();
+                return;
             }
         }
-        $stmt_insert_urun->close();
-
-        $conn->commit();
-        http_response_code(200);
-        // Güncellenen teklifi (ürünleriyle birlikte) geri döndürmek iyi bir pratik olacaktır.
-        // getTeklif($conn, $teklif_id_url) çağrılabilir. Şimdilik basit mesaj:
-        echo json_encode(array("message" => "Teklif başarıyla güncellendi.", "id" => $teklif_id_url));
-
-    } catch (Exception $e) {
-        $conn->rollback();
-        http_response_code($e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500);
-        echo json_encode(array("message" => $e->getMessage()));
+        $stmt_urun_insert->close();
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
+
+    $conn->commit();
+    http_response_code(200);
+    // Güncellenmiş teklifi geri döndür
+    // getTeklif($conn, $teklif_id_url); // Bu tekrar JSON çıktısı yapar, bunun yerine manuel oluştur.
+     echo json_encode(array("message" => "Teklif başarıyla güncellendi.", "id" => $teklif_id_url));
+
 }
 
 function deleteTeklif($conn, $id_param) {
     $id = $conn->real_escape_string(trim($id_param));
-    // Teklif silindiğinde, teklif_urunleri tablosundaki ilişkili kayıtlar
-    // FOREIGN KEY tanımındaki ON DELETE CASCADE sayesinde otomatik silinecektir.
 
-    // Teklifin var olup olmadığını kontrol et
-    $checkSql = "SELECT id FROM teklifler WHERE id = ?";
-    $stmt_check = $conn->prepare($checkSql);
-    $stmt_check->bind_param("s", $id);
-    $stmt_check->execute();
-    $result_check = $stmt_check->get_result();
-    if ($result_check->num_rows == 0) {
-        $stmt_check->close();
-        http_response_code(404);
-        echo json_encode(array("message" => "Silinecek teklif bulunamadı. ID: " . $id));
-        if (ob_get_level() > 0) { ob_end_clean(); }
+    $conn->begin_transaction();
+    
+    // 1. Teklifin var olup olmadığını kontrol et
+    $check_exists_sql = "SELECT id FROM teklifler WHERE id = ?";
+    $stmt_check_exists = $conn->prepare($check_exists_sql);
+    if (!$stmt_check_exists) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Silinecek teklif varlık kontrol sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+        $conn->rollback();
         return;
     }
-    $stmt_check->close();
+    $stmt_check_exists->bind_param("s", $id);
+    $stmt_check_exists->execute();
+    $result_check = $stmt_check_exists->get_result(); // get_result() çağrısını değişkene ata
+    if ($result_check->num_rows === 0) { // Değişken üzerinden kontrol et
+        $stmt_check_exists->close();
+        http_response_code(404);
+        echo json_encode(array("message" => "Silinecek teklif bulunamadı. ID: " . $id));
+        $conn->rollback();
+        return;
+    }
+    $stmt_check_exists->close();
 
-    $sql = "DELETE FROM teklifler WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    if ($stmt) {
-        $stmt->bind_param("s", $id);
-        if ($stmt->execute()) {
-            if ($stmt->affected_rows > 0) {
-                http_response_code(200); // Veya 204 No Content
-                echo json_encode(array("message" => "Teklif başarıyla silindi."));
-            } else {
-                // Normalde checkSql nedeniyle buraya düşmemeli
-                http_response_code(404); 
-                echo json_encode(array("message" => "Silinecek teklif bulunamadı (veya zaten silinmişti)."));
-            }
+    // 2. Önce ilişkili teklif ürünlerini sil
+    $sql_delete_urunler = "DELETE FROM teklif_urunleri WHERE teklif_id = ?";
+    $stmt_delete_urunler = $conn->prepare($sql_delete_urunler);
+    if (!$stmt_delete_urunler) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Teklife bağlı ürünleri silme sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+        $conn->rollback();
+        return;
+    }
+    $stmt_delete_urunler->bind_param("s", $id); // teklif_id VARCHAR
+    if (!$stmt_delete_urunler->execute()) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Teklife bağlı ürünler silinirken SQL hatası.", "error_detail" => $stmt_delete_urunler->error));
+        $conn->rollback();
+        $stmt_delete_urunler->close(); // Hata durumunda da kapat
+        return;
+    }
+    // Ürün silme işleminde affected_rows kontrolü burada kritik değil, teklifin ürünü olmayabilir.
+    $stmt_delete_urunler->close();
+
+    // 3. Sonra ana teklifi sil
+    $sql_delete_teklif = "DELETE FROM teklifler WHERE id = ?";
+    $stmt_delete_teklif = $conn->prepare($sql_delete_teklif);
+     if (!$stmt_delete_teklif) {
+        http_response_code(500);
+        echo json_encode(array("message" => "Ana teklif silme sorgusu hazırlanamadı.", "error_detail" => $conn->error));
+        $conn->rollback();
+        return;
+    }
+    $stmt_delete_teklif->bind_param("s", $id); // id VARCHAR
+
+    if ($stmt_delete_teklif->execute()) {
+        if ($stmt_delete_teklif->affected_rows > 0) {
+            $conn->commit(); // Sadece ana teklif başarıyla silinirse commit et
+            http_response_code(200);
+            echo json_encode(array("message" => "Teklif ve bağlı ürünleri başarıyla silindi.", "id" => $id));
         } else {
-            http_response_code(500);
-            echo json_encode(array("message" => "Teklif silinirken SQL hatası oluştu.", "error" => $stmt->error));
+            // Varlık kontrolünden geçtiği için buraya düşmemeli, ama olası bir yarış durumu için.
+            $conn->rollback();
+            http_response_code(404); 
+            echo json_encode(array("message" => "Teklif silinemedi (ana teklif üzerinde affected_rows = 0). ID: " . $id));
         }
-        $stmt->close();
     } else {
         http_response_code(500);
-        echo json_encode(array("message" => "Teklif silinirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
+        echo json_encode(array("message" => "Teklif silinirken SQL hatası.", "error_detail" => $stmt_delete_teklif->error));
+        $conn->rollback();
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
+    $stmt_delete_teklif->close();
 }
 
-if (isset($conn)) {
-    $conn->close();
-}
-if (ob_get_level() > 0) {
-    ob_end_flush();
-}
+$conn->close();
 ?> 
