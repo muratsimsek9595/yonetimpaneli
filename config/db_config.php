@@ -5,7 +5,7 @@ define('DB_PASSWORD', 'bz.ZMUe.Xa2Zj.V');  // MySQL şifreniz
 define('DB_DATABASE', 'hsnplant_yonetimDB'); // Veritabanı adınız
 
 // Bağlantı oluşturma
-$conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_DATABASE);
+$conn = @new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_DATABASE);
 
 // Bağlantıyı kontrol etme
 if ($conn->connect_error) {
