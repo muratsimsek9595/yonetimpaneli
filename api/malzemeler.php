@@ -83,10 +83,10 @@ function getMalzeme($conn, $id) {
 
 function addMalzeme($conn) {
     $data = json_decode(file_get_contents("php://input"));
-    if (!empty($data->ad) && !empty($data->birim_tipi) && !empty($data->birim_adi)) {
+    if (!empty($data->ad) && isset($data->birim_tipi)) {
         $ad = $conn->real_escape_string($data->ad);
         $birim_tipi = $conn->real_escape_string($data->birim_tipi);
-        $birim_adi = $conn->real_escape_string($data->birim_adi);
+        $birim_adi = isset($data->birim_adi) ? $conn->real_escape_string($data->birim_adi) : '';
 
         $sql = "INSERT INTO malzemeler (ad, birim_tipi, birim_adi) VALUES ('$ad', '$birim_tipi', '$birim_adi')";
         if ($conn->query($sql) === TRUE) {
@@ -102,16 +102,16 @@ function addMalzeme($conn) {
     } else {
         ob_clean();
         http_response_code(400);
-        echo json_encode(array("message" => "Malzeme eklemek için gerekli alanlar (ad, birim_tipi, birim_adi) eksik."));
+        echo json_encode(array("message" => "Malzeme eklemek için gerekli alanlar (ad, birim_tipi) eksik."));
     }
 }
 
 function updateMalzeme($conn, $id) {
     $data = json_decode(file_get_contents("php://input"));
-    if (!empty($data->ad) && !empty($data->birim_tipi) && !empty($data->birim_adi)) {
+    if (!empty($data->ad) && isset($data->birim_tipi)) {
         $ad = $conn->real_escape_string($data->ad);
         $birim_tipi = $conn->real_escape_string($data->birim_tipi);
-        $birim_adi = $conn->real_escape_string($data->birim_adi);
+        $birim_adi = isset($data->birim_adi) ? $conn->real_escape_string($data->birim_adi) : '';
 
         $checkSql = "SELECT id FROM malzemeler WHERE id = '$id'";
         $checkResult = $conn->query($checkSql);
@@ -133,7 +133,7 @@ function updateMalzeme($conn, $id) {
     } else {
         ob_clean();
         http_response_code(400);
-        echo json_encode(array("message" => "Malzeme güncellemek için gerekli alanlar (ad, birim_tipi, birim_adi) eksik."));
+        echo json_encode(array("message" => "Malzeme güncellemek için gerekli alanlar (ad, birim_tipi) eksik."));
     }
 }
 
