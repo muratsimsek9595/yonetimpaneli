@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yönetim Paneli - Fiyat Takip</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=1.1">
     <meta name="description" content="Yeni web projesi açıklaması">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -152,27 +152,27 @@
                     <h3>Yeni Tedarikçi Ekle / Güncelle</h3>
                     <form id="tedarikciForm">
                         <input type="hidden" id="tedarikciIdInput" name="tedarikciIdInput">
-                        <div>
+                        <div class="form-group">
                             <label for="tedarikciAdiInput">Tedarikçi Adı:</label>
                             <input type="text" id="tedarikciAdiInput" name="tedarikciAdiInput" required>
                         </div>
-                        <div>
+                        <div class="form-group">
                             <label for="tedarikciYetkiliKisi">Yetkili Kişi:</label>
                             <input type="text" id="tedarikciYetkiliKisi" name="tedarikciYetkiliKisi">
                         </div>
-                        <div>
+                        <div class="form-group">
                             <label for="tedarikciTelefon">Telefon:</label>
                             <input type="tel" id="tedarikciTelefon" name="tedarikciTelefon">
                         </div>
-                        <div>
+                        <div class="form-group">
                             <label for="tedarikciEmail">Email:</label>
                             <input type="email" id="tedarikciEmail" name="tedarikciEmail">
                         </div>
-                        <div>
+                        <div class="form-group">
                             <label for="tedarikciAdres">Adres:</label>
                             <textarea id="tedarikciAdres" name="tedarikciAdres" rows="3"></textarea>
                         </div>
-                        <div>
+                        <div class="form-group">
                             <label for="tedarikciNot">Not:</label>
                             <textarea id="tedarikciNot" name="tedarikciNot" rows="3"></textarea>
                         </div>
@@ -244,6 +244,6 @@
         </main>
     </div>
 
-    <script src="js/script.js?v=1.3"></script>
+    <script src="js/script.js?v=1.4"></script>
 </body>
 </html> 
