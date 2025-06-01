@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${fiyat.malzeme_birim_adi || '-'}</td>
                         <td>${new Date(fiyat.tarih).toLocaleDateString('tr-TR')}</td>
                         <td>${fiyat.tedarikci_adi || '-'}</td>
-                        <td class="actions">
+                        <td class="actions actions-dar">
                             <button class="delete-fiyat-btn" data-id="${fiyat.id}">Sil</button>
                         </td>
                     `;

@@ -278,12 +278,66 @@ form button[type="button"]:hover {
     background-color: #f0f8ff; /* Hafif mavi hover */
 }
 
+/* Tablo İşlem Butonları */
 #urunListesiTablosu .actions button,
-#tedarikciListesiTablosu .actions button {
+#tedarikciListesiTablosu .actions button,
+#sonFiyatlarTablosu .actions .delete-fiyat-btn { /* sonFiyatlarTablosu eklendi ve buton sınıfı belirtildi */
     padding: 6px 10px;
-    margin-right: 6px;
+    margin-right: 0; /* Tek buton olacağı için sağdaki margin'i kaldırabiliriz veya bırakabiliriz */
     font-size: 0.85rem;
     min-width: 70px; /* Butonların aynı genişlikte olması için */
+    border-radius: 4px; /* Diğer butonlara benzer yuvarlaklık */
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    border: 1px solid transparent;
+}
+
+/* Silme butonlarına özel stil (kırmızımsı) */
+#urunListesiTablosu .actions .delete-btn, /* Eğer genel bir delete-btn sınıfı varsa */
+#tedarikciListesiTablosu .actions .delete-btn,
+#sonFiyatlarTablosu .actions .delete-fiyat-btn {
+    background-color: #ff4d4f; /* Kırmızı */
+    color: white;
+    border-color: #ff4d4f;
+}
+
+#urunListesiTablosu .actions .delete-btn:hover,
+#tedarikciListesiTablosu .actions .delete-btn:hover,
+#sonFiyatlarTablosu .actions .delete-fiyat-btn:hover {
+    background-color: #d9363e; /* Koyu Kırmızı */
+    border-color: #d9363e;
+}
+
+/* Düzenle butonlarına özel stil (mavi) - zaten var olan form button gibi */
+#urunListesiTablosu .actions .edit-btn,
+#tedarikciListesiTablosu .actions .edit-btn {
+    background-color: #1890ff;
+    color: white;
+    border-color: #1890ff;
+}
+
+#urunListesiTablosu .actions .edit-btn:hover,
+#tedarikciListesiTablosu .actions .edit-btn:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+
+/* Tüm tablolardaki İşlemler sütunu için ortak stil */
+#urunListesiTablosu th.islem-sutunu, 
+#urunListesiTablosu td.actions, 
+#tedarikciListesiTablosu th.islem-sutunu, 
+#tedarikciListesiTablosu td.actions,
+#sonFiyatlarTablosu th.islem-sutunu, /* Yeni */
+#sonFiyatlarTablosu td.actions { /* Yeni */
+    width: 120px; /* İhtiyaca göre ayarlanabilir, örneğin 2 buton için */
+    text-align: center; /* İçeriği (butonları) ortala */
+}
+
+/* sonFiyatlarTablosu'ndaki İşlemler sütunu tek buton içeriyorsa daha dar olabilir */
+#sonFiyatlarTablosu th.islem-sutunu-dar, /* HTML'e bu sınıfı ekleyeceğiz */
+#sonFiyatlarTablosu td.actions-dar { /* HTML'e bu sınıfı ekleyeceğiz */
+    width: 80px; /* Tek silme butonu için daha dar */
+    text-align: center;
 }
 
 /* Footer */
