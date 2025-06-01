@@ -116,8 +116,26 @@ function getMusteri($conn, $id) {
 }
 
 function addMusteri($conn) {
-    $data = json_decode(file_get_contents("php://input"));
+    // --- GEÇİCİ TEŞHİS KODU BAŞLANGICI ---
+    header("Content-Type: text/plain; charset=UTF-8"); // Yanıtın JSON olmadığını belirt
+    $raw_input = file_get_contents("php://input");
+    echo "Ham input:\n";
+    var_dump($raw_input);
+    echo "\n\nInput string uzunluğu: " . strlen($raw_input) . "\n";
+    
+    $data = json_decode($raw_input);
+    
+    echo "\n\njson_decode sonrası \$data:\n";
+    var_dump($data);
+    
+    echo "\n\njson_last_error(): " . json_last_error() . "\n";
+    echo "json_last_error_msg(): " . json_last_error_msg() . "\n";
+    // --- GEÇİCİ TEŞHİS KODU SONU ---
+    
+    // Asıl mantık geçici olarak devre dışı bırakıldı, sadece test için exit();
+    exit();
 
+    /* // ASIL KOD GEÇİCİ OLARAK DEVRE DIŞI
     if (empty($data->ad)) {
         http_response_code(400); 
         echo json_encode(array("status" => "error", "message" => "Müşteri adı boş olamaz."));
@@ -153,6 +171,7 @@ function addMusteri($conn) {
     }
     $stmt->close();
     exit();
+    */ // ASIL KOD GEÇİCİ OLARAK DEVRE DIŞI SONU
 }
 
 function updateMusteri($conn, $id) {
