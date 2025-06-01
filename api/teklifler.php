@@ -250,9 +250,26 @@ function addTeklif($conn) {
     $stmt_urun->close();
     $conn->commit();
     http_response_code(201);
-    // Kaydedilen teklifi geri döndür (getTeklif çağrılabilir veya manuel oluşturulabilir)
-    // Şimdilik basit mesaj:
-    echo json_encode(array("message" => "Teklif başarıyla eklendi.", "id" => $id, "teklifNo" => $teklifNo));
+
+    // Frontend'e gönderilecek tam teklif verisini oluştur
+    $returnData = $data; // JavaScript'ten gelen tüm verileri al
+    $returnData->id = $id; // Sunucuda üretilen yeni ID'yi ekle
+    // Eğer musteri_id null ise ve $data->musteri_id yoksa, bunu da ekleyebiliriz
+    if (!isset($returnData->musteri_id) && $musteri_id === null) {
+        $returnData->musteri_id = null;
+    }
+    // Frontend'in beklediği diğer alanlar zaten $data içinde olmalı
+    // (araToplamSatis, genelToplamSatis vb. $data içinde araToplam, genelToplam olarak geliyor olabilir, JS tarafıyla isimlerin tutarlı olması önemli)
+    // JavaScript'in gönderdiği isimlerle (örn: $data->genelToplam) eşleştiğinden emin olalım.
+    // Eğer $data içinde bu toplamlar farklı isimlerdeyse (örn: araToplamSatis yerine araToplam) 
+    // $returnData altında doğru isimlerle atama yapmak gerekebilir.
+    // Ancak mevcut PHP kodunda zaten $data->araToplamSatis gibi doğrudan okuma yapılıyor, 
+    // bu da JS'in bu isimlerle gönderdiği anlamına gelir.
+
+    echo json_encode(array(
+        "message" => "Teklif başarıyla eklendi.", 
+        "data" => $returnData 
+    ));
 }
 
 
