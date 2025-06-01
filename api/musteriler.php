@@ -1,10 +1,6 @@
 <?php
 // ÖNEMLİ: Content-Type başlığını, olası HTML hata çıktılarından önce ayarla
 header("Content-Type: application/json; charset=UTF-8");
-ob_start(); // Çıktı tamponlamasını Content-Type'dan sonra başlat
-if (ob_get_level() > 0) {
-    ob_clean();
-}
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -275,9 +271,5 @@ function deleteMusteri($conn, $id_str) {
 
 if (isset($conn)) {
     $conn->close();
-}
-
-if (ob_get_level() > 0) {
-    ob_end_flush();
 }
 ?> 
