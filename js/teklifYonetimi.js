@@ -57,7 +57,7 @@ function initTeklifYonetimi() {
     renderTekliflerTablosu(getTeklifler());
     ayarlamaFormVarsayilanlari();
 
-    teklifUrunEkleButton.addEventListener('click', yeniUrunSatiriEkle);
+    teklifUrunEkleButton.addEventListener('click', () => yeniUrunSatiriEkle());
 
     teklifForm.addEventListener('submit', async (event) => {
         event.preventDefault();
