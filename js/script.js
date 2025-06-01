@@ -65,6 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const urunForm = document.getElementById('urunForm');
     const urunIdInput = document.getElementById('urunId');
     const urunAdiInput = document.getElementById('urunAdi');
+    const urunBirimSecimi = document.getElementById('urunBirimSecimi');
+    const ozelBirimContainer = document.getElementById('ozelBirimContainer');
     const urunBirimAdiInput = document.getElementById('urunBirimAdi');
     const urunListesiTablosuBody = document.querySelector('#urunListesiTablosu tbody');
     const formTemizleButton = document.getElementById('formTemizleButton');
@@ -118,24 +120,56 @@ document.addEventListener('DOMContentLoaded', function() {
     function formuTemizle() { // urunForm için
         urunForm.reset();
         urunIdInput.value = '';
+        if (urunBirimSecimi) {
+            urunBirimSecimi.value = ''; // Dropdown'ı sıfırla
+        }
+        ozelBirimContainer.style.display = 'none'; // Özel birim alanını gizle
+        urunBirimAdiInput.value = ''; // Özel birim inputunu temizle
         formTemizleButton.style.display = 'none';
         urunAdiInput.focus();
+    }
+
+    // Birim seçimi dropdown'ı değiştiğinde özel birim alanını yönet
+    if (urunBirimSecimi) { // Elementin varlığını kontrol et
+        urunBirimSecimi.addEventListener('change', function() {
+            if (this.value === 'diger') {
+                ozelBirimContainer.style.display = 'block';
+                urunBirimAdiInput.value = ''; // Özel birim alanını temizle
+                urunBirimAdiInput.focus();
+            } else {
+                ozelBirimContainer.style.display = 'none';
+                // urunBirimAdiInput.value = this.value; // Kullanıcı dropdown'dan seçince özel alanı doldurmayalım, form submit anında karar verilir.
+            }
+        });
     }
 
     urunForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         const id = urunIdInput.value;
         const ad = urunAdiInput.value.trim();
-        const birimAdi = urunBirimAdiInput.value.trim();
+        
+        let birimDegeri = '';
+        if (urunBirimSecimi) { // Dropdown varsa
+            if (urunBirimSecimi.value === 'diger') {
+                birimDegeri = urunBirimAdiInput.value.trim();
+            } else {
+                birimDegeri = urunBirimSecimi.value;
+            }
+        }
 
         if (!ad) {
             alert('Malzeme adı boş bırakılamaz!');
             return;
         }
+        // İsteğe bağlı: "Diğer" seçiliyse özel birimin boş olmaması kontrolü
+        if (urunBirimSecimi && urunBirimSecimi.value === 'diger' && !birimDegeri) {
+            alert('Lütfen özel birim adını girin veya listeden bir birim seçin.');
+            return;
+        }
 
         const malzemeVerisi = {
             ad: ad,
-            birim_adi: birimAdi // API bu ismi bekliyor
+            birim_adi: birimDegeri // API bu ismi bekliyor
         };
 
         let url = 'api/malzemeler.php';
@@ -183,7 +217,23 @@ document.addEventListener('DOMContentLoaded', function() {
             if (urun) {
                 urunIdInput.value = urun.id;
                 urunAdiInput.value = urun.ad;
-                urunBirimAdiInput.value = urun.birim_adi || '';   // Artık tek birim alanı
+                
+                // Birim alanlarını doldur
+                if (urunBirimSecimi) {
+                    const seceneklerdeVar = Array.from(urunBirimSecimi.options).some(option => option.value === urun.birim_adi);
+                    if (seceneklerdeVar && urun.birim_adi !== 'diger') {
+                        urunBirimSecimi.value = urun.birim_adi;
+                        ozelBirimContainer.style.display = 'none';
+                        urunBirimAdiInput.value = ''; // Özel alanı temizle
+                    } else {
+                        urunBirimSecimi.value = 'diger';
+                        ozelBirimContainer.style.display = 'block';
+                        urunBirimAdiInput.value = urun.birim_adi || '';
+                    }
+                } else { // Dropdown yoksa (eski yapı veya bir hata durumunda), sadece text inputu doldur
+                    urunBirimAdiInput.value = urun.birim_adi || '';
+                }
+
                 formTemizleButton.style.display = 'inline-block';
                 urunAdiInput.focus();
             }

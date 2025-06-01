@@ -53,8 +53,23 @@
                             <input type="text" id="urunAdi" name="urunAdi" required>
                         </div>
                         <div>
-                            <label for="urunBirimAdi">Birim:</label> 
-                            <input type="text" id="urunBirimAdi" name="urunBirimAdi" placeholder="Örn: kg, adet, koli, metre, Boy">
+                            <label for="urunBirimSecimi">Birim Seçin:</label>
+                            <select id="urunBirimSecimi" name="urunBirimSecimi">
+                                <option value="">-- Birim Seçiniz --</option>
+                                <option value="kg">kg</option>
+                                <option value="adet">adet</option>
+                                <option value="metre">metre</option>
+                                <option value="Boy">Boy</option>
+                                <option value="Paket">Paket</option>
+                                <option value="Litre">Litre</option>
+                                <option value="m2">m²</option>
+                                <option value="m3">m³</option>
+                                <option value="diger">-- Diğer (Aşağıya Yazın) --</option>
+                            </select>
+                        </div>
+                        <div id="ozelBirimContainer" style="display: none;">
+                            <label for="urunBirimAdi">Özel Birim Adı:</label>
+                            <input type="text" id="urunBirimAdi" name="urunBirimAdi" placeholder="Kendi biriminizi yazın">
                         </div>
                         <button type="submit">Malzemeyi Kaydet</button>
                         <button type="button" id="formTemizleButton" style="display:none;">Formu Temizle</button>
@@ -220,6 +235,6 @@
         </main>
     </div>
 
-    <script src="js/script.js?v=1709906400"></script>
+    <script src="js/script.js?v=1709907000"></script>
 </body>
 </html> 
