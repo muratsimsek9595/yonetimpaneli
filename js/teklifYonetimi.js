@@ -322,12 +322,30 @@ function genelToplamlariHesapla() {
 function teklifFormundanVeriAl() {
     const urunler = [];
     document.querySelectorAll('#teklifUrunListesiContainer .teklif-urun-satiri').forEach(satir => {
-        const urunId = satir.querySelector('.teklif-urun-malzeme').value;
-        const malzemeSelect = satir.querySelector('.teklif-urun-malzeme option:checked');
-        const malzemeAdi = malzemeSelect ? malzemeSelect.textContent.split(' (')[0] : '';
-        const birim = malzemeSelect ? malzemeSelect.dataset.birim : '';
-        const miktar = parseFloat(satir.querySelector('.teklif-urun-miktar').value) || 0;
-        const birimFiyat = parseFloat(satir.querySelector('.teklif-urun-birim-fiyat').value) || 0;
+        const urunMalzemeElement = satir.querySelector('.teklif-urun-malzeme');
+        if (!urunMalzemeElement) {
+            console.error('Teklif formu: Ürün malzeme elementi bir satırda bulunamadı. Bu satır atlanıyor.', satir);
+            return; // Skips this iteration of forEach
+        }
+        const urunId = urunMalzemeElement.value;
+        
+        const malzemeOptionChecked = urunMalzemeElement.querySelector('option:checked');
+        const malzemeAdi = malzemeOptionChecked ? malzemeOptionChecked.textContent.split(' (')[0] : '';
+        const birim = malzemeOptionChecked ? malzemeOptionChecked.dataset.birim : '';
+
+        const miktarElement = satir.querySelector('.teklif-urun-miktar');
+        if (!miktarElement) {
+            console.error('Teklif formu: Miktar input elementi bir satırda bulunamadı. Bu satır atlanıyor.', satir);
+            return; // Skips this iteration of forEach
+        }
+        const miktar = parseFloat(miktarElement.value) || 0;
+
+        const birimFiyatElement = satir.querySelector('.teklif-urun-birim-fiyat');
+        if (!birimFiyatElement) {
+            console.error('Teklif formu: Birim fiyat input elementi bir satırda bulunamadı. Bu satır atlanıyor.', satir);
+            return; // Skips this iteration of forEach
+        }
+        const birimFiyat = parseFloat(birimFiyatElement.value) || 0;
         
         if (urunId && miktar > 0) { 
             urunler.push({
