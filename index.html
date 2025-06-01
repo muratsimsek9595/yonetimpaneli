@@ -34,6 +34,9 @@
                     <li><a href="#teklif-yonetimi"><span class="nav-icon">📝</span> Teklif Yönetimi</a></li>
                     <li><a href="#musteri-yonetimi"><span class="nav-icon">👥</span> Müşteri Yönetimi</a></li>
                     <li><a href="#proje-yonetimi"><span class="nav-icon">🛠️</span> Proje Yönetimi</a></li>
+                    <li><a href="#musteriler"><i class="fas fa-users"></i> Müşteriler</a></li>
+                    <li><a href="#teklifler"><i class="fas fa-file-invoice-dollar"></i> Teklifler</a></li>
+                    <li><a href="#isciler"><i class="fas fa-hard-hat"></i> İşçiler</a></li>
                 </ul>
             </nav>
         </aside>
@@ -527,6 +530,110 @@
                 </div>
                 <!-- Proje Yönetimi içeriği buraya gelecek -->
                 <p>Proje yönetimi modülü yakında burada olacak.</p>
+            </section>
+
+            <!-- İşçiler Yönetim Paneli -->
+            <section id="isciler" class="content-section" style="display:none;">
+                <h2>İşçiler Yönetimi</h2>
+                <div class="form-container">
+                    <h3>Yeni İşçi Ekle / Düzenle</h3>
+                    <form id="isciForm">
+                        <input type="hidden" id="isciIdInput" name="isciId">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="isciAdSoyadInput">Ad Soyad (*)</label>
+                                <input type="text" id="isciAdSoyadInput" name="adSoyad" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="isciPozisyonInput">Pozisyon</label>
+                                <input type="text" id="isciPozisyonInput" name="pozisyon">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="isciGunlukUcretInput">Günlük Ücret</label>
+                                <input type="number" id="isciGunlukUcretInput" name="gunlukUcret" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="isciSaatlikUcretInput">Saatlik Ücret</label>
+                                <input type="number" id="isciSaatlikUcretInput" name="saatlikUcret" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="isciParaBirimiInput">Para Birimi</label>
+                                <select id="isciParaBirimiInput" name="paraBirimi">
+                                    <option value="TL">TL</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="DIGER">Diğer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="isciIseBaslamaTarihiInput">İşe Başlama Tarihi</label>
+                                <input type="date" id="isciIseBaslamaTarihiInput" name="iseBaslamaTarihi">
+                            </div>
+                             <div class="form-group">
+                                <label for="isciAktifCheckbox" class="checkbox-label">
+                                    <input type="checkbox" id="isciAktifCheckbox" name="aktif" checked> Aktif Mi?
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="isciTelefonInput">Telefon</label>
+                                <input type="tel" id="isciTelefonInput" name="telefon">
+                            </div>
+                            <div class="form-group">
+                                <label for="isciEmailInput">E-posta</label>
+                                <input type="email" id="isciEmailInput" name="email">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="isciAdresInput">Adres</label>
+                            <textarea id="isciAdresInput" name="adres" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="isciNotlarInput">Notlar</label>
+                            <textarea id="isciNotlarInput" name="notlar" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Kaydet</button>
+                            <button type="button" id="isciFormTemizleButton" class="btn btn-secondary">Formu Temizle</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <h3>Kayıtlı İşçiler</h3>
+                    <div class="table-responsive">
+                        <table id="isciListesiTablosu" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ad Soyad</th>
+                                    <th>Pozisyon</th>
+                                    <th>Günlük Ücret</th>
+                                    <th>Para Birimi</th>
+                                    <th>Aktif</th>
+                                    <th>İşe Başlama</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- İşçi verileri buraya dinamik olarak eklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
             <footer class="main-footer">

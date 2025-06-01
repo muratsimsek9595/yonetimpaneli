@@ -309,4 +309,86 @@ export function doldurTedarikciFormu(tedarikci, tedarikciIdInput, tedarikciAdiIn
     if (tedarikciAdiInput) tedarikciAdiInput.focus();
 }
 
+// --- İşçi UI Fonksiyonları ---
+
+export function guncelleIscilerTablosu(iscilerData, tabloBodyElement) {
+    if (!tabloBodyElement) {
+        console.error("guncelleIscilerTablosu: Tablo body elementi bulunamadı.");
+        return;
+    }
+    tabloBodyElement.innerHTML = ''; // Tabloyu temizle
+
+    if (!iscilerData || iscilerData.length === 0) {
+        tabloBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">Kayıtlı işçi bulunamadı.</td></tr>';
+        return;
+    }
+
+    iscilerData.forEach(isci => {
+        const row = tabloBodyElement.insertRow();
+        row.innerHTML = `
+            <td>${isci.id || '-'}</td>
+            <td>${isci.adSoyad || '-'}</td>
+            <td>${isci.pozisyon || '-'}</td>
+            <td>${isci.gunlukUcret ? parseFloat(isci.gunlukUcret).toFixed(2) : (isci.saatlikUcret ? parseFloat(isci.saatlikUcret).toFixed(2) + ' (Saatlik)' : '-')}</td>
+            <td>${isci.paraBirimi || 'TL'}</td>
+            <td><span class="status ${isci.aktif ? 'status-active' : 'status-inactive'}">${isci.aktif ? 'Aktif' : 'Pasif'}</span></td>
+            <td>${isci.iseBaslamaTarihi ? new Date(isci.iseBaslamaTarihi).toLocaleDateString('tr-TR') : '-'}</td>
+            <td class="actions">
+                <button class="btn-icon edit-isci-btn" data-id="${isci.id}" title="Düzenle"><i class="fas fa-edit"></i></button>
+                <button class="btn-icon delete-isci-btn" data-id="${isci.id}" title="Sil"><i class="fas fa-trash-alt"></i></button>
+            </td>
+        `;
+    });
+}
+
+export function temizleIsciFormu(formElement, idInputElement) {
+    if (formElement) {
+        formElement.reset(); // Formdaki tüm inputları sıfırlar
+        // Varsayılan değerleri ayarla (örneğin para birimi, aktif checkbox)
+        const paraBirimiInput = formElement.querySelector('#isciParaBirimiInput');
+        if (paraBirimiInput) paraBirimiInput.value = 'TL';
+        const aktifCheckbox = formElement.querySelector('#isciAktifCheckbox');
+        if (aktifCheckbox) aktifCheckbox.checked = true;
+    }
+    if (idInputElement) {
+        idInputElement.value = ''; // Gizli ID inputunu temizle
+    }
+    const submitButton = formElement.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.textContent = 'Kaydet'; // Buton metnini 'Kaydet' yap
+        submitButton.classList.remove('btn-warning'); // Eğer 'Güncelle' için farklı class varsa
+        submitButton.classList.add('btn-primary');
+    }
+    const adSoyadInput = formElement.querySelector('#isciAdSoyadInput');
+    if (adSoyadInput) {
+        adSoyadInput.focus(); // İlk inputa odaklan
+    }
+}
+
+export function doldurIsciFormu(isci, formElement, idInputElement) {
+    if (!isci || !formElement) return;
+
+    if (idInputElement) idInputElement.value = isci.id || '';
+    
+    // Formdaki her bir inputu isci nesnesindeki karşılık gelen değerle doldur
+    formElement.querySelector('#isciAdSoyadInput').value = isci.adSoyad || '';
+    formElement.querySelector('#isciPozisyonInput').value = isci.pozisyon || '';
+    formElement.querySelector('#isciGunlukUcretInput').value = isci.gunlukUcret || '';
+    formElement.querySelector('#isciSaatlikUcretInput').value = isci.saatlikUcret || '';
+    formElement.querySelector('#isciParaBirimiInput').value = isci.paraBirimi || 'TL';
+    formElement.querySelector('#isciIseBaslamaTarihiInput').value = isci.iseBaslamaTarihi || '';
+    formElement.querySelector('#isciAktifCheckbox').checked = typeof isci.aktif === 'boolean' ? isci.aktif : true;
+    formElement.querySelector('#isciTelefonInput').value = isci.telefon || '';
+    formElement.querySelector('#isciEmailInput').value = isci.email || '';
+    formElement.querySelector('#isciAdresInput').value = isci.adres || '';
+    formElement.querySelector('#isciNotlarInput').value = isci.notlar || '';
+
+    const submitButton = formElement.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.textContent = 'Güncelle'; // Buton metnini 'Güncelle' yap
+        submitButton.classList.remove('btn-primary');
+        submitButton.classList.add('btn-warning'); // Güncelleme için farklı bir stil (isteğe bağlı)
+    }
+}
+
 // Diğer UI fonksiyonları buraya eklenecek... 

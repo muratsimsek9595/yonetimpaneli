@@ -77,37 +77,24 @@ export async function deleteFiyat(id) {
     return fetchWrapper(`${API_BASE_URL}/fiyatlar.php?id=${id}`, { method: 'DELETE' });
 }
 
-// Teklif API Fonksiyonları (Henüz backend implementasyonu yok, test için hata fırlatacak)
+// Teklif API Fonksiyonları
 export async function getTeklifler() {
     // return Promise.resolve(DUMMY_TEKLIFLER); // Test için doğrudan dummy data döndürebilir
-    return fetchWrapper(`${API_BASE_URL}/teklifler.php`); // Hata fırlatıp script.js'deki dummy datayı tetikler
+    return fetchWrapper(`${API_BASE_URL}/teklifler.php`);
 }
 
 export async function saveTeklif(teklifData, id = null) {
     const url = id ? `${API_BASE_URL}/teklifler.php?id=${id}` : `${API_BASE_URL}/teklifler.php`;
     const method = id ? 'PUT' : 'POST';
-    // Gerçek API çağrısı yerine geçici mesaj
-    // return fetchWrapper(url, {
-    //     method: method,
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify(teklifData),
-    // });
-    console.warn(`API.saveTeklif çağrıldı (ID: ${id}), ancak backend henüz hazır değil.`);
-    const newId = id || `dtk${Date.now()}`;
-    return Promise.resolve({ 
-        success: true, 
-        message: id ? 'Teklif başarıyla güncellendi (simülasyon).': 'Teklif başarıyla kaydedildi (simülasyon).', 
-        data: { ...teklifData, id: newId } 
+    return fetchWrapper(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(teklifData),
     });
 }
 
 export async function deleteTeklif(id) {
-    // return fetchWrapper(`${API_BASE_URL}/teklifler.php?id=${id}`, { method: 'DELETE' });
-    console.warn(`API.deleteTeklif çağrıldı (ID: ${id}), ancak backend henüz hazır değil.`);
-    return Promise.resolve({ 
-        success: true, 
-        message: 'Teklif başarıyla silindi (simülasyon).' 
-    });
+    return fetchWrapper(`${API_BASE_URL}/teklifler.php?id=${id}`, { method: 'DELETE' });
 }
 
 // Müşteri API Fonksiyonları
@@ -127,4 +114,23 @@ export async function saveMusteri(musteriData, id = null) {
 
 export async function deleteMusteri(id) {
     return fetchWrapper(`${API_BASE_URL}/musteriler.php?id=${id}`, { method: 'DELETE' });
+}
+
+// İşçi API Fonksiyonları
+export async function getIsciler() {
+    return fetchWrapper(`${API_BASE_URL}/isciler.php`);
+}
+
+export async function saveIsci(isciData, id = null) {
+    const url = id ? `${API_BASE_URL}/isciler.php?id=${id}` : `${API_BASE_URL}/isciler.php`;
+    const method = id ? 'PUT' : 'POST';
+    return fetchWrapper(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(isciData),
+    });
+}
+
+export async function deleteIsci(id) {
+    return fetchWrapper(`${API_BASE_URL}/isciler.php?id=${id}`, { method: 'DELETE' });
 } 

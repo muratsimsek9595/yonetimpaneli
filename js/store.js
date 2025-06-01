@@ -294,6 +294,67 @@ export function removeMusteriByIdFromStore(musteriId) {
     }
 }
 
+// --- İşçiler State ---
+let isciler = [];
+
+export function getIscilerState() {
+    return [...isciler]; // Dizinin kopyasını döndür
+}
+
+export function setIscilerState(newIsciler) {
+    if (Array.isArray(newIsciler)) {
+        isciler = [...newIsciler]; // Yeni diziyi kopyala
+        // Veri bütünlüğü için sıralama (isteğe bağlı ama genellikle iyi bir pratik)
+        isciler.sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
+        notify('iscilerChanged', isciler);
+    } else {
+        console.error("setIscilerState: newIsciler bir dizi olmalıdır.", newIsciler);
+        isciler = []; // Hata durumunda boşalt
+        notify('iscilerChanged', isciler);
+    }
+}
+
+export function addIsciToState(isci) {
+    if (isci && typeof isci === 'object' && isci.id) {
+        const index = isciler.findIndex(i => i.id === isci.id);
+        if (index === -1) {
+            isciler.push(isci);
+        } else {
+            // Eğer ID varsa güncelle (saveIsci hem ekleme hem güncelleme için kullanılabilir)
+            isciler[index] = { ...isciler[index], ...isci };
+        }
+        isciler.sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
+        notify('iscilerChanged', isciler);
+    } else {
+        console.error("addIsciToState: Geçersiz işçi nesnesi veya ID eksik.", isci);
+    }
+}
+
+export function updateIsciInState(id, updatedIsciData) {
+    const index = isciler.findIndex(i => i.id === id);
+    if (index !== -1) {
+        isciler[index] = { ...isciler[index], ...updatedIsciData };
+        isciler.sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
+        notify('iscilerChanged', isciler);
+    } else {
+        console.warn(`updateIsciInState: Güncellenecek işçi bulunamadı. ID: ${id}`);
+    }
+}
+
+export function removeIsciFromState(id) {
+    const initialLength = isciler.length;
+    isciler = isciler.filter(i => i.id !== id);
+    if (isciler.length < initialLength) {
+        notify('iscilerChanged', isciler);
+    } else {
+        console.warn(`removeIsciFromState: Silinecek işçi bulunamadı. ID: ${id}`);
+    }
+}
+
+export function getIsciByIdState(id) {
+    return isciler.find(i => i.id === id) || null;
+}
+
 // Başlangıçta boş state ile olayları tetikleyebiliriz (opsiyonel)
 // Örneğin, uygulama ilk yüklendiğinde boş listelerle ilgili olayları tetiklemek için:
 // document.addEventListener('DOMContentLoaded', () => {
