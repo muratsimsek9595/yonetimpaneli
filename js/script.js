@@ -354,7 +354,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function malzemeleriYukle() {
         try {
             const apiUrunler = await fetchMalzemeler();
-            console.log("[script.js] API'den gelen ürünler:", apiUrunler);
             setUrunler(apiUrunler && Array.isArray(apiUrunler) ? apiUrunler : []);
         } catch (error) {
             globalHataYakala(error, 'Malzemeler yüklenirken bir sorun oluştu.');
@@ -366,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function tedarikcileriYukle() {
         try {
             const apiTedarikciler = await fetchTedarikciler();
-            console.log("[script.js] API'den gelen tedarikçiler:", apiTedarikciler);
             setTedarikciler(apiTedarikciler && Array.isArray(apiTedarikciler) ? apiTedarikciler : []);
         } catch (error) {
             globalHataYakala(error, 'Tedarikçiler yüklenirken bir sorun oluştu.');
@@ -378,7 +376,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fiyatlariYukle() {
         try {
             const tumGelenFiyatlar = await fetchFiyatlar();
-            console.log("[script.js] API'den gelen fiyatlar:", tumGelenFiyatlar);
             setFiyatlar(tumGelenFiyatlar && Array.isArray(tumGelenFiyatlar) ? tumGelenFiyatlar : []);
         } catch (error) {
             globalHataYakala(error, 'Fiyatlar yüklenirken bir sorun oluştu.');
@@ -408,8 +405,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Ürünler değiştiğinde UI'ı güncelle
     subscribe('urunlerChanged', (guncelUrunler) => {
-        console.log("[script.js] 'urunlerChanged' aboneliği tetiklendi, alınan ürünler:", guncelUrunler);
-        console.log("[script.js] urunListesiTablosuBody:", urunListesiTablosuBody);
         guncelleUrunListesiTablosu(guncelUrunler, urunListesiTablosuBody);
         populeEtUrunSecimDropdown(guncelUrunler, grafikUrunSecimi, "-- Ürün Seçiniz --", true, null);
         guncelleGrafikTedarikciFiltresi();
@@ -419,8 +414,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Tedarikçiler değiştiğinde UI'ı güncelle
     subscribe('tedarikcilerChanged', (guncelTedarikciler) => {
-        console.log("[script.js] 'tedarikcilerChanged' aboneliği tetiklendi, alınan tedarikçiler:", guncelTedarikciler);
-        console.log("[script.js] tedarikciListesiTablosuBody:", tedarikciListesiTablosuBody);
         guncelleTedarikciListesiTablosu(guncelTedarikciler, tedarikciListesiTablosuBody);
         populeTedarikciDropdown(guncelTedarikciler, fiyatGirisTedarikciSecimi, "-- Tedarikçi Seçiniz --");
         guncelleGrafikTedarikciFiltresi();
@@ -428,9 +421,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fiyatlar değiştiğinde UI'ı güncelle
     subscribe('fiyatlarChanged', (guncelFiyatlar) => {
-        console.log("[script.js] 'fiyatlarChanged' aboneliği tetiklendi, alınan fiyatlar:", guncelFiyatlar);
-        console.log("[script.js] sonFiyatlarTablosuBody:", sonFiyatlarTablosuBody);
-        console.log("[script.js] fiyatGrafigiCanvas:", fiyatGrafigiCanvas);
         gosterSonFiyatlarTablosu(guncelFiyatlar, sonFiyatlarTablosuBody, getUrunler(), getTedarikciler(), 5);
         fiyatGrafigi = cizVeyaGuncelleFiyatGrafigi(
             fiyatGrafigiCanvas, 

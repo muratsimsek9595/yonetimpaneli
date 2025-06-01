@@ -38,7 +38,6 @@ export function unsubscribe(eventName, callback) {
  * @param {*} data Abonelere gönderilecek veri.
  */
 function notify(eventName, data) {
-    console.log(`[store.js] Olay tetiklendi (notify): ${eventName}`, data);
     if (listeners[eventName]) {
         listeners[eventName].forEach(callback => {
             try {
@@ -78,7 +77,6 @@ export function getTedarikciById(id) {
  * @param {Array} urunler Yeni ürün listesi.
  */
 export function setUrunler(urunler) {
-    console.log("[store.js] setUrunler çağrıldı, alınan ürünler:", urunler);
     state._urunler = Array.isArray(urunler) ? [...urunler] : [];
     notify('urunlerChanged', getUrunler());
 }
@@ -119,7 +117,6 @@ export function removeUrunById(urunId) {
  * @param {Array} tedarikciler Yeni tedarikçi listesi.
  */
 export function setTedarikciler(tedarikciler) {
-    console.log("[store.js] setTedarikciler çağrıldı, alınan tedarikçiler:", tedarikciler);
     state._tedarikciler = Array.isArray(tedarikciler) ? [...tedarikciler] : [];
     notify('tedarikcilerChanged', getTedarikciler());
 }
@@ -158,7 +155,6 @@ export function removeTedarikciById(tedarikciId) {
  * @param {Array} fiyatlar Yeni fiyat listesi.
  */
 export function setFiyatlar(fiyatlar) {
-    console.log("[store.js] setFiyatlar çağrıldı, alınan fiyatlar:", fiyatlar);
     state._fiyatlar = Array.isArray(fiyatlar) ? [...fiyatlar] : [];
     notify('fiyatlarChanged', getFiyatlar());
 }
