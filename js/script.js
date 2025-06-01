@@ -85,14 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const sonFiyatlarTablosuBody = document.querySelector('#sonFiyatlarTablosu tbody');
 
     // Veri Saklama (LocalStorage)
-    let urunler = JSON.parse(localStorage.getItem('urunler')) || [];
-    let fiyatlar = JSON.parse(localStorage.getItem('fiyatlar')) || [];
+    let urunler = []; // Ürünler artık API'den yüklenecek
+    let fiyatlar = []; // Fiyatlar da API'den yüklenecek (sonraki adım)
     let tedarikciler = []; // Tedarikçiler artık API'den yüklenecek
 
     function verileriKaydet() {
-        localStorage.setItem('urunler', JSON.stringify(urunler));
-        localStorage.setItem('fiyatlar', JSON.stringify(fiyatlar));
-        // localStorage.setItem('tedarikciler', JSON.stringify(tedarikciler)); // Bu satır kaldırılacak veya yorum yapılacak
+        // localStorage artık kullanılmayacak
     }
 
     function tedarikciAdiniGetir(tedarikciId) {
@@ -745,15 +743,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const eskiTedarikciListesiniGuncelle = tedarikciListesiniGuncelle;
 
     // ----------- Genel Başlangıç Fonksiyonları -----------
+    async function malzemeleriYukle() {
+        try {
+            const response = await fetch('api/malzemeler.php');
+            if (!response.ok) {
+                let errorText = `Malzeme API hatası: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorText = errorData.message || errorText;
+                } catch (e) { errorText = response.statusText; }
+                throw new Error(errorText);
+            }
+            const apiUrunler = await response.json();
+            urunler = apiUrunler; // Global ürünler listesini güncelle
+            console.log("Malzemeler API'den yüklendi:", urunler);
+            urunListesiniGuncelle(); // Malzemeler yüklendikten sonra tabloyu ve dropdownları güncelle
+        } catch (error) {
+            console.error('Malzemeler API\'den getirilirken hata:', error);
+            urunListesiTablosuBody.innerHTML = '<tr><td colspan="3">Malzemeler yüklenirken bir hata oluştu.</td></tr>';
+        }
+    }
+
     async function initializePageData() {
         console.log("Sayfa verileri yükleniyor...");
-        await tedarikciListesiniGuncelle(); // API'den tedarikçileri yükle
-        urunListesiniGuncelle(); // Lokal depolamadan ürünleri yükle
-        sonFiyatlariGuncelle(); // Lokal depolamadan son fiyatları yükle
-        // Grafik ve diğer UI elemanları için başlangıç durumları burada ayarlanabilir
-        // Örneğin, ilk ürün seçiliyse grafiği direkt çizdirebilirsiniz.
-        // grafigiOlusturVeyaGuncelle(); // Eğer başlangıçta bir grafik gösterilecekse
-        console.log("Sayfa verileri yüklendi.");
+        await tedarikciListesiniGuncelle();
+        await malzemeleriYukle();
+        // await fiyatlariYukle(); // Bu fonksiyon daha sonra eklenecek
+
+        // Günlük fiyat girişi için tarih alanını bugüne ayarla
+        const gunlukTarihInput = document.getElementById('gunlukTarihInput');
+        if (gunlukTarihInput) {
+            const today = new Date().toISOString().split('T')[0];
+            gunlukTarihInput.value = today;
+        }
+
+        console.log("Sayfa verileri başarıyla yüklendi.");
     }
 
     // Sayfa yüklendiğinde verileri ve UI'ı hazırla
