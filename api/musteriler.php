@@ -1,6 +1,16 @@
 <?php
-// ÖNEMLİ: Content-Type başlığını, olası HTML hata çıktılarından önce ayarla
+// TÜM BAŞLIKLARI EN BAŞA AL
 header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Max-Age: 3600");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+
+// OPTIONS isteği başlıklar ayarlandıktan sonra ele alınabilir
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -12,33 +22,42 @@ error_reporting(E_ALL);
 // ve karakter setini mysqli_set_charset($conn, "utf8mb4"); ile ayarlar.
 require_once '../config/db_config.php'; 
 
-echo json_encode(["status" => "test_ok_after_db_config", "message" => "API script processed db_config.php", "db_conn_error" => isset($conn) ? $conn->connect_error : "conn_not_set"]);
-exit;
+// Test echo ve exit kaldırıldı
+// echo json_encode(["status" => "test_ok_after_db_config", "message" => "API script processed db_config.php", "db_conn_error" => isset($conn) ? $conn->connect_error : "conn_not_set"]);
+// exit;
+
+// $conn bağlantısının varlığını kontrol et (db_config.php sonrası hemen yapılmalı)
+if (!$conn || $conn->connect_error) { // $conn null olabilir VEYA connect_error set edilmiş olabilir
+    http_response_code(503); 
+    // Content-Type zaten en başta ayarlandığı için burada tekrar set etmeye gerek yok.
+    echo json_encode(array("message" => "Veritabanı bağlantısı kurulamadı.", "error_detail" => ($conn ? $conn->connect_error : "Bağlantı nesnesi oluşturulamadı.")));
+    exit();
+}
 
 $method = $_SERVER['REQUEST_METHOD'];
-
 $id_param = null;
 if (isset($_GET['id'])) {
     $id_param = trim($_GET['id']); 
 }
 
-// CORS Başlıkları (Content-Type zaten yukarıda ayarlandı)
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+// CORS BAŞLIKLARI YUKARI TAŞINDI
+// header("Access-Control-Allow-Origin: *");
+// header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+// header("Access-Control-Max-Age: 3600");
+// header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-if ($method == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+// OPTIONS İSTEĞİ YUKARI TAŞINDI
+// if ($method == 'OPTIONS') {
+//    http_response_code(200);
+//    exit();
+// }
 
-// $conn bağlantısının varlığını kontrol et
-if (!$conn) {
-    http_response_code(503); // Service Unavailable
-    echo json_encode(array("message" => "Veritabanı bağlantısı kurulamadı."));
-    exit();
-}
+// $conn BAĞLANTI KONTROLÜ YUKARI TAŞINDI VE GÜÇLENDİRİLDİ
+// if (!$conn) {
+//    http_response_code(503); 
+//    echo json_encode(array("message" => "Veritabanı bağlantısı kurulamadı."));
+//    exit();
+// }
 
 switch ($method) {
     case 'GET':
