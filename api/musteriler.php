@@ -57,9 +57,9 @@ switch ($method) {
         // exit(); // Test exit kaldırıldı
         break;
     case 'PUT':
-        // updateMusteri($conn, $id_param); // Devre dışı
-        echo json_encode(["status" => "switch_case_put_test_active", "id_param" => $id_param]); 
-        exit();
+        updateMusteri($conn, $id_param); // Devre dışı olan satırı aktif ettim.
+        // echo json_encode(["status" => "switch_case_put_test_active", "id_param" => $id_param]); // Test echo satırını yoruma aldım.
+        // exit(); // exit() zaten updateMusteri içinde var, burada gereksiz olabilir veya kalabilir.
         break;
     case 'DELETE':
         // deleteMusteri($conn, $id_param); // Devre dışı
