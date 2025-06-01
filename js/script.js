@@ -712,49 +712,98 @@ document.addEventListener('DOMContentLoaded', function() {
 
     fiyatGirisMalzemeSecimi.addEventListener('change', guncelleFiyatGirisBirimGostergesi);
 
-    function sonFiyatlariGuncelle(limit = 5) {
+    async function sonFiyatlariGuncelle(limit = 5) {
         sonFiyatlarTablosuBody.innerHTML = '';
-        // Fiyatları tarihe göre tersten sırala ve limiti uygula
-        const sonGirilenler = [...fiyatlar].sort((a, b) => new Date(b.tarih) - new Date(a.tarih)).slice(0, limit);
-        sonGirilenler.forEach(fiyat => {
-            const urun = urunler.find(u => u.id === fiyat.urunId);
-            if (urun) {
+        try {
+            const response = await fetch(`api/fiyatlar.php?limit=${limit}&sortBy=tarih&order=DESC`); // API'den son N fiyatı çek
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || `Son fiyatlar API hatası: ${response.status} - ${response.statusText}`);
+            }
+            const sonGirilenler = await response.json();
+            fiyatlar = sonGirilenler; // Global fiyatlar dizisini de güncelleyebiliriz veya sadece bu fonksiyon için kullanabiliriz.
+
+            if (sonGirilenler.length === 0) {
+                sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="5">Kayıtlı fiyat girişi bulunamadı.</td></tr>';
+                return;
+            }
+
+            sonGirilenler.forEach(fiyat => {
+                // API yanıtında malzeme_adi, malzeme_birim_adi, tedarikci_adi zaten geliyor olmalı (JOIN ile)
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${urun.ad}</td>
-                    <td>${fiyat.fiyat.toFixed(2)}</td>
-                    <td>${urun.birimAdi || '-'}</td>
+                    <td>${fiyat.malzeme_adi || '-'}</td>
+                    <td>${parseFloat(fiyat.fiyat).toFixed(2)}</td>
+                    <td>${fiyat.malzeme_birim_adi || '-'}</td>
                     <td>${new Date(fiyat.tarih).toLocaleDateString('tr-TR')}</td>
-                    <td>${tedarikciAdiniGetir(fiyat.tedarikciId)}</td>
+                    <td>${fiyat.tedarikci_adi || '-'}</td>
                 `;
                 sonFiyatlarTablosuBody.appendChild(tr);
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Son fiyatlar yüklenirken hata:', error);
+            sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="5">Son fiyatlar yüklenirken bir hata oluştu.</td></tr>';
+        }
     }
 
-    gunlukFiyatForm.addEventListener('submit', function(event) {
+    gunlukFiyatForm.addEventListener('submit', async function(event) {
         event.preventDefault();
-        const urunId = fiyatGirisMalzemeSecimi.value;
-        const tedarikciId = fiyatGirisTedarikciSecimi.value;
-        const fiyat = parseFloat(gunlukFiyatInput.value);
-        const tarih = gunlukTarihInput.value;
+        const malzeme_id = fiyatGirisMalzemeSecimi.value;
+        const tedarikci_id = fiyatGirisTedarikciSecimi.value;
+        const fiyatInput = document.getElementById('gunlukFiyatInput'); // ID'yi direkt alalım
+        const fiyatValue = fiyatInput.value;
+        const tarih = document.getElementById('gunlukTarihInput').value; // ID'yi direkt alalım
 
-        if (!urunId || !tedarikciId || isNaN(fiyat) || !tarih) {
+        if (!malzeme_id || !tedarikci_id || fiyatValue === '' || !tarih) {
             alert('Lütfen malzeme, tedarikçi seçin ve tüm alanları doğru bir şekilde doldurun.');
             return;
         }
+        
+        const fiyatFloat = parseFloat(fiyatValue);
+        if (isNaN(fiyatFloat)) {
+            alert('Fiyat geçerli bir sayı olmalıdır.');
+            return;
+        }
 
-        fiyatlar.push({ urunId, tedarikciId, fiyat, tarih });
-        verileriKaydet();
-        alert('Fiyat başarıyla kaydedildi!');
-        gunlukFiyatForm.reset();
-        fiyatGirisMalzemeSecimi.value = '';
-        fiyatGirisTedarikciSecimi.value = '';
-        guncelleFiyatGirisBirimGostergesi();
-        const today = new Date().toISOString().split('T')[0];
-        gunlukTarihInput.value = today;
-        sonFiyatlariGuncelle();
-        grafigiOlusturVeyaGuncelle();
+        const fiyatVerisi = {
+            malzeme_id: malzeme_id,
+            tedarikci_id: tedarikci_id,
+            fiyat: fiyatFloat,
+            tarih: tarih
+        };
+
+        try {
+            const response = await fetch('api/fiyatlar.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(fiyatVerisi),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
+                throw new Error(errorData.message || `Fiyat eklenirken API hatası: ${response.status}`);
+            }
+
+            const sonuc = await response.json();
+            console.log(sonuc.message, sonuc);
+            // alert(sonuc.message);
+
+            gunlukFiyatForm.reset();
+            //fiyatGirisMalzemeSecimi.value = ''; // Reset sonrası zaten boş olur
+            //fiyatGirisTedarikciSecimi.value = ''; // Reset sonrası zaten boş olur
+            guncelleFiyatGirisBirimGostergesi(); 
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('gunlukTarihInput').value = today;
+            
+            await sonFiyatlariGuncelle(); // Son fiyatlar listesini API'den tazele
+            // await grafigiOlusturVeyaGuncelle(); // Grafik de API'den güncellenecek
+
+        } catch (error) {
+            console.error('Fiyat kaydedilirken hata:', error);
+            alert(`Hata: ${error.message}`);
+        }
     });
     
     // ----------- Günlük Fiyat Girişi Kodları Bitiş -----------
@@ -799,15 +848,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Sayfa verileri yükleniyor...");
         await tedarikciListesiniGuncelle();
         await malzemeleriYukle();
-        // await fiyatlariYukle(); // Bu fonksiyon daha sonra eklenecek
-
-        // Günlük fiyat girişi için tarih alanını bugüne ayarla
+        await sonFiyatlariGuncelle(); // Sayfa ilk yüklendiğinde son fiyatları API'den çek
+        
         const gunlukTarihInput = document.getElementById('gunlukTarihInput');
         if (gunlukTarihInput) {
             const today = new Date().toISOString().split('T')[0];
             gunlukTarihInput.value = today;
         }
-
         console.log("Sayfa verileri başarıyla yüklendi.");
     }
 
