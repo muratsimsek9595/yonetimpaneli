@@ -38,56 +38,7 @@ if (isset($_GET['id'])) {
 }
 // --- İstek metodu ve ID parametresi alma sonu ---
 
-echo json_encode([
-    "status" => "musteriler_api_method_id_parsed", 
-    "message" => "db_config yüklendi, metod ve ID parse edildi.",
-    "detected_method" => $method,
-    "detected_id_param" => $id_param
-]);
-exit();
-
-/* // GERİ KALAN KISIM HALA DEVRE DIŞI
-$method = $_SERVER['REQUEST_METHOD'];
-$id_param = null;
-if (isset($_GET['id'])) {
-    $id_param = trim($_GET['id']); 
-}
-
-switch ($method) {
-    case 'GET':
-        if ($id_param !== null) {
-            // getMusteri($conn, $id_param); // Devre dışı
-             echo json_encode(["message" => "getMusteri devre dışı"]); exit();
-        } else {
-            // getMusteriler($conn); // Devre dışı
-            echo json_encode(["message" => "getMusteriler devre dışı"]); exit();
-        }
-        break;
-    case 'POST':
-        // addMusteri($conn); // Devre dışı
-        echo json_encode(["message" => "addMusteri devre dışı"]); exit();
-        break;
-    case 'PUT':
-        // updateMusteri($conn, $id_param); // Devre dışı
-        echo json_encode(["message" => "updateMusteri devre dışı"]); exit();
-        break;
-    case 'DELETE':
-        // deleteMusteri($conn, $id_param); // Devre dışı
-        echo json_encode(["message" => "deleteMusteri devre dışı"]); exit();
-        break;
-    default:
-        http_response_code(405); 
-        echo json_encode(array("message" => "Desteklenmeyen Metod: " . $method));
-        break;
-}
-
-// Fonksiyon tanımları da geçici olarak burada kalabilir veya silinebilir, nasılsa çağrılmıyorlar.
-// ... (getMusteriler, getMusteri, addMusteri, updateMusteri, deleteMusteri fonksiyonları) ...
-
-if (isset($conn)) {
-    $conn->close();
-}
-*/ // GEÇİCİ OLARAK DEVRE DIŞI BIRAKILDI SONU
+// --- ÖNCEKİ TEST ÇIKTISI VE EXIT KALDIRILDI ---
 
 // --- switch bloğunu etkinleştir, içindeki asıl çağrılar yorumlu kalsın ---
 switch ($method) {
@@ -120,8 +71,17 @@ switch ($method) {
     default:
         http_response_code(405); 
         echo json_encode(["status" => "switch_case_default", "message" => "Desteklenmeyen Metod: " . $method]);
-        exit(); // default case için de exit eklendi
+        exit();
         break;
 }
 // --- switch bloğu sonu ---
+
+/* // FONKSİYON TANIMLARI VE BAĞLANTI KAPATMA HALA DEVRE DIŞI
+// Fonksiyon tanımları da geçici olarak burada kalabilir veya silinebilir, nasılsa çağrılmıyorlar.
+// ... (getMusteriler, getMusteri, addMusteri, updateMusteri, deleteMusteri fonksiyonları) ...
+
+if (isset($conn)) {
+    $conn->close();
+}
+*/ // GEÇİCİ OLARAK DEVRE DIŞI BIRAKILDI SONU
 ?> 
