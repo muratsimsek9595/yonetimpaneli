@@ -60,11 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadMusteriler() {
         if (!musteriListesiTablosuBody) return;
         try {
-            const musteriler = await getMusteriler(); // getMusterilerAPI -> getMusteriler
+            const response = await getMusteriler(); // API yanıtının tamamını al
             musteriListesiTablosuBody.innerHTML = ''; // Önceki kayıtları temizle
 
-            if (musteriler && musteriler.length > 0) {
-                musteriler.forEach(musteri => {
+            if (response && response.status === 'success' && response.data && response.data.length > 0) {
+                response.data.forEach(musteri => { // response.data dizisini kullan
                     const row = musteriListesiTablosuBody.insertRow();
                     row.innerHTML = `
                         <td>${musteri.adi || ''}</td>
@@ -81,7 +81,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 });
             } else {
-                musteriListesiTablosuBody.innerHTML = '<tr><td colspan="8">Kayıtlı müşteri bulunamadı.</td></tr>';
+                // Eğer status 'success' değilse veya data yoksa/boşsa
+                const mesaj = (response && response.message && response.status !== 'success') ? response.message : 'Kayıtlı müşteri bulunamadı.';
+                musteriListesiTablosuBody.innerHTML = `<tr><td colspan="8">${mesaj}</td></tr>`;
             }
             addEventListenersToButtons(); // Butonlara event listener'ları ata
         } catch (error) {
