@@ -165,4 +165,4 @@ function deleteMalzeme($conn, $id) {
 }
 
 $conn->close();
-?> 
+?>

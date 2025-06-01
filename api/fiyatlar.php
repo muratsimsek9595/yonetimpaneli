@@ -226,4 +226,4 @@ function handleBulkDelete($conn, $params) {
 
 
 $conn->close();
-?> 
+?>
