@@ -1,5 +1,8 @@
 <?php
+// Çıktı tamponlamasını başlat ve mevcut çıktıları temizle
 ob_start();
+ob_clean();
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -17,6 +20,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 
 if ($method == 'OPTIONS') {
     http_response_code(200);
+    ob_end_clean();
     exit();
 }
 
@@ -56,14 +60,14 @@ function addFiyat($conn) {
 
         // Tarih formatını kontrol et (YYYY-AA-GG)
         if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $tarih)) {
-            ob_clean();
+            ob_end_clean();
             http_response_code(400);
             echo json_encode(array("message" => "Geçersiz tarih formatı. YYYY-AA-GG kullanılmalı."));
             return;
         }
         // Fiyatın sayısal olup olmadığını kontrol et
         if (!is_numeric($fiyat)) {
-            ob_clean();
+            ob_end_clean();
             http_response_code(400);
             echo json_encode(array("message" => "Fiyat sayısal bir değer olmalı."));
             return;
@@ -73,7 +77,7 @@ function addFiyat($conn) {
         
         if ($conn->query($sql) === TRUE) {
             $last_id = $conn->insert_id;
-            ob_clean();
+            ob_end_clean();
             http_response_code(201); // Created
             echo json_encode(array(
                 "message" => "Fiyat başarıyla eklendi.", 
@@ -84,12 +88,12 @@ function addFiyat($conn) {
                 "tarih" => $tarih
             ));
         } else {
-            ob_clean();
+            ob_end_clean();
             http_response_code(500);
             echo json_encode(array("message" => "Fiyat eklenirken SQL hatası oluştu.", "error" => $conn->error));
         }
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(400); // Bad Request
         echo json_encode(array("message" => "Fiyat eklemek için gerekli alanlar (malzeme_id, tedarikci_id, fiyat, tarih) eksik."));
     }
@@ -135,10 +139,10 @@ function getFiyatlar($conn, $params) {
                 $fiyatlar[] = $row;
             }
         }
-        ob_clean();
+        ob_end_clean();
         echo json_encode($fiyatlar);
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(500);
         echo json_encode(
             array("message" => "Fiyatlar getirilirken bir SQL hatası oluştu.", "error" => $conn->error, "sql_debug" => $sql)
@@ -148,7 +152,7 @@ function getFiyatlar($conn, $params) {
 
 function deleteFiyat($conn, $id) {
     if (empty($id)) {
-        ob_clean();
+        ob_end_clean();
         http_response_code(400);
         echo json_encode(array("message" => "Silinecek fiyat ID'si belirtilmedi."));
         return;
@@ -162,7 +166,7 @@ function deleteFiyat($conn, $id) {
     $resultCheck = $stmtCheck->get_result();
 
     if ($resultCheck->num_rows === 0) {
-        ob_clean();
+        ob_end_clean();
         http_response_code(404); // Not Found
         echo json_encode(array("message" => "Silinecek fiyat kaydı bulunamadı."));
         $stmtCheck->close();
@@ -176,16 +180,16 @@ function deleteFiyat($conn, $id) {
 
     if ($stmt->execute()) {
         if ($stmt->affected_rows > 0) {
-            ob_clean();
+            ob_end_clean();
             echo json_encode(array("message" => "Fiyat kaydı başarıyla silindi."));
         } else {
             // Bu durum normalde yukarıdaki varlık kontrolü ile yakalanmalı, ama bir güvenlik önlemi
-            ob_clean();
+            ob_end_clean();
             http_response_code(404);
             echo json_encode(array("message" => "Silinecek fiyat kaydı bulunamadı veya zaten silinmiş."));
         }
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(500);
         echo json_encode(array("message" => "Fiyat kaydı silinirken SQL hatası oluştu.", "error" => $stmt->error));
     }
@@ -206,24 +210,23 @@ function handleBulkDelete($conn, $params) {
         $type = 'tedarikçi';
         $sql = "DELETE FROM fiyatlar WHERE tedarikci_id = '$item_id'";
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(400);
         echo json_encode(array("message" => "Silme için malzeme_id veya tedarikci_id belirtilmedi."));
         return;
     }
 
     if ($conn->query($sql) === TRUE) {
-        ob_clean();
+        ob_end_clean();
         echo json_encode(array("message" => ucfirst($type) . " ID'si '{$item_id}' olan ilişkili tüm fiyatlar başarıyla silindi."));
         $deleted = true;
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(500);
         echo json_encode(array("message" => ucfirst($type) . " ID'si '{$item_id}' olan ilişkili fiyatlar silinirken SQL hatası oluştu.", "error" => $conn->error));
     }
     // Bu fonksiyon, malzeme veya tedarikçi silinirken ana API dosyalarından çağrılabilir.
 }
-
 
 $conn->close();
 ?>

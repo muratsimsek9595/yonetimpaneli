@@ -1,5 +1,8 @@
 <?php
+// Çıktı tamponlamasını başlat ve mevcut çıktıları temizle
 ob_start();
+ob_clean();
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -17,6 +20,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 
 if ($method == 'OPTIONS') {
     http_response_code(200);
+    ob_end_clean();
     exit();
 }
 
@@ -62,7 +66,7 @@ function getTedarikciler($conn) {
             $tedarikciler[] = $row;
         }
     }
-    ob_clean();
+    ob_end_clean();
     echo json_encode($tedarikciler);
 }
 
@@ -71,10 +75,10 @@ function getTedarikci($conn, $id) {
     $result = $conn->query($sql);
     if ($result && $result->num_rows > 0) {
         $tedarikci = $result->fetch_assoc();
-        ob_clean();
+        ob_end_clean();
         echo json_encode($tedarikci);
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(404);
         echo json_encode(array("message" => "Tedarikçi bulunamadı."));
     }
@@ -95,7 +99,7 @@ function addTedarikci($conn) {
         
         if ($stmt->execute()) {
             $last_id = $conn->insert_id;
-            ob_clean();
+            ob_end_clean();
             http_response_code(201); // Created
             echo json_encode(array(
                 "message" => "Tedarikçi başarıyla eklendi.", 
@@ -108,13 +112,13 @@ function addTedarikci($conn) {
                 "not_alani" => $not_alani
             ));
         } else {
-            ob_clean();
+            ob_end_clean();
             http_response_code(500);
             echo json_encode(array("message" => "Tedarikçi eklenirken hata oluştu.", "error" => $stmt->error));
         }
         $stmt->close();
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(400); // Bad Request
         echo json_encode(array("message" => "Tedarikçi adı gönderilmedi."));
     }
@@ -141,7 +145,7 @@ function updateTedarikci($conn, $id) {
             $stmt->bind_param("ssssssi", $ad, $yetkili_kisi, $telefon, $email, $adres, $not_alani, $id);
             
             if ($stmt->execute()) {
-                ob_clean();
+                ob_end_clean();
                 echo json_encode(array(
                     "message" => "Tedarikçi başarıyla güncellendi.", 
                     "id" => $id, 
@@ -153,18 +157,18 @@ function updateTedarikci($conn, $id) {
                     "not_alani" => $not_alani
                 ));
             } else {
-                ob_clean();
+                ob_end_clean();
                 http_response_code(500);
                 echo json_encode(array("message" => "Tedarikçi güncellenirken hata oluştu.", "error" => $stmt->error));
             }
             $stmt->close();
         } else {
-            ob_clean();
+            ob_end_clean();
             http_response_code(404); // Not Found
             echo json_encode(array("message" => "Güncellenecek tedarikçi bulunamadı."));
         }
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(400);
         echo json_encode(array("message" => "Güncellenecek tedarikçi adı gönderilmedi."));
     }
@@ -181,15 +185,15 @@ function deleteTedarikci($conn, $id) {
 
         $sql = "DELETE FROM tedarikciler WHERE id = '$id'";
         if ($conn->query($sql) === TRUE) {
-            ob_clean();
+            ob_end_clean();
             echo json_encode(array("message" => "Tedarikçi başarıyla silindi."));
         } else {
-            ob_clean();
+            ob_end_clean();
             http_response_code(500);
             echo json_encode(array("message" => "Tedarikçi silinirken hata oluştu.", "error" => $conn->error));
         }
     } else {
-        ob_clean();
+        ob_end_clean();
         http_response_code(404); // Not Found
         echo json_encode(array("message" => "Silinecek tedarikçi bulunamadı."));
     }

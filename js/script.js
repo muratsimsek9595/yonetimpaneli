@@ -764,12 +764,26 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const tumFiyatlarApiUrl = 'api/fiyatlar.php'; 
             console.log("Tüm fiyatlar için API isteği yapılacak:", tumFiyatlarApiUrl);
-            const response = await fetch(tumFiyatlarApiUrl); 
+            const response = await fetch(tumFiyatlarApiUrl);
+            console.log("Fiyatlar API yanıtı durumu:", response.status, response.statusText);
+            console.log("Fiyatlar API yanıtı headers:", response.headers.get('content-type'));
+            
+            // Önce response text olarak al ve kontrol et
+            const responseText = await response.text();
+            console.log("Fiyatlar API ham yanıtı:", responseText);
+            
             if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.message || `Tüm fiyatlar API hatası: ${response.status} - ${response.statusText}`);
+                throw new Error(`Fiyatlar API hatası: ${response.status} - ${response.statusText}\nYanıt: ${responseText}`);
             }
-            const tumGelenFiyatlar = await response.json();
+            
+            // JSON parse etmeyi dene
+            let tumGelenFiyatlar;
+            try {
+                tumGelenFiyatlar = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error("Fiyatlar JSON parse hatası:", parseError);
+                throw new Error(`Fiyatlar API yanıtı geçerli JSON değil: ${responseText}`);
+            }
             
             fiyatlar = tumGelenFiyatlar.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
             console.log("Global fiyatlar güncellendi (API\'den çekildi), toplam:", fiyatlar.length, "adet.");
@@ -923,15 +937,26 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log("API isteği yapılacak: api/malzemeler.php"); // Kontrol için eklendi
             const response = await fetch('api/malzemeler.php');
+            console.log("API yanıtı durumu:", response.status, response.statusText);
+            console.log("API yanıtı headers:", response.headers.get('content-type'));
+            
+            // Önce response text olarak al ve kontrol et
+            const responseText = await response.text();
+            console.log("API ham yanıtı:", responseText);
+            
             if (!response.ok) {
-                let errorText = `Malzeme API hatası: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorText = errorData.message || errorText;
-                } catch (e) { errorText = response.statusText; }
-                throw new Error(errorText);
+                throw new Error(`Malzeme API hatası: ${response.status} - ${response.statusText}\nYanıt: ${responseText}`);
             }
-            const apiUrunler = await response.json();
+            
+            // JSON parse etmeyi dene
+            let apiUrunler;
+            try {
+                apiUrunler = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error("JSON parse hatası:", parseError);
+                throw new Error(`API yanıtı geçerli JSON değil: ${responseText}`);
+            }
+            
             urunler = apiUrunler; // Global ürünler listesini güncelle
             console.log("Malzemeler API'den yüklendi:", urunler);
             urunListesiniGuncelle(); // Malzemeler yüklendikten sonra tabloyu ve dropdownları güncelle
@@ -945,18 +970,26 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("tedarikcileriYukle fonksiyonu çağrıldı.");
         try {
             const response = await fetch('api/tedarikciler.php');
+            console.log("Tedarikçi API yanıtı durumu:", response.status, response.statusText);
+            console.log("Tedarikçi API yanıtı headers:", response.headers.get('content-type'));
+            
+            // Önce response text olarak al ve kontrol et
+            const responseText = await response.text();
+            console.log("Tedarikçi API ham yanıtı:", responseText);
+            
             if (!response.ok) {
-                let errorText = `Tedarikçi API hatası: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorText = errorData.message || errorText;
-                } catch (e) { 
-                    // JSON parse edilemezse veya mesaj yoksa statusText'i kullan
-                    errorText = response.statusText || errorText;
-                }
-                throw new Error(errorText);
+                throw new Error(`Tedarikçi API hatası: ${response.status} - ${response.statusText}\nYanıt: ${responseText}`);
             }
-            const apiTedarikciler = await response.json();
+            
+            // JSON parse etmeyi dene
+            let apiTedarikciler;
+            try {
+                apiTedarikciler = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error("JSON parse hatası:", parseError);
+                throw new Error(`API yanıtı geçerli JSON değil: ${responseText}`);
+            }
+            
             console.log("API'den gelen tedarikçiler:", apiTedarikciler); // API yanıtını kontrol et
             tedarikciler = Array.isArray(apiTedarikciler) ? apiTedarikciler : []; // Global tedarikçiler listesini güncelle, array değilse boş array ata
             tedarikciListesiniGuncelle(); // Listeyi ve ilgili dropdownları güncelle
@@ -970,6 +1003,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function initializePageData() {
         console.log("Sayfa verileri yükleniyor...");
+        
+        // Önce test API'si ile bağlantıyı kontrol et
+        console.log("Test API çağrısı yapılıyor...");
+        try {
+            const testResponse = await fetch('api/test.php');
+            console.log("Test API yanıtı durumu:", testResponse.status, testResponse.statusText);
+            console.log("Test API yanıtı headers:", testResponse.headers.get('content-type'));
+            
+            const testResponseText = await testResponse.text();
+            console.log("Test API ham yanıtı:", testResponseText);
+            
+            if (testResponse.ok) {
+                try {
+                    const testData = JSON.parse(testResponseText);
+                    console.log("Test API başarılı:", testData);
+                } catch (parseError) {
+                    console.error("Test API JSON parse hatası:", parseError);
+                }
+            } else {
+                console.error("Test API başarısız:", testResponse.status, testResponseText);
+            }
+        } catch (error) {
+            console.error("Test API çağrısında hata:", error);
+        }
+        
         await tedarikcileriYukle(); // Değişiklik burada: tedarikciListesiniGuncelle -> tedarikcileriYukle
         await malzemeleriYukle();
         
