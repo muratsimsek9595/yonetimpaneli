@@ -48,15 +48,13 @@ switch ($method) {
             echo json_encode(["status" => "switch_case_get_with_id_test_active", "id_param" => $id_param]); 
             exit();
         } else {
-            getMusteriler($conn); // <<-- BU ÇAĞRI ŞİMDİ AKTİF
-            // echo json_encode(["status" => "switch_case_get_all"]); // Test echo kaldırıldı
-            // exit(); // Test exit kaldırıldı
+            getMusteriler($conn); 
         }
         break;
     case 'POST':
-        // addMusteri($conn); // Devre dışı
-        echo json_encode(["status" => "switch_case_post_test_active"]); 
-        exit();
+        addMusteri($conn); // <<-- BU ÇAĞRI ŞİMDİ AKTİF
+        // echo json_encode(["status" => "switch_case_post_test_active"]); // Test echo kaldırıldı
+        // exit(); // Test exit kaldırıldı
         break;
     case 'PUT':
         // updateMusteri($conn, $id_param); // Devre dışı
