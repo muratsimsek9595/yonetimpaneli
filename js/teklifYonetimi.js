@@ -188,7 +188,7 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
     const urunlerListesi = getUrunler() || []; 
     console.log("[teklifYonetimi.js] getUrunler() sonucu:", urunlerListesi);
 
-    const urunSecenekleri = urunlerListesi.map(urun => `<option value="${urun.id}" data-birim="${urun.birim_adi}">${urun.ad} (${urun.birim_adi})</option>`).join('');
+    const urunSecenekleri = urunlerListesi.map(urun => `<option value="${urun.id}" data-birim="${urun.birim_adi}">${urun.ad.trim()} (${urun.birim_adi})</option>`).join('');
 
     const urunSatiriHTML = `
         <div class="teklif-urun-satiri" id="${satirId}">
@@ -330,7 +330,8 @@ function teklifFormundanVeriAl() {
         const urunId = urunMalzemeElement.value;
         
         const malzemeOptionChecked = urunMalzemeElement.querySelector('option:checked');
-        const malzemeAdi = malzemeOptionChecked ? malzemeOptionChecked.textContent.split(' (')[0] : '';
+        const malzemeAdiText = malzemeOptionChecked ? malzemeOptionChecked.textContent.split(' (')[0] : '';
+        const malzemeAdi = malzemeAdiText.trim();
         const birim = malzemeOptionChecked ? malzemeOptionChecked.dataset.birim : '';
 
         const miktarElement = satir.querySelector('.teklif-urun-miktar');
@@ -353,8 +354,10 @@ function teklifFormundanVeriAl() {
                 malzemeAdi: malzemeAdi,
                 miktar: miktar,
                 birim: birim,
-                birimFiyat: birimFiyat,
-                satirToplami: miktar * birimFiyat
+                kaydedilen_birim_satis_fiyati: birimFiyat,
+                satirToplami: miktar * birimFiyat,
+                kalemTipi: 'malzeme',
+                aciklama: ''
             });
         }
     });
