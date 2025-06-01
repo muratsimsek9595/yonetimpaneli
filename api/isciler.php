@@ -11,6 +11,11 @@ error_reporting(E_ALL);
 
 require_once '../config/db_config.php'; // Veritabanı bağlantısı
 
+// Test: db_config.php yüklendi mi ve temel JSON çalışıyor mu?
+// echo json_encode(["status" => "db_config_loaded", "conn_error" => $conn ? null : "Bağlantı NESNESİ YOK", "conn_connect_error" => $conn ? $conn->connect_error : "N/A"]);
+// if (ob_get_level() > 0) { ob_end_clean(); }
+// exit;
+
 $method = $_SERVER['REQUEST_METHOD'];
 $id = isset($_GET['id']) ? $conn->real_escape_string(trim($_GET['id'])) : null;
 

@@ -455,7 +455,11 @@ subscribe('urunlerChanged', (guncelUrunler) => {
 });
 
 subscribe('musterilerChanged', (guncelMusteriler) => {
-    populeEtMusteriDropdown(guncelMusteriler);
+    if (teklifMusteriSecimi) { // Elementin var olduğundan emin ol
+        populeEtMusteriDropdown(guncelMusteriler, teklifMusteriSecimi, "-- Müşteri Seçiniz --", false);
+    } else {
+        console.error("teklifMusteriSecimi dropdown elementi bulunamadı.");
+    }
 });
 
 // Modül başlangıç fonksiyonunu çağır
