@@ -75,6 +75,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const tedarikciForm = document.getElementById('tedarikciForm');
     const tedarikciIdInput = document.getElementById('tedarikciIdInput');
     const tedarikciAdiInput = document.getElementById('tedarikciAdiInput');
+    const tedarikciYetkiliKisiInput = document.getElementById('tedarikciYetkiliKisi');
+    const tedarikciTelefonInput = document.getElementById('tedarikciTelefon');
+    const tedarikciEmailInput = document.getElementById('tedarikciEmail');
+    const tedarikciAdresInput = document.getElementById('tedarikciAdres');
+    const tedarikciNotInput = document.getElementById('tedarikciNot');
     const tedarikciListesiTablosuBody = document.querySelector('#tedarikciListesiTablosu tbody');
     const tedarikciFormTemizleButton = document.getElementById('tedarikciFormTemizleButton');
 
@@ -283,152 +288,155 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function tedarikciListesiniGuncelle() {
-        try {
-            const response = await fetch('api/tedarikciler.php'); // Güncellendi
-            if (!response.ok) {
-                // HTTP durum kodu 200-299 aralığında değilse hata fırlat
-                let errorText = `API hatası: ${response.status}`;
-                try {
-                    const errorData = await response.json(); // Sunucudan gelen JSON hata mesajını almaya çalış
-                    errorText = errorData.message || errorText;
-                } catch (e) { /* JSON parse edilemezse statusText\'i kullan */ errorText = response.statusText; }
-                throw new Error(errorText);
-            }
-            const apiTedarikciler = await response.json();
-            tedarikciler = apiTedarikciler; // Global tedarikçiler listesini güncelle
-
-            tedarikciListesiTablosuBody.innerHTML = '';
-            if (!Array.isArray(tedarikciler) || tedarikciler.length === 0) {
-                tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="3">Kayıtlı tedarikçi bulunamadı.</td></tr>';
-            } else {
-                tedarikciler.forEach(tedarikci => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${tedarikci.ad}</td>
-                        <td class="actions">
-                            <button class="edit-btn" data-id="${tedarikci.id}">Düzenle</button>
-                            <button class="delete-btn" data-id="${tedarikci.id}">Sil</button>
-                        </td>
-                    `;
-                    tedarikciListesiTablosuBody.appendChild(tr);
-                });
-            }
-            urunTedarikciSeciminiDoldur(); 
-        } catch (error) {
-            console.error('Tedarikçiler API\'den getirilirken hata:', error);
-            tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="3">Tedarikçiler yüklenirken bir hata oluştu.</td></tr>';
+        tedarikciListesiTablosuBody.innerHTML = ''; 
+        if (!Array.isArray(tedarikciler) || tedarikciler.length === 0) {
+            tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="7">Kayıtlı tedarikçi bulunamadı.</td></tr>';
+        } else {
+            tedarikciler.forEach(tedarikci => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${tedarikci.ad || '-'}</td>
+                    <td>${tedarikci.yetkili_kisi || '-'}</td>
+                    <td>${tedarikci.telefon || '-'}</td>
+                    <td>${tedarikci.email || '-'}</td>
+                    <td>${tedarikci.adres || '-'}</td>
+                    <td>${tedarikci.not_alani || '-'}</td>
+                    <td class="actions">
+                        <button class="edit-btn" data-id="${tedarikci.id}">Düzenle</button>
+                        <button class="delete-btn" data-id="${tedarikci.id}">Sil</button>
+                    </td>
+                `;
+                tedarikciListesiTablosuBody.appendChild(tr);
+            });
         }
+        tedarikcileriGunlukFiyatGirisSecimineYukle();
+        guncelleGrafikTedarikciFiltresi();
     }
 
     function tedarikciFormuTemizle() {
         tedarikciForm.reset();
         tedarikciIdInput.value = '';
-        // Diğer inputların temizlenmesi (artık kullanılmıyorlar ama formda kalmış olabilirler)
-        const yetkiliInput = document.getElementById('tedarikciYetkiliKisi');
-        const telefonInput = document.getElementById('tedarikciTelefon');
-        const emailInput = document.getElementById('tedarikciEmail');
-        const adresInput = document.getElementById('tedarikciAdres');
-        if (yetkiliInput) yetkiliInput.value = '';
-        if (telefonInput) telefonInput.value = '';
-        if (emailInput) emailInput.value = '';
-        if (adresInput) adresInput.value = '';
-        
+        tedarikciAdiInput.value = '';
+        tedarikciYetkiliKisiInput.value = '';
+        tedarikciTelefonInput.value = '';
+        tedarikciEmailInput.value = '';
+        tedarikciAdresInput.value = '';
+        tedarikciNotInput.value = '';
         tedarikciFormTemizleButton.style.display = 'none';
         tedarikciAdiInput.focus();
     }
 
-    tedarikciForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const id = tedarikciIdInput.value; 
-        const ad = tedarikciAdiInput.value.trim();
+    if (tedarikciForm) {
+        tedarikciForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const id = tedarikciIdInput.value;
+            const ad = tedarikciAdiInput.value.trim();
+            const yetkili_kisi = tedarikciYetkiliKisiInput.value.trim();
+            const telefon = tedarikciTelefonInput.value.trim();
+            const email = tedarikciEmailInput.value.trim();
+            const adres = tedarikciAdresInput.value.trim();
+            const not_alani = tedarikciNotInput.value.trim();
 
-        if (!ad) {
-            alert('Tedarikçi adı boş bırakılamaz!');
-            return;
-        }
+            if (!ad) {
+                alert('Tedarikçi adı boş bırakılamaz!');
+                return;
+            }
 
-        const tedarikciVerisi = { // Sadece 'ad' alanı gönderiliyor
-            ad: ad
-        };
+            const tedarikciVerisi = {
+                ad: ad,
+                yetkili_kisi: yetkili_kisi,
+                telefon: telefon,
+                email: email,
+                adres: adres,
+                not_alani: not_alani
+            };
 
-        try {
-            let response;
-            let url = 'api/tedarikciler.php'; // Güncellendi
+            let url = 'api/tedarikciler.php';
             let method = 'POST';
 
-            if (id) { // Güncelleme (PUT)
-                url = `api/tedarikciler.php?id=${id}`; // Güncellendi: ID URL parametresi olarak
+            if (id) { // Güncelleme
+                url = `api/tedarikciler.php?id=${id}`;
                 method = 'PUT';
-            } 
-            
-            response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(tedarikciVerisi),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
-                throw new Error(errorData.message || `API hatası: ${response.status}`);
             }
-            
-            const sonuc = await response.json();
-            console.log(id ? 'Tedarikçi güncellendi:' : 'Yeni tedarikçi eklendi:', sonuc);
-            
-            await tedarikciListesiniGuncelle(); 
-            tedarikciFormuTemizle();
-        } catch (error) {
-            console.error('Tedarikçi kaydedilirken hata:', error);
-            alert(`Hata: ${error.message}`);
-        }
-    });
 
-    tedarikciFormTemizleButton.addEventListener('click', tedarikciFormuTemizle);
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(tedarikciVerisi),
+                });
 
-    tedarikciListesiTablosuBody.addEventListener('click', async function(event) {
-        const target = event.target;
-        const tedarikciId = target.dataset.id;
-
-        if (target.classList.contains('edit-btn')) {
-            const tedarikci = tedarikciler.find(t => String(t.id) === String(tedarikciId));
-            if (tedarikci) {
-                tedarikciIdInput.value = tedarikci.id;
-                tedarikciAdiInput.value = tedarikci.ad;
-                // Diğer form inputları artık doldurulmuyor (yetkili_kisi vb.)
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
+                    throw new Error(errorData.message || `Tedarikçi ${id ? 'güncellenirken' : 'eklenirken'} API hatası: ${response.status}`);
+                }
                 
-                tedarikciFormTemizleButton.style.display = 'inline-block';
-                tedarikciAdiInput.focus();
+                const sonuc = await response.json();
+                console.log(id ? 'Tedarikçi güncellendi:' : 'Yeni tedarikçi eklendi:', sonuc);
+                
+                await tedarikcileriYukle();
+                tedarikciFormuTemizle();
+            } catch (error) {
+                console.error('Tedarikçi kaydedilirken hata:', error);
+                alert(`Hata: ${error.message}`);
             }
-        } else if (target.classList.contains('delete-btn')) {
-            const tedarikciAdiSil = tedarikciler.find(t => String(t.id) === String(tedarikciId))?.ad || 'Bu';
-            // Fiyat kayıtları ile ilgili uyarıyı kaldırdım, çünkü PHP tarafı henüz bunu işlemiyor.
-            if (confirm(`"${tedarikciAdiSil}" tedarikçisini silmek istediğinize emin misiniz?`)) {
-                try {
-                    const response = await fetch(`api/tedarikciler.php?id=${tedarikciId}`, { // Güncellendi
-                        method: 'DELETE'
-                    });
+        });
+    }
 
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
-                        throw new Error(errorData.message || `API hatası: ${response.status}`);
+    if (tedarikciFormTemizleButton) {
+        tedarikciFormTemizleButton.addEventListener('click', tedarikciFormuTemizle);
+    }
+
+    if (tedarikciListesiTablosuBody) {
+        tedarikciListesiTablosuBody.addEventListener('click', async function(event) {
+            const target = event.target;
+            const tedarikciId = target.dataset.id;
+
+            if (target.classList.contains('edit-btn')) {
+                const tedarikci = tedarikciler.find(t => String(t.id) === String(tedarikciId));
+                if (tedarikci) {
+                    tedarikciIdInput.value = tedarikci.id;
+                    tedarikciAdiInput.value = tedarikci.ad || '';
+                    tedarikciYetkiliKisiInput.value = tedarikci.yetkili_kisi || '';
+                    tedarikciTelefonInput.value = tedarikci.telefon || '';
+                    tedarikciEmailInput.value = tedarikci.email || '';
+                    tedarikciAdresInput.value = tedarikci.adres || '';
+                    tedarikciNotInput.value = tedarikci.not_alani || '';
+                    
+                    tedarikciFormTemizleButton.style.display = 'inline-block';
+                    tedarikciAdiInput.focus();
+                }
+            } else if (target.classList.contains('delete-btn')) {
+                const tedarikciAdiSil = tedarikciler.find(t => String(t.id) === String(tedarikciId))?.ad || 'Bu tedarikçi';
+                if (confirm(`'${tedarikciAdiSil}' tedarikçisini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tedarikçiye ait tüm fiyat kayıtları da silinecektir!`)) { 
+                    try {
+                        const response = await fetch(`api/tedarikciler.php?id=${tedarikciId}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
+                            throw new Error(errorData.message || `Tedarikçi silinirken API hatası: ${response.status}`);
+                        }
+                        const sonuc = await response.json();
+                        console.log(sonuc.message);
+                        await tedarikcileriYukle();
+                        if (fiyatGirisTedarikciSecimi.value === tedarikciId) {
+                            fiyatGirisTedarikciSecimi.value = ""; 
+                        }
+                        if (document.getElementById('grafikTedarikciSecimi') && document.getElementById('grafikTedarikciSecimi').value === tedarikciId) {
+                            document.getElementById('grafikTedarikciSecimi').value = "";
+                        }
+                    } catch (error) {
+                        console.error('Tedarikçi silinirken hata:', error);
+                        alert(`Hata: ${error.message}`);
                     }
-                    const sonuc = await response.json();
-                    console.log('Tedarikçi silindi:', sonuc.message);
-                    alert(sonuc.message || 'Tedarikçi başarıyla silindi.');
-
-                    await tedarikciListesiniGuncelle(); 
-                    // await sonFiyatlariGuncelle(); // Fiyat API'si henüz yok
-                    // await grafigiOlusturVeyaGuncelle(); // Fiyat API'si henüz yok
-                    tedarikciFormuTemizle(); 
-                } catch (error) {
-                    console.error('Tedarikçi silinirken hata:', error);
-                    alert(`Hata: ${error.message}`);
                 }
             }
-        }
-    });
+        });
+    }
     // ----------- Tedarikçi Yönetimi Kodları Bitiş -----------
 
     // ----------- Fiyat Grafikleri Kodları Başlangıç -----------

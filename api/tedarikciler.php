@@ -54,7 +54,7 @@ switch ($method) {
 }
 
 function getTedarikciler($conn) {
-    $sql = "SELECT id, ad FROM tedarikciler ORDER BY ad ASC";
+    $sql = "SELECT id, ad, yetkili_kisi, telefon, email, adres, not_alani FROM tedarikciler ORDER BY ad ASC";
     $result = $conn->query($sql);
     $tedarikciler = array();
     if ($result && $result->num_rows > 0) {
@@ -67,7 +67,7 @@ function getTedarikciler($conn) {
 }
 
 function getTedarikci($conn, $id) {
-    $sql = "SELECT id, ad FROM tedarikciler WHERE id = '$id'";
+    $sql = "SELECT id, ad, yetkili_kisi, telefon, email, adres, not_alani FROM tedarikciler WHERE id = '$id'";
     $result = $conn->query($sql);
     if ($result && $result->num_rows > 0) {
         $tedarikci = $result->fetch_assoc();
@@ -84,17 +84,35 @@ function addTedarikci($conn) {
     $data = json_decode(file_get_contents("php://input"));
     if (!empty($data->ad)) {
         $ad = $conn->real_escape_string($data->ad);
-        $sql = "INSERT INTO tedarikciler (ad) VALUES ('$ad')";
-        if ($conn->query($sql) === TRUE) {
+        $yetkili_kisi = isset($data->yetkili_kisi) ? $conn->real_escape_string($data->yetkili_kisi) : null;
+        $telefon = isset($data->telefon) ? $conn->real_escape_string($data->telefon) : null;
+        $email = isset($data->email) ? $conn->real_escape_string($data->email) : null;
+        $adres = isset($data->adres) ? $conn->real_escape_string($data->adres) : null;
+        $not_alani = isset($data->not_alani) ? $conn->real_escape_string($data->not_alani) : null;
+
+        $stmt = $conn->prepare("INSERT INTO tedarikciler (ad, yetkili_kisi, telefon, email, adres, not_alani) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $ad, $yetkili_kisi, $telefon, $email, $adres, $not_alani);
+        
+        if ($stmt->execute()) {
             $last_id = $conn->insert_id;
             ob_clean();
             http_response_code(201); // Created
-            echo json_encode(array("message" => "Tedarikçi başarıyla eklendi.", "id" => $last_id, "ad" => $ad));
+            echo json_encode(array(
+                "message" => "Tedarikçi başarıyla eklendi.", 
+                "id" => $last_id, 
+                "ad" => $ad,
+                "yetkili_kisi" => $yetkili_kisi,
+                "telefon" => $telefon,
+                "email" => $email,
+                "adres" => $adres,
+                "not_alani" => $not_alani
+            ));
         } else {
             ob_clean();
             http_response_code(500);
-            echo json_encode(array("message" => "Tedarikçi eklenirken hata oluştu.", "error" => $conn->error));
+            echo json_encode(array("message" => "Tedarikçi eklenirken hata oluştu.", "error" => $stmt->error));
         }
+        $stmt->close();
     } else {
         ob_clean();
         http_response_code(400); // Bad Request
@@ -106,19 +124,40 @@ function updateTedarikci($conn, $id) {
     $data = json_decode(file_get_contents("php://input"));
     if (!empty($data->ad)) {
         $ad = $conn->real_escape_string($data->ad);
-        // Önce tedarikçinin var olup olmadığını kontrol et
-        $checkSql = "SELECT id FROM tedarikciler WHERE id = '$id'";
-        $checkResult = $conn->query($checkSql);
+        $yetkili_kisi = isset($data->yetkili_kisi) ? $conn->real_escape_string($data->yetkili_kisi) : null;
+        $telefon = isset($data->telefon) ? $conn->real_escape_string($data->telefon) : null;
+        $email = isset($data->email) ? $conn->real_escape_string($data->email) : null;
+        $adres = isset($data->adres) ? $conn->real_escape_string($data->adres) : null;
+        $not_alani = isset($data->not_alani) ? $conn->real_escape_string($data->not_alani) : null;
+
+        $checkSql = "SELECT id FROM tedarikciler WHERE id = ?";
+        $checkStmt = $conn->prepare($checkSql);
+        $checkStmt->bind_param("s", $id);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+
         if ($checkResult->num_rows > 0) {
-            $sql = "UPDATE tedarikciler SET ad = '$ad' WHERE id = '$id'";
-            if ($conn->query($sql) === TRUE) {
+            $stmt = $conn->prepare("UPDATE tedarikciler SET ad = ?, yetkili_kisi = ?, telefon = ?, email = ?, adres = ?, not_alani = ? WHERE id = ?");
+            $stmt->bind_param("ssssssi", $ad, $yetkili_kisi, $telefon, $email, $adres, $not_alani, $id);
+            
+            if ($stmt->execute()) {
                 ob_clean();
-                echo json_encode(array("message" => "Tedarikçi başarıyla güncellendi.", "id" => $id, "ad" => $ad));
+                echo json_encode(array(
+                    "message" => "Tedarikçi başarıyla güncellendi.", 
+                    "id" => $id, 
+                    "ad" => $ad,
+                    "yetkili_kisi" => $yetkili_kisi,
+                    "telefon" => $telefon,
+                    "email" => $email,
+                    "adres" => $adres,
+                    "not_alani" => $not_alani
+                ));
             } else {
                 ob_clean();
                 http_response_code(500);
-                echo json_encode(array("message" => "Tedarikçi güncellenirken hata oluştu.", "error" => $conn->error));
+                echo json_encode(array("message" => "Tedarikçi güncellenirken hata oluştu.", "error" => $stmt->error));
             }
+            $stmt->close();
         } else {
             ob_clean();
             http_response_code(404); // Not Found
