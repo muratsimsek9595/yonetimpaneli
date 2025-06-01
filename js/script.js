@@ -744,7 +744,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ----------- Genel Başlangıç Fonksiyonları -----------
     async function malzemeleriYukle() {
+        console.log("malzemeleriYukle fonksiyonu çağrıldı."); // Kontrol için eklendi
         try {
+            console.log("API isteği yapılacak: api/malzemeler.php"); // Kontrol için eklendi
             const response = await fetch('api/malzemeler.php');
             if (!response.ok) {
                 let errorText = `Malzeme API hatası: ${response.status}`;
