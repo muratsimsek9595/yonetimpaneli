@@ -1,21 +1,242 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Yönetim Paneli - Fiyat Takip</title>
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="description" content="Yeni web projesi açıklaması">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Data Labels Plugin CDN (Chart.js'den SONRA olmalı) -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- Google Fonts (Örnek: Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Favicon örnEĞİ -->
+    <!-- <link rel="icon" href="images/favicon.ico" type="image/x-icon"> -->
 </head>
 <body>
-    <header>
-        <h1>Admin Panel</h1>
-    </header>
-    <main>
-        <p>Welcome to the admin panel.</p>
-    </main>
-    <footer>
-        <p>&copy; 2024 Your Company &copy; 2025 Your Company</p>
-    </footer>
-    <script src="script.js"></script>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <!-- Logo veya Proje Adı buraya eklenebilir -->
+                <h2>Fiyat Takip</h2> 
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#anasayfa" class="active"><span class="nav-icon">🏠</span> Ana Sayfa</a></li>
+                    <li><a href="#malzeme-tanimlama"><span class="nav-icon">📦</span> Malzeme Tanımlama</a></li>
+                    <li><a href="#gunluk-fiyat-girisi"><span class="nav-icon">✏️</span> Günlük Fiyat Girişi</a></li>
+                    <li><a href="#tedarikci-yonetimi"><span class="nav-icon">🚚</span> Tedarikçi Yönetimi</a></li>
+                    <li><a href="#fiyat-grafikleri"><span class="nav-icon">📊</span> Fiyat Grafikleri</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <section id="anasayfa">
+                <h1>Hoş Geldiniz!</h1>
+                <p>Bu sizin tedarikçi ürün fiyat takip paneliniz.</p>
+            </section>
+
+            <section id="malzeme-tanimlama">
+                <h2>Malzeme Tanımlama</h2>
+                
+                <div class="form-container">
+                    <h3>Yeni Malzeme Ekle / Güncelle</h3>
+                    <form id="urunForm">
+                        <input type="hidden" id="urunId" name="urunId">
+                        <div>
+                            <label for="urunAdi">Malzeme Adı:</label>
+                            <input type="text" id="urunAdi" name="urunAdi" required>
+                        </div>
+                        <div>
+                            <label for="urunBirimTipi">Birim Tipi:</label>
+                            <select id="urunBirimTipi" name="urunBirimTipi" required>
+                                <option value="">-- Birim Tipi Seçiniz --</option>
+                                <option value="Boy">Boy</option>
+                                <option value="Ağırlık">Ağırlık</option>
+                                <option value="Adet">Adet</option>
+                                <option value="Hacim">Hacim</option>
+                                <option value="Uzunluk">Uzunluk</option>
+                                <option value="Paket">Paket</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="urunBirimAdi">Birim Adı:</label>
+                            <input type="text" id="urunBirimAdi" name="urunBirimAdi" placeholder="Örn: kg, adet, koli, metre" required>
+                        </div>
+                        <button type="submit">Malzemeyi Kaydet</button>
+                        <button type="button" id="formTemizleButton" style="display:none;">Formu Temizle</button>
+                    </form>
+                </div>
+
+                <div class="liste-container">
+                    <h3>Malzeme Listesi</h3>
+                    <table id="urunListesiTablosu">
+                        <thead>
+                            <tr>
+                                <th>Malzeme Adı</th>
+                                <th>Birim Adı</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Ürünler buraya dinamik olarak eklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+            <section id="gunluk-fiyat-girisi">
+                <h2>Günlük Fiyat Girişi</h2>
+                <div class="form-container">
+                    <h3>Fiyat Ekle</h3>
+                    <form id="gunlukFiyatForm">
+                        <div>
+                            <label for="fiyatGirisMalzemeSecimi">Malzeme:</label>
+                            <select id="fiyatGirisMalzemeSecimi" name="fiyatGirisMalzemeSecimi" required>
+                                <option value="">-- Malzeme Seçiniz --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="fiyatGirisTedarikciSecimi">Tedarikçi:</label>
+                            <select id="fiyatGirisTedarikciSecimi" name="fiyatGirisTedarikciSecimi" required>
+                                <option value="">-- Tedarikçi Seçiniz --</option>
+                                <!-- Tedarikçiler buraya JS ile eklenecek -->
+                            </select>
+                        </div>
+                        <div>
+                            <label>Birim:</label>
+                            <span id="fiyatGirisBirimGostergesi" style="font-weight: bold;">-</span>
+                        </div>
+                        <div>
+                            <label for="gunlukFiyatInput">Fiyat:</label>
+                            <input type="number" id="gunlukFiyatInput" name="gunlukFiyatInput" step="0.01" required>
+                        </div>
+                        <div>
+                            <label for="gunlukTarihInput">Tarih:</label>
+                            <input type="date" id="gunlukTarihInput" name="gunlukTarihInput" required>
+                        </div>
+                        <button type="submit">Fiyatı Kaydet</button>
+                    </form>
+                </div>
+                <div class="liste-container">
+                    <h3>Son Fiyat Girişleri (Opsiyonel Liste)</h3>
+                    <table id="sonFiyatlarTablosu">
+                        <thead>
+                            <tr>
+                                <th>Malzeme Adı</th>
+                                <th>Fiyat</th>
+                                <th>Birim</th>
+                                <th>Tarih</th>
+                                <th>Tedarikçi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Son fiyat girişleri buraya eklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="tedarikci-yonetimi">
+                <h2>Tedarikçi Yönetimi</h2>
+                <div class="form-container">
+                    <h3>Yeni Tedarikçi Ekle / Güncelle</h3>
+                    <form id="tedarikciForm">
+                        <input type="hidden" id="tedarikciIdInput" name="tedarikciIdInput">
+                        <div>
+                            <label for="tedarikciAdiInput">Tedarikçi Adı:</label>
+                            <input type="text" id="tedarikciAdiInput" name="tedarikciAdiInput" required>
+                        </div>
+                        <div>
+                            <label for="tedarikciYetkiliKisi">Yetkili Kişi:</label>
+                            <input type="text" id="tedarikciYetkiliKisi" name="tedarikciYetkiliKisi">
+                        </div>
+                        <div>
+                            <label for="tedarikciTelefon">Telefon:</label>
+                            <input type="tel" id="tedarikciTelefon" name="tedarikciTelefon">
+                        </div>
+                        <div>
+                            <label for="tedarikciEmail">Email:</label>
+                            <input type="email" id="tedarikciEmail" name="tedarikciEmail">
+                        </div>
+                        <div>
+                            <label for="tedarikciAdres">Adres:</label>
+                            <textarea id="tedarikciAdres" name="tedarikciAdres" rows="3"></textarea>
+                        </div>
+                        <button type="submit">Tedarikçiyi Kaydet</button>
+                        <button type="button" id="tedarikciFormTemizleButton" style="display:none;">Formu Temizle</button>
+                    </form>
+                </div>
+
+                <div class="liste-container">
+                    <h3>Tedarikçi Listesi</h3>
+                    <table id="tedarikciListesiTablosu">
+                        <thead>
+                            <tr>
+                                <th>Tedarikçi Adı</th>
+                                <th>Yetkili Kişi</th>
+                                <th>Telefon</th>
+                                <th>Email</th>
+                                <th>Adres</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Tedarikçiler buraya JS ile eklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="fiyat-grafikleri">
+                <h2>Fiyat Grafikleri</h2>
+                <div class="form-container">
+                    <h3>Ürün Seçin ve Grafik Görüntüleyin</h3>
+                    <div class="filter-controls">
+                        <div>
+                            <label for="grafikUrunSecimi">Malzeme:</label>
+                            <select id="grafikUrunSecimi" name="grafikUrunSecimi">
+                                <option value="">-- Malzeme Seçiniz --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="zamanAraligiSecimi">Zaman Aralığı:</label>
+                            <select id="zamanAraligiSecimi" name="zamanAraligiSecimi">
+                                <option value="haftalik">Son 1 Hafta</option>
+                                <option value="aylik">Son 1 Ay</option>
+                                <option value="son3ay">Son 3 Ay</option>
+                                <option value="yillik">Son 1 Yıl</option>
+                                <option value="tum">Tüm Zamanlar</option>
+                            </select>
+                        </div>
+                        <div class="tedarikci-filter-grafik" style="display: none;">
+                            <label for="grafikTedarikciSecimi">Tedarikçi:</label>
+                            <select id="grafikTedarikciSecimi" name="grafikTedarikciSecimi">
+                                <option value="">-- Tüm Tedarikçiler --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="grafik-container card">
+                    <canvas id="fiyatGrafigi"></canvas>
+                </div>
+                <p style="text-align:center; margin-top: 20px;">Burada seçtiğiniz ürünlerin fiyat değişim grafiklerini görebilirsiniz.</p>
+            </section>
+            <!-- Diğer section'lar buraya eklenebilir -->
+
+            <footer class="main-footer">
+                <p>&copy; 2024 Fiyat Takip Paneli. Tüm Hakları Saklıdır.</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="js/script.js"></script>
 </body>
 </html> 

@@ -1,0 +1,359 @@
+/* Genel Reset ve Temel Ayarlar */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f2f5; /* Açık gri arka plan */
+    color: #333;
+    line-height: 1.6;
+    display: flex; /* app-container'ı esnetmek için */
+}
+
+.app-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Kenar Çubuğu (Sidebar) Stilleri */
+.sidebar {
+    width: 260px;
+    background-color: #ffffff; /* Beyaz kenar çubuğu */
+    color: #333;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed; /* Sabit kenar çubuğu */
+    height: 100%;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+}
+
+.sidebar-header {
+    padding: 0 20px 20px 20px;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.sidebar-header h2 {
+    font-size: 1.8rem;
+    color: #2c3e50; /* Koyu mavi/gri tonu */
+}
+
+.sidebar nav ul {
+    list-style: none;
+}
+
+.sidebar nav ul li a {
+    display: flex; /* İkon ve metni yan yana getirmek için */
+    align-items: center;
+    padding: 12px 20px;
+    color: #555;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-left: 3px solid transparent; /* Aktif link için border yeri */
+}
+
+.sidebar nav ul li a .nav-icon {
+    margin-right: 12px;
+    font-size: 1.2rem;
+}
+
+.sidebar nav ul li a:hover {
+    background-color: #f0f2f5; /* Hover için hafif gri */
+    color: #2c3e50;
+}
+
+.sidebar nav ul li a.active {
+    background-color: #e6f7ff; /* Açık mavi aktif arka plan */
+    color: #1890ff; /* Vurgu rengi */
+    border-left-color: #1890ff;
+    font-weight: 600;
+}
+
+/* Ana İçerik Alanı Stilleri */
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    margin-left: 260px; /* Kenar çubuğu genişliği kadar boşluk */
+    background-color: #f0f2f5;
+}
+
+.main-content section {
+    display: none; /* Varsayılan olarak gizli, JS ile gösterilecek */
+    margin-bottom: 30px;
+}
+
+.main-content section.active-section {
+    display: block; /* Aktif section'ı göster */
+}
+
+.main-content h1, .main-content h2 {
+    color: #2c3e50;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.main-content h1 {
+    font-size: 2rem;
+}
+
+.main-content h2 {
+    font-size: 1.6rem;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+/* Kart Stilleri (form-container, liste-container, grafik-container için) */
+.form-container, 
+.liste-container,
+.grafik-container.card { /* grafik-container'a card sınıfı eklenmişti */
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+
+/* Grafik Konteynerı için özel boyutlandırma */
+.grafik-container.card {
+    width: 60%; /* Genişliği %60'a ayarla (100% - 40%) */
+    margin-left: auto; /* Ortalamak için */
+    margin-right: auto; /* Ortalamak için */
+    /* Diğer padding, background vb. stiller yukarıdaki genel .card kuralından gelir */
+}
+
+.form-container h3, .liste-container h3 {
+    font-size: 1.3rem;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Form Elemanları */
+form div {
+    margin-bottom: 18px;
+}
+
+form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+form input[type="text"],
+form input[type="number"],
+form input[type="date"],
+form select,
+.form-container select {
+    width: 100%; 
+    padding: 12px 35px 12px 15px; /* Sağ padding ok için artırıldı (top, right, bottom, left) */
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    appearance: none; /* Varsayılan tarayıcı görünümünü kaldır */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff; /* Arka plan rengi */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E"); /* Özel ok ikonu */
+    background-repeat: no-repeat;
+    background-position: right 15px center; /* Okun konumu */
+    background-size: 1em; /* Okun boyutu (font boyutuna göre) */
+}
+
+/* IE için özel ok gizleme (IE artık pek kullanılmasa da) */
+form select::-ms-expand,
+.form-container select::-ms-expand {
+    display: none;
+}
+
+form input[type="text"]:focus,
+form input[type="number"]:focus,
+form input[type="date"]:focus,
+form select:focus {
+    border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    outline: none;
+}
+
+form button {
+    background-color: #1890ff; /* Vurgu rengi */
+    color: white;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    margin-right: 10px;
+    margin-top: 10px; /* Butonlar arasında biraz boşluk bırakmak için eklendi */
+}
+
+form button:hover {
+    background-color: #40a9ff; /* Vurgu renginin açığı */
+    border-color: #bfbfbf;
+}
+
+form button[type="button"] { /* Temizle butonu gibi ikincil butonlar */
+    background-color: #f0f2f5;
+    color: #555;
+    border: 1px solid #d9d9d9;
+}
+
+form button[type="button"]:hover {
+    background-color: #e6e6e6;
+    border-color: #bfbfbf;
+}
+
+.birim-gosterge {
+    font-weight: 600;
+    color: #1890ff;
+    font-size: 1rem;
+    padding: 10px 0;
+    display: inline-block;
+}
+
+/* Tablo Stilleri */
+#urunListesiTablosu, 
+#tedarikciListesiTablosu,
+#sonFiyatlarTablosu {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.95rem;
+}
+
+#urunListesiTablosu th, #urunListesiTablosu td,
+#tedarikciListesiTablosu th, #tedarikciListesiTablosu td,
+#sonFiyatlarTablosu th, #sonFiyatlarTablosu td {
+    border: 1px solid #e8e8e8;
+    padding: 14px 12px;
+    text-align: left;
+}
+
+#urunListesiTablosu th, 
+#tedarikciListesiTablosu th,
+#sonFiyatlarTablosu th {
+    background-color: #fafafa;
+    color: #333;
+    font-weight: 600;
+}
+
+#urunListesiTablosu tbody tr:nth-child(even),
+#tedarikciListesiTablosu tbody tr:nth-child(even),
+#sonFiyatlarTablosu tbody tr:nth-child(even) {
+    background-color: #fcfcfc;
+}
+
+#urunListesiTablosu tbody tr:hover,
+#tedarikciListesiTablosu tbody tr:hover,
+#sonFiyatlarTablosu tbody tr:hover {
+    background-color: #f0f8ff; /* Hafif mavi hover */
+}
+
+#urunListesiTablosu .actions button,
+#tedarikciListesiTablosu .actions button {
+    padding: 6px 10px;
+    margin-right: 6px;
+    font-size: 0.85rem;
+    min-width: 70px; /* Butonların aynı genişlikte olması için */
+}
+
+/* Footer */
+.main-footer {
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 30px;
+    color: #888;
+    font-size: 0.9rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Responsive Tasarım için Örnek (Daha da geliştirilebilir) */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 220px;
+    }
+    .main-content {
+        margin-left: 220px;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        padding-bottom: 0;
+    }
+    .sidebar-header {
+        /* Mobil için daha kompakt başlık */
+    }
+    .sidebar nav ul {
+        display: flex; /* Yatay menü */
+        overflow-x: auto; /* Kaydırılabilir */
+        padding-bottom: 10px;
+    }
+    .sidebar nav ul li a {
+        padding: 10px 15px;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+    }
+    .sidebar nav ul li a.active {
+        border-bottom-color: #1890ff;
+        border-left-color: transparent;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+    .main-content h1 {
+        font-size: 1.8rem;
+    }
+    .main-content h2 {
+        font-size: 1.4rem;
+    }
+}
+
+/* Filtre Kontrolleri için Özel Stiller (Fiyat Grafikleri Bölümü) */
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap; /* Küçük ekranlarda alt alta sarması için */
+    gap: 20px; /* Kontroller arasında boşluk */
+    align-items: flex-end; /* Etiket ve inputları dikeyde hizala */
+    margin-bottom: 25px; /* Altındaki grafik konteynerinden boşluk */
+}
+
+.filter-controls > div { /* Her bir filtre grubuna (label + select) etki et */
+    flex-grow: 1; /* Mümkün olduğunca genişlesin */
+    min-width: 200px; /* Çok daralmalarını engelle */
+}
+
+/* .filter-controls içindeki label ve select stilleri zaten genel form stillerinden geliyor. */
+/* Gerekirse burada özelleştirilebilirler. Örneğin, genişliklerini ayarlamak için: */
+/*
+.filter-controls label {
+    margin-bottom: 5px;
+}
+.filter-controls select {
+    width: 100%;
+}
+*/ 
