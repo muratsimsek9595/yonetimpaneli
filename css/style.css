@@ -849,4 +849,84 @@ form button[type="button"]:hover {
     background-color: #fafafa; /* Açık Gri */
     color: #8c8c8c;
     border: 1px solid #d9d9d9;
+}
+
+/* === Müşteri Listesi Tablo Stilleri === */
+#musteriListesiTablosu {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.9em;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    background-color: #fff;
+}
+
+#musteriListesiTablosu thead tr {
+    background-color: #f8f9fa; /* Açık gri başlık arkaplanı */
+    color: #333; /* Koyu gri başlık yazı rengi */
+    text-align: left;
+    font-weight: bold;
+    border-bottom: 2px solid #dee2e6; /* Başlık altı çizgi */
+}
+
+#musteriListesiTablosu th,
+#musteriListesiTablosu td {
+    padding: 12px 15px;
+    border: 1px solid #eee; /* İnce hücre çizgileri */
+}
+
+#musteriListesiTablosu tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+}
+
+#musteriListesiTablosu tbody tr:nth-of-type(even) {
+    background-color: #fcfcfc; /* Hafif Zebra deseni */
+}
+
+#musteriListesiTablosu tbody tr:last-of-type {
+    border-bottom: 2px solid #dee2e6; /* Tablo sonu çizgisi */
+}
+
+#musteriListesiTablosu tbody tr:hover {
+    background-color: #f1f1f1; /* Satır üzerine gelince arkaplan */
+}
+
+/* Buton Stilleri */
+#musteriListesiTablosu .btn-edit,
+#musteriListesiTablosu .btn-delete {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    margin-right: 5px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#musteriListesiTablosu .btn-edit {
+    background-color: #007bff; /* Mavi - Düzenle */
+    color: white;
+}
+
+#musteriListesiTablosu .btn-edit:hover {
+    background-color: #0056b3;
+}
+
+#musteriListesiTablosu .btn-delete {
+    background-color: #dc3545; /* Kırmızı - Sil (Hedef tasarımdaki gibi) */
+    color: white;
+}
+
+#musteriListesiTablosu .btn-delete:hover {
+    background-color: #c82333;
+}
+
+#musteriListesiTablosu .btn-edit:active,
+#musteriListesiTablosu .btn-delete:active {
+    transform: scale(0.98);
+}
+
+/* İşlemler sütunu için özel ayar */
+#musteriListesiTablosu td:last-child {
+    text-align: left; /* Butonları sola yasla veya center için ortala */
 } 
