@@ -69,13 +69,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 response.data.forEach(musteri => { // response.data dizisini kullan
                     const row = musteriListesiTablosuBody.insertRow();
                     row.innerHTML = `
-                        <td>AD: ${musteri.ad || 'YOK'}</td>
-                        <td>YETKILI: ${musteri.yetkiliKisi || 'YOK'}</td>
-                        <td>TEL: ${musteri.telefon || 'YOK'}</td>
-                        <td>EMAIL: ${musteri.email || 'YOK'}</td>
-                        <td>ADRES: ${musteri.adres || 'YOK'}</td>
-                        <td>VERGINO: ${musteri.vergiNo || 'YOK'}</td>
-                        <td>NOT: ${musteri.notlar || 'YOK'}</td>
+                        <td>${musteri.ad || 'YOK'}</td>
+                        <td>${musteri.yetkiliKisi || 'YOK'}</td>
+                        <td>${musteri.telefon || 'YOK'}</td>
+                        <td>${musteri.email || 'YOK'}</td>
+                        <td>${musteri.adres || 'YOK'}</td>
+                        <td>${musteri.vergiNo || 'YOK'}</td>
+                        <td>${musteri.notlar || 'YOK'}</td>
                         <td>
                             <button class="btn-edit" data-id="${musteri.id}">Düzenle</button>
                             <button class="btn-delete" data-id="${musteri.id}">Sil</button>
