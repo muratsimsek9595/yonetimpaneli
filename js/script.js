@@ -126,9 +126,9 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         const id = urunIdInput.value;
         const ad = urunAdiInput.value.trim();
-        const birimAdi = urunBirimAdiInput.value.trim(); // Boş olabilir, genel birim alanı
+        const birimAdi = urunBirimAdiInput.value.trim();
 
-        if (!ad) { // Sadece 'ad' zorunlu, birimAdi isteğe bağlı
+        if (!ad) {
             alert('Malzeme adı boş bırakılamaz!');
             return;
         }
