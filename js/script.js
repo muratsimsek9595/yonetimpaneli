@@ -1,3 +1,24 @@
+import {
+    getMalzemeler,
+    saveMalzeme,
+    deleteMalzeme,
+    getTedarikciler,
+    saveTedarikci,
+    deleteTedarikci,
+    getFiyatlar,
+    saveFiyat,
+    deleteFiyat
+} from './api.js';
+import {
+    temizleUrunFormu,
+    temizleTedarikciFormu,
+    gosterSonFiyatlarTablosu,
+    guncelleUrunListesiTablosu,
+    populeEtUrunSecimDropdown,
+    guncelleTedarikciListesiTablosu,
+    populeEtTedarikciSecimDropdown as populeTedarikciDropdown
+} from './ui.js';
+
 // Genel JavaScript fonksiyonları ve olay dinleyicileri buraya gelecek.
 // Chart.js DataLabels eklentisini global olarak kaydet
 if (typeof ChartDataLabels !== 'undefined') {
@@ -51,16 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Örnek: Bir butona tıklandığında mesaj gösterme
-    /*
-    const ornekButon = document.getElementById('ornekButon');
-    if (ornekButon) {
-        ornekButon.addEventListener('click', function() {
-            alert('Butona tıklandı!');
-        });
-    }
-    */
-
     // ----------- Ürün Yönetimi Kodları Başlangıç -----------
     const urunForm = document.getElementById('urunForm');
     const urunIdInput = document.getElementById('urunId');
@@ -100,26 +111,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function urunListesiniGuncelle() {
-        urunListesiTablosuBody.innerHTML = ''; 
-        if (!Array.isArray(urunler) || urunler.length === 0) {
-            urunListesiTablosuBody.innerHTML = '<tr><td colspan="3">Kayıtlı malzeme bulunamadı.</td></tr>';
-        } else {
-            urunler.forEach(urun => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${urun.ad}</td>
-                    <td>${urun.birim_adi || '-'}</td> 
-                    <td class="actions">
-                        <button class="edit-btn" data-id="${urun.id}">Düzenle</button>
-                        <button class="delete-btn" data-id="${urun.id}">Sil</button>
-                    </td>
-                `;
-                urunListesiTablosuBody.appendChild(tr);
-            });
-        }
-        urunleriGrafikSecimineYukle();
-        urunleriGunlukFiyatGirisSecimineYukle();
-        // grafigiOlusturVeyaGuncelle(); // Bu, fiyatlar yüklendikten sonra çağrılmalı
+        // Tabloyu güncelle
+        guncelleUrunListesiTablosu(urunler, urunListesiTablosuBody);
+        
+        // Grafik ürün seçimini güncelle
+        populeEtUrunSecimDropdown(urunler, grafikUrunSecimi, "-- Ürün Seçiniz --", true, null);
+        // Malzeme seçimi değiştiğinde tedarikçi filtresini de güncelle (Bu fonksiyon script.js'de kalabilir veya taşınabilir)
+        guncelleGrafikTedarikciFiltresi(); 
+
+        // Günlük fiyat girişi ürün seçimini güncelle
+        populeEtUrunSecimDropdown(urunler, fiyatGirisMalzemeSecimi, "-- Malzeme Seçiniz --", true, urun => ` (${urun.birim_adi || 'Tanımsız Birim'})`);
+        // Malzeme seçimi değiştiğinde birimi güncelle (Bu fonksiyon script.js'de kalabilir)
+        guncelleFiyatGirisBirimGostergesi();
     }
 
     function formuTemizle() { // urunForm için
@@ -186,32 +189,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(malzemeVerisi),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
-                throw new Error(errorData.message || `Malzeme ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
-            }
-
-            const sonuc = await response.json();
-            console.log(sonuc.message, sonuc);
+            const sonuc = await saveMalzeme(malzemeVerisi, id);
+            console.log(sonuc.message || (id ? 'Malzeme güncellendi' : 'Malzeme eklendi'), sonuc);
             // alert(sonuc.message);
 
             await malzemeleriYukle(); // Listeyi API'den tazeleyerek güncelle
-            formuTemizle();
+            temizleUrunFormu(urunForm, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton);
         } catch (error) {
             console.error(`Malzeme ${id ? 'güncellenirken' : 'eklenirken'} hata:`, error);
             alert(`Hata: ${error.message}`);
         }
     });
 
-    formTemizleButton.addEventListener('click', formuTemizle);
+    formTemizleButton.addEventListener('click', () => {
+        temizleUrunFormu(urunForm, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton);
+    });
 
     urunListesiTablosuBody.addEventListener('click', async function(event) {
         const target = event.target;
@@ -247,20 +239,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fiyat silme uyarısını API'ye göre güncelleyeceğiz
             if (confirm(`'${urunAdiSil}' malzemesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) { 
                 try {
-                    const response = await fetch(`api/malzemeler.php?id=${urunId}`, {
-                        method: 'DELETE'
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
-                        throw new Error(errorData.message || `Malzeme silinirken bir sorun oluştu.`);
-                    }
-                    const sonuc = await response.json();
-                    console.log(sonuc.message, sonuc);
+                    const sonuc = await deleteMalzeme(urunId);
+                    console.log(sonuc.message || 'Malzeme silindi', sonuc);
                     // alert(sonuc.message);
 
                     await malzemeleriYukle(); // Listeyi API'den tazeleyerek güncelle
-                    formuTemizle(); 
+                    temizleUrunFormu(urunForm, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton); 
                 } catch (error) {
                     console.error('Malzeme silinirken hata:', error);
                     alert(`Hata: ${error.message}`);
@@ -288,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function tedarikciListesiniGuncelle() {
+        guncelleTedarikciListesiTablosu(tedarikciler, tedarikciListesiTablosuBody);
         tedarikciListesiTablosuBody.innerHTML = ''; 
         if (!Array.isArray(tedarikciler) || tedarikciler.length === 0) {
             tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="7">Kayıtlı tedarikçi bulunamadı.</td></tr>';
@@ -360,24 +345,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(tedarikciVerisi),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
-                    throw new Error(errorData.message || `Tedarikçi ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
-                }
-                
-                const sonuc = await response.json();
-                console.log(id ? 'Tedarikçi güncellendi:' : 'Yeni tedarikçi eklendi:', sonuc);
+                const sonuc = await saveTedarikci(tedarikciVerisi, id);
+                console.log(id ? 'Tedarikçi güncellendi:' : 'Yeni tedarikçi eklendi:', sonuc.message || 'İşlem başarılı', sonuc);
                 
                 await tedarikcileriYukle();
-                tedarikciFormuTemizle();
+                temizleTedarikciFormu(tedarikciForm, tedarikciIdInput, tedarikciAdiInput, tedarikciYetkiliKisiInput, tedarikciTelefonInput, tedarikciEmailInput, tedarikciAdresInput, tedarikciNotInput, tedarikciFormTemizleButton);
             } catch (error) {
                 console.error('Tedarikçi kaydedilirken hata:', error);
                 alert(`Hata: ${error.message}`);
@@ -386,7 +358,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (tedarikciFormTemizleButton) {
-        tedarikciFormTemizleButton.addEventListener('click', tedarikciFormuTemizle);
+        tedarikciFormTemizleButton.addEventListener('click', () => {
+            temizleTedarikciFormu(tedarikciForm, tedarikciIdInput, tedarikciAdiInput, tedarikciYetkiliKisiInput, tedarikciTelefonInput, tedarikciEmailInput, tedarikciAdresInput, tedarikciNotInput, tedarikciFormTemizleButton);
+        });
     }
 
     if (tedarikciListesiTablosuBody) {
@@ -412,16 +386,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const tedarikciAdiSil = tedarikciler.find(t => String(t.id) === String(tedarikciId))?.ad || 'Bu tedarikçi';
                 if (confirm(`'${tedarikciAdiSil}' tedarikçisini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tedarikçiye ait tüm fiyat kayıtları da silinecektir!`)) { 
                     try {
-                        const response = await fetch(`api/tedarikciler.php?id=${tedarikciId}`, {
-                            method: 'DELETE'
-                        });
-
-                        if (!response.ok) {
-                            const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
-                            throw new Error(errorData.message || `Tedarikçi silinirken bir sorun oluştu.`);
-                        }
-                        const sonuc = await response.json();
-                        console.log(sonuc.message);
+                        const sonuc = await deleteTedarikci(tedarikciId);
+                        console.log(sonuc.message || 'Tedarikçi silindi', sonuc);
                         await tedarikcileriYukle();
                         if (fiyatGirisTedarikciSecimi.value === tedarikciId) {
                             fiyatGirisTedarikciSecimi.value = ""; 
@@ -762,45 +728,17 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("sonFiyatlariGuncelle fonksiyonu çağrıldı. Tablo için limit:", tabloLimiti);
         
         try {
-            const tumFiyatlarApiUrl = 'api/fiyatlar.php'; 
-            console.log("Tüm fiyatlar için API isteği yapılacak:", tumFiyatlarApiUrl);
-            const response = await fetch(tumFiyatlarApiUrl);
-            console.log("Fiyatlar API yanıtı durumu:", response.status, response.statusText);
-            console.log("Fiyatlar API yanıtı headers:", response.headers.get('content-type'));
+            const tumGelenFiyatlar = await getFiyatlar(); // API'den tüm fiyatları çek
             
-            // Önce response text olarak al ve kontrol et
-            const responseText = await response.text();
-            console.log("Fiyatlar API ham yanıtı:", responseText);
-            
-            if (!response.ok) {
-                throw new Error(`Fiyatlar yüklenirken bir sorun oluştu. Yanıt: ${responseText}`);
-            }
-            const tumGelenFiyatlar = await response.json();
-            
+            // Global fiyatlar dizisini güncelle (tarihe göre en yeniden eskiye sıralı)
             fiyatlar = tumGelenFiyatlar.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
-            console.log("Global fiyatlar güncellendi (API\'den çekildi), toplam:", fiyatlar.length, "adet.");
+            console.log("Global fiyatlar güncellendi (API'den çekildi), toplam:", fiyatlar.length, "adet.");
 
-            sonFiyatlarTablosuBody.innerHTML = '';
-            const gosterilecekFiyatlar = fiyatlar.slice(0, tabloLimiti);
+            // UI güncelleme fonksiyonunu çağır
+            // Bu fonksiyonun urunler ve tedarikciler listelerine ihtiyacı var, global değişkenlerden alacak.
+            gosterSonFiyatlarTablosu(fiyatlar, sonFiyatlarTablosuBody, urunler, tedarikciler, tabloLimiti);
 
-            if (gosterilecekFiyatlar.length === 0) {
-                sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="6">Kayıtlı fiyat girişi bulunamadı.</td></tr>'; // colspan güncellendi
-            } else {
-                gosterilecekFiyatlar.forEach(fiyat => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${fiyat.malzeme_adi || '-'}</td>
-                        <td>${parseFloat(fiyat.fiyat).toFixed(2)}</td>
-                        <td>${fiyat.malzeme_birim_adi || '-'}</td>
-                        <td>${new Date(fiyat.tarih).toLocaleDateString('tr-TR')}</td>
-                        <td>${fiyat.tedarikci_adi || '-'}</td>
-                        <td class="actions">
-                            <button class="delete-fiyat-btn" data-id="${fiyat.id}">Sil</button>
-                        </td>
-                    `;
-                    sonFiyatlarTablosuBody.appendChild(tr);
-                });
-            }
+            // Grafiklerin güncellenmesi
             if (grafikUrunSecimi.value) {
                  guncelleGrafikTedarikciFiltresi(); 
             } else {
@@ -809,9 +747,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Fiyatlar yüklenirken veya tablo güncellenirken hata:', error);
-            sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="6">Fiyatlar yüklenirken bir hata oluştu.</td></tr>'; // colspan güncellendi
-            fiyatlar = []; 
-            grafigiOlusturVeyaGuncelle(); 
+            if (sonFiyatlarTablosuBody) {
+                sonFiyatlarTablosuBody.innerHTML = '<tr><td colspan="6">Fiyatlar yüklenirken bir hata oluştu.</td></tr>';
+            }
+            fiyatlar = []; // Hata durumunda global fiyat listesini boşalt
+            grafigiOlusturVeyaGuncelle(); // Hata durumunda grafiği de (boş veriyle) güncelle
         }
     }
 
@@ -826,15 +766,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (confirm(`'${malzemeAdi}' için girilen ${fiyatDegeri} TL değerindeki fiyat kaydını silmek istediğinize emin misiniz?`)) {
                     try {
-                        const response = await fetch(`api/fiyatlar.php?id=${fiyatId}`, {
-                            method: 'DELETE'
-                        });
-                        if (!response.ok) {
-                            const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
-                            throw new Error(errorData.message || `Fiyat silinirken bir sorun oluştu.`);
-                        }
-                        const sonuc = await response.json();
-                        console.log(sonuc.message);
+                        const sonuc = await deleteFiyat(fiyatId);
+                        console.log(sonuc.message || 'Fiyat silindi', sonuc);
                         // alert(sonuc.message); // İsteğe bağlı olarak kullanıcıya bildirim gösterilebilir
 
                         // Fiyat listesini ve grafikleri güncelle
@@ -876,21 +809,8 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         try {
-            const response = await fetch('api/fiyatlar.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(fiyatVerisi),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
-                throw new Error(errorData.message || `Fiyat eklenirken bir sorun oluştu.`);
-            }
-
-            const sonuc = await response.json();
-            console.log(sonuc.message, sonuc);
+            const sonuc = await saveFiyat(fiyatVerisi);
+            console.log(sonuc.message || 'Fiyat eklendi', sonuc);
             // alert(sonuc.message);
 
             gunlukFiyatForm.reset();
@@ -927,27 +847,28 @@ document.addEventListener('DOMContentLoaded', function() {
     async function malzemeleriYukle() {
         console.log("malzemeleriYukle fonksiyonu çağrıldı."); // Kontrol için eklendi
         try {
-            console.log("API isteği yapılacak: api/malzemeler.php"); // Kontrol için eklendi
-            const response = await fetch('api/malzemeler.php');
-            console.log("API yanıtı durumu:", response.status, response.statusText);
-            console.log("API yanıtı headers:", response.headers.get('content-type'));
+            // console.log("API isteği yapılacak: api/malzemeler.php"); // Kontrol için eklendi
+            // const response = await fetch('api/malzemeler.php');
+            // console.log("API yanıtı durumu:", response.status, response.statusText);
+            // console.log("API yanıtı headers:", response.headers.get('content-type'));
             
-            // Önce response text olarak al ve kontrol et
-            const responseText = await response.text();
-            console.log("API ham yanıtı:", responseText);
+            // // Önce response text olarak al ve kontrol et
+            // const responseText = await response.text();
+            // console.log("API ham yanıtı:", responseText);
             
-            if (!response.ok) {
-                throw new Error(`Malzemeler yüklenirken bir sorun oluştu. Yanıt: ${responseText}`);
-            }
+            // if (!response.ok) {
+            //     throw new Error(`Malzemeler yüklenirken bir sorun oluştu. Yanıt: ${responseText}`);
+            // }
             
-            // JSON parse etmeyi dene
-            let apiUrunler;
-            try {
-                apiUrunler = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error("JSON parse hatası:", parseError);
-                throw new Error(`API yanıtı geçerli JSON değil: ${responseText}`);
-            }
+            // // JSON parse etmeyi dene
+            // let apiUrunler;
+            // try {
+            //     apiUrunler = JSON.parse(responseText);
+            // } catch (parseError) {
+            //     console.error("JSON parse hatası:", parseError);
+            //     throw new Error(`API yanıtı geçerli JSON değil: ${responseText}`);
+            // }
+            const apiUrunler = await getMalzemeler();
             
             urunler = apiUrunler; // Global ürünler listesini güncelle
             console.log("Malzemeler API'den yüklendi:", urunler);
@@ -961,26 +882,27 @@ document.addEventListener('DOMContentLoaded', function() {
     async function tedarikcileriYukle() {
         console.log("tedarikcileriYukle fonksiyonu çağrıldı.");
         try {
-            const response = await fetch('api/tedarikciler.php');
-            console.log("Tedarikçi API yanıtı durumu:", response.status, response.statusText);
-            console.log("Tedarikçi API yanıtı headers:", response.headers.get('content-type'));
+            // const response = await fetch('api/tedarikciler.php');
+            // console.log("Tedarikçi API yanıtı durumu:", response.status, response.statusText);
+            // console.log("Tedarikçi API yanıtı headers:", response.headers.get('content-type'));
             
-            // Önce response text olarak al ve kontrol et
-            const responseText = await response.text();
-            console.log("Tedarikçi API ham yanıtı:", responseText);
+            // // Önce response text olarak al ve kontrol et
+            // const responseText = await response.text();
+            // console.log("Tedarikçi API ham yanıtı:", responseText);
             
-            if (!response.ok) {
-                throw new Error(`Tedarikçiler yüklenirken bir sorun oluştu. Yanıt: ${responseText}`);
-            }
+            // if (!response.ok) {
+            //     throw new Error(`Tedarikçiler yüklenirken bir sorun oluştu. Yanıt: ${responseText}`);
+            // }
             
-            // JSON parse etmeyi dene
-            let apiTedarikciler;
-            try {
-                apiTedarikciler = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error("JSON parse hatası:", parseError);
-                throw new Error(`API yanıtı geçerli JSON değil: ${responseText}`);
-            }
+            // // JSON parse etmeyi dene
+            // let apiTedarikciler;
+            // try {
+            //     apiTedarikciler = JSON.parse(responseText);
+            // } catch (parseError) {
+            //     console.error("JSON parse hatası:", parseError);
+            //     throw new Error(`API yanıtı geçerli JSON değil: ${responseText}`);
+            // }
+            const apiTedarikciler = await getTedarikciler();
             
             console.log("API'den gelen tedarikçiler:", apiTedarikciler); // API yanıtını kontrol et
             tedarikciler = Array.isArray(apiTedarikciler) ? apiTedarikciler : []; // Global tedarikçiler listesini güncelle, array değilse boş array ata
@@ -1001,7 +923,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log("initializePageData: sonFiyatlariGuncelle ÇAĞRILMADAN ÖNCE (Tüm fiyatlar yüklenecek)");
         try {
-            await sonFiyatlariGuncelle(); // Parametresiz çağrı tüm fiyatları yükler, tabloyu varsayılan limitle (5) günceller
+            // await sonFiyatlariGuncelle(); // This was already calling getFiyatlar internally.
+            // No change needed here for sonFiyatlariGuncelle, as it now uses getFiyatlar from api.js
+            // The initial call to load all prices will be handled by sonFiyatlariGuncelle correctly.
+             await sonFiyatlariGuncelle(); // Keep this call, it now uses the refactored API call.
             console.log("initializePageData: sonFiyatlariGuncelle (Tüm fiyatlar) BAŞARIYLA TAMAMLANDI");
         } catch (error) {
             console.error("initializePageData: sonFiyatlariGuncelle (Tüm fiyatlar) ÇAĞRISINDA HATA:", error);
