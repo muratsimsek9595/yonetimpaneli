@@ -151,26 +151,37 @@ form label {
     font-size: 0.95rem;
 }
 
-form input[type="text"],
-form input[type="number"],
-form input[type="date"],
-form select,
-.form-container select {
+/* Aşağıdaki seçiciyi güncelliyoruz ve eksik türleri ekliyoruz */
+.form-container .form-group input[type="text"],
+.form-container .form-group input[type="number"],
+.form-container .form-group input[type="date"],
+.form-container .form-group input[type="tel"], /* Eklendi */
+.form-container .form-group input[type="email"], /* Eklendi */
+.form-container .form-group textarea, /* Eklendi */
+.form-container .form-group select,
+.form-container select { /* Bu satır kalabilir veya .form-container .form-group select ile birleştirilebilir */
     width: 100%; 
-    padding: 12px 35px 12px 15px; /* Sağ padding ok için artırıldı (top, right, bottom, left) */
+    padding: 12px 15px; /* Select olmayanlar için padding düzenlendi */
     border: 1px solid #d9d9d9;
     border-radius: 6px;
     box-sizing: border-box;
     font-size: 1rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    appearance: none; /* Varsayılan tarayıcı görünümünü kaldır */
+    /* Select'e özel stiller aşağıda ayrıca ele alınacak */
+}
+
+/* Select elemanlarına özel stiller (ok ikonu vb.) */
+.form-container .form-group select,
+.form-container select { 
+    padding-right: 35px; /* Ok için sağ padding */
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-color: #fff; /* Arka plan rengi */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E"); /* Özel ok ikonu */
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 15px center; /* Okun konumu */
-    background-size: 1em; /* Okun boyutu (font boyutuna göre) */
+    background-position: right 15px center;
+    background-size: 1em;
 }
 
 /* IE için özel ok gizleme (IE artık pek kullanılmasa da) */
@@ -182,6 +193,9 @@ form select::-ms-expand,
 form input[type="text"]:focus,
 form input[type="number"]:focus,
 form input[type="date"]:focus,
+form input[type="tel"]:focus, /* Eklendi */
+form input[type="email"]:focus, /* Eklendi */
+form textarea:focus, /* Eklendi */
 form select:focus {
     border-color: #1890ff;
     box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
