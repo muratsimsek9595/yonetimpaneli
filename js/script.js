@@ -85,9 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const sonFiyatlarTablosuBody = document.querySelector('#sonFiyatlarTablosu tbody');
 
     // Veri Saklama (LocalStorage)
-    // let urunler = []; // Ürünler artık API'den yüklenecek
-    // let fiyatlar = []; // Fiyatlar da API'den yüklenecek (sonraki adım)
-    // let tedarikciler = []; // Tedarikçiler artık API'den yüklenecek
+    let urunler = []; // Ürünler artık API'den yüklenecek
+    let fiyatlar = []; // Fiyatlar da API'den yüklenecek
+    let tedarikciler = []; // Tedarikçiler artık API'den yüklenecek
 
     function verileriKaydet() { 
         // localStorage artık kullanılmayacak, bu fonksiyonun içeriği boşaltıldı veya tamamen kaldırılabilir.
