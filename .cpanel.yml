@@ -1,0 +1,4 @@
+deployment:
+  tasks:
+    - export DEPLOY_PATH=/home/hsnplant/public_html/demo/
+    - /bin/cp -r * $DEPLOY_PATH 
