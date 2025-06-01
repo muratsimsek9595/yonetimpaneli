@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const musteriId = formData.get('musteriIdInput');
 
+        console.log("Sunucuya gönderilen musteriData:", musteriData);
+
         try {
             let response;
             if (musteriId) {
