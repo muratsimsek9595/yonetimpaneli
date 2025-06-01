@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 response.data.forEach(musteri => { // response.data dizisini kullan
                     console.log('Rendering musteri:', musteri); // Müşteri nesnesini logla
                     console.log('Musteri Adı Değeri ve Tipi:', musteri.adi, typeof musteri.adi); // AD DEĞERİNİ VE TİPİNİ LOGLA
+                    console.log('Musteri nesnesi anahtarları:', Object.keys(musteri)); // <<-- YENİ LOG
                     const row = musteriListesiTablosuBody.insertRow();
                     row.innerHTML = `
                         <td>AD: ${musteri.adi || 'YOK'}</td>
