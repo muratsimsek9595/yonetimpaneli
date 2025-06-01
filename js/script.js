@@ -7,7 +7,9 @@ import {
     deleteTedarikci as deleteTedarikciAPI,
     getFiyatlar as fetchFiyatlar,
     saveFiyat as saveFiyatAPI,
-    deleteFiyat as deleteFiyatAPI
+    deleteFiyat as deleteFiyatAPI,
+    getTeklifler as fetchTekliflerAPI,
+    getMusteriler as getMusterilerAPI
 } from './api.js';
 import {
     subscribe,
@@ -22,7 +24,11 @@ import {
     getFiyatlar,
     setFiyatlar,
     saveFiyatStore,
-    removeFiyatById
+    removeFiyatById,
+    getTeklifler,
+    setTeklifler,
+    getMusteriler,
+    setMusteriler
 } from './store.js';
 import {
     temizleUrunFormu,
@@ -43,24 +49,6 @@ import {
 } from './grafik.js';
 import { globalHataYakala } from './hataYonetimi.js';
 
-// Test Modu ve Dummy Data
-let testModuAktif = false;
-const DUMMY_URUNLER = [
-    { id: 'd1', ad: 'Dummy Malzeme Alpha', birim_adi: 'adet' },
-    { id: 'd2', ad: 'Dummy Malzeme Beta', birim_adi: 'kg' },
-    { id: 'd3', ad: 'Dummy Malzeme Gamma', birim_adi: 'metre' }
-];
-const DUMMY_TEDARIKCILER = [
-    { id: 'dt1', ad: 'Dummy Tedarikçi X', yetkili_kisi: 'Ali Veli', telefon: '000', email: 'x@dummy.com', adres: 'Test Adres 1', not_alani: 'Bu bir test tedarikçisidir' },
-    { id: 'dt2', ad: 'Dummy Tedarikçi Y', yetkili_kisi: 'Ayşe Fatma', telefon: '111', email: 'y@dummy.com', adres: 'Test Adres 2', not_alani: 'Bu da bir test tedarikçisidir' }
-];
-const DUMMY_FIYATLAR = [
-    { id: 'df1', malzeme_id: 'd1', tedarikci_id: 'dt1', fiyat: 10.99, tarih: '2023-01-15' },
-    { id: 'df2', malzeme_id: 'd2', tedarikci_id: 'dt2', fiyat: 25.50, tarih: '2023-01-20' },
-    { id: 'df3', malzeme_id: 'd1', tedarikci_id: 'dt2', fiyat: 12.50, tarih: '2023-01-25' },
-    { id: 'df4', malzeme_id: 'd3', tedarikci_id: 'dt1', fiyat: 5.00, tarih: '2023-02-01' }
-];
-
 // Genel JavaScript fonksiyonları ve olay dinleyicileri buraya gelecek.
 // Chart.js DataLabels eklentisini global olarak kaydet
 if (typeof ChartDataLabels !== 'undefined') {
@@ -77,22 +65,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const sections = document.querySelectorAll('.main-content section');
     const anasayfaSection = document.getElementById('anasayfa');
 
-    const testModuBildirimiEl = document.getElementById('testModuBildirimi');
+    // Hızlı işlem butonlarını da section geçişleri için yakala
+    const quickActionButtons = document.querySelectorAll('.quick-action-button');
 
-    function testModuDurumunuGuncelleUI(aktif) {
-        if (testModuBildirimiEl) {
-            testModuBildirimiEl.style.display = aktif ? 'block' : 'none';
-        }
+    function showSection(targetId) {
+        sections.forEach(section => {
+            section.id === targetId ? section.classList.add('active-section') : section.classList.remove('active-section');
+        });
+        navLinks.forEach(navLink => {
+            navLink.getAttribute('href') === `#\${targetId}` ? navLink.classList.add('active') : navLink.classList.remove('active');
+        });
+
+        // URL hash'ini güncelle (isteğe bağlı, tarayıcı geçmişi için)
+        // history.pushState(null, null, `#\${targetId}`);
     }
 
     if (anasayfaSection) {
-        anasayfaSection.classList.add('active-section');
-        const anasayfaLink = document.querySelector('.sidebar nav a[href="#anasayfa"]');
-        if (anasayfaLink) anasayfaLink.classList.add('active');
+        showSection('anasayfa');
     } else {
         if (sections.length > 0) {
-            sections[0].classList.add('active-section');
-            if (navLinks.length > 0) navLinks[0].classList.add('active');
+            showSection(sections[0].id);
         }
     }
 
@@ -100,12 +92,20 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(event) {
             event.preventDefault();
             const targetId = this.getAttribute('href').substring(1);
-            sections.forEach(section => {
-                section.id === targetId ? section.classList.add('active-section') : section.classList.remove('active-section');
-            });
-            navLinks.forEach(navLink => navLink.classList.remove('active'));
-            this.classList.add('active');
+            showSection(targetId);
         });
+    });
+
+    quickActionButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            showSection(targetId);
+            // İlgili ana navigasyon linkini de aktif yap
+            navLinks.forEach(navLink => {
+                navLink.getAttribute('href') === `#\${targetId}` ? navLink.classList.add('active') : navLink.classList.remove('active');
+        });
+    });
     });
 
     // DOM Element Tanımlamaları (Global değişkenlerden sonra, fonksiyonlardan önce)
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fiyatGirisTedarikciSecimi = document.getElementById('fiyatGirisTedarikciSecimi');
     const fiyatGirisBirimGostergesi = document.getElementById('fiyatGirisBirimGostergesi');
     const sonFiyatlarTablosuBody = document.querySelector('#sonFiyatlarTablosu tbody');
-    
+
     const grafikUrunSecimi = document.getElementById('grafikUrunSecimi');
     const grafikTedarikciSecimi = document.getElementById('grafikTedarikciSecimi');
     const tedarikciFilterGrafikDiv = document.querySelector('.tedarikci-filter-grafik');
@@ -182,10 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     urunForm.addEventListener('submit', async function(event) {
         event.preventDefault();
-        if (testModuAktif) {
-            showToast('Test modunda yeni kayıt eklenemez veya mevcut kayıt güncellenemez.', 'info');
-            return;
-        }
         const submitButton = urunForm.querySelector('button[type="submit"]');
         setButtonLoading(submitButton, 'Kaydediliyor...');
         const id = urunIdInput.value;
@@ -221,18 +217,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (target.classList.contains('edit-btn')) {
-            if (testModuAktif) {
-                showToast('Test modunda kayıtlar düzenlenemez.', 'info');
-                return;
-            }
             if (urun) {
                 doldurUrunFormu(urun, urunIdInput, urunAdiInput, urunBirimSecimi, ozelBirimContainer, urunBirimAdiInput, formTemizleButton);
             }
         } else if (target.classList.contains('delete-btn')) {
-            if (testModuAktif) {
-                showToast('Test modunda kayıt silinemez.', 'info');
-                return;
-            }
             if (confirm(`'${urun.ad}' malzemesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
                 try {
                     const sonuc = await deleteMalzemeAPI(urunId);
@@ -249,10 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tedarikciForm) {
         tedarikciForm.addEventListener('submit', async function(event) {
             event.preventDefault();
-            if (testModuAktif) {
-                showToast('Test modunda yeni kayıt eklenemez veya mevcut kayıt güncellenemez.', 'info');
-                return;
-            }
             const submitButton = tedarikciForm.querySelector('button[type="submit"]');
             setButtonLoading(submitButton, 'Kaydediliyor...');
             const id = tedarikciIdInput.value;
@@ -296,18 +280,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (target.classList.contains('edit-btn')) {
-                if (testModuAktif) {
-                    showToast('Test modunda kayıtlar düzenlenemez.', 'info');
-                    return;
-                }
                 if (tedarikci) {
                     doldurTedarikciFormu(tedarikci, tedarikciIdInput, tedarikciAdiInput, tedarikciYetkiliKisiInput, tedarikciTelefonInput, tedarikciEmailInput, tedarikciAdresInput, tedarikciNotInput, tedarikciFormTemizleButton);
                 }
             } else if (target.classList.contains('delete-btn')) {
-                if (testModuAktif) {
-                    showToast('Test modunda kayıt silinemez.', 'info');
-                    return;
-                }
                 if (confirm(`'${tedarikci.ad}' tedarikçisini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tedarikçiye ait tüm fiyat kayıtları da silinecektir!`)) {
                     try {
                         const sonuc = await deleteTedarikciAPI(tedarikciId);
@@ -364,10 +340,6 @@ document.addEventListener('DOMContentLoaded', function() {
         sonFiyatlarTablosuBody.addEventListener('click', async function(event) {
             const target = event.target;
             if (target.classList.contains('delete-fiyat-btn')) {
-                if (testModuAktif) {
-                    showToast('Test modunda kayıt silinemez.', 'info');
-                    return;
-                }
                 const fiyatId = target.dataset.id;
                 const trElement = target.closest('tr');
                 const malzemeAdi = trElement?.cells[0]?.textContent || 'Bilinmeyen Malzeme';
@@ -387,10 +359,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     gunlukFiyatForm.addEventListener('submit', async function(event) {
         event.preventDefault();
-        if (testModuAktif) {
-            showToast('Test modunda yeni kayıt eklenemez.', 'info');
-            return;
-        }
         const submitButton = gunlukFiyatForm.querySelector('button[type="submit"]');
         setButtonLoading(submitButton, 'Kaydediliyor...');
         const malzeme_id = fiyatGirisMalzemeSecimi.value;
@@ -406,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
             saveFiyatStore(kaydedilenFiyat.data);
             showToast(kaydedilenFiyat?.message || 'Fiyat başarıyla kaydedildi.', 'success');
             gunlukFiyatForm.reset();
-            guncelleFiyatGirisBirimGostergesi();
+            guncelleFiyatGirisBirimGostergesi(); 
             document.getElementById('gunlukTarihInput').value = new Date().toISOString().split('T')[0];
         } catch (error) {
             globalHataYakala(error, 'Fiyat kaydedilirken bir sorun oluştu.');
@@ -419,13 +387,10 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const apiUrunler = await fetchMalzemeler();
             setUrunler(apiUrunler && Array.isArray(apiUrunler) ? apiUrunler : []);
-            testModuAktif = false;
         } catch (error) {
-            globalHataYakala(error, 'Malzemeler yüklenirken bir sorun oluştu. Test moduna geçiliyor.');
-            setUrunler(DUMMY_URUNLER);
-            testModuAktif = true;
+            globalHataYakala(error, 'Malzemeler yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+            setUrunler([]); // Hata durumunda boş dizi ata
         }
-        testModuDurumunuGuncelleUI(testModuAktif);
     }
 
     async function tedarikcileriYukle() {
@@ -433,11 +398,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const apiTedarikciler = await fetchTedarikciler();
             setTedarikciler(apiTedarikciler && Array.isArray(apiTedarikciler) ? apiTedarikciler : []);
         } catch (error) {
-            globalHataYakala(error, 'Tedarikçiler yüklenirken bir sorun oluştu. Test verileri kullanılacak.');
-            setTedarikciler(DUMMY_TEDARIKCILER);
-            testModuAktif = true; // Eğer herhangi bir yükleme başarısız olursa test moduna geç
+            globalHataYakala(error, 'Tedarikçiler yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+            setTedarikciler([]); // Hata durumunda boş dizi ata
         }
-        testModuDurumunuGuncelleUI(testModuAktif);
     }
 
     async function fiyatlariYukle() {
@@ -445,11 +408,34 @@ document.addEventListener('DOMContentLoaded', function() {
             const tumGelenFiyatlar = await fetchFiyatlar();
             setFiyatlar(tumGelenFiyatlar && Array.isArray(tumGelenFiyatlar) ? tumGelenFiyatlar : []);
         } catch (error) {
-            globalHataYakala(error, 'Fiyatlar yüklenirken bir sorun oluştu. Test verileri kullanılacak.');
-            setFiyatlar(DUMMY_FIYATLAR);
-            testModuAktif = true; // Eğer herhangi bir yükleme başarısız olursa test moduna geç
+            globalHataYakala(error, 'Fiyatlar yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+            setFiyatlar([]); // Hata durumunda boş dizi ata
         }
-        testModuDurumunuGuncelleUI(testModuAktif);
+    }
+
+    async function teklifleriYukle() {
+        try {
+            const apiTeklifler = await fetchTekliflerAPI(); // Bu fonksiyon api.js'de tanımlanacak
+            setTeklifler(apiTeklifler && Array.isArray(apiTeklifler) ? apiTeklifler : []);
+        } catch (error) {
+            globalHataYakala(error, 'Teklifler yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+            setTeklifler([]); // Hata durumunda boş dizi ata
+        }
+    }
+
+    // Müşterileri Yükle Fonksiyonu
+    async function musterileriYukle() {
+        try {
+            showToast('Müşteriler yükleniyor...', 'info', 1000);
+            const musteriler = await getMusterilerAPI();
+            setMusteriler(musteriler.data && Array.isArray(musteriler.data) ? musteriler.data : []); // API'den gelen veri.data varsayımı
+            console.log('Müşteriler API üzerinden yüklendi.', getMusteriler());
+            showToast('Müşteriler başarıyla yüklendi.', 'success');
+        } catch (error) {
+            console.warn('Müşteriler yüklenirken bir sorun oluştu.', error.message);
+            setMusteriler([]); // Hata durumunda boş dizi ata
+            showToast('Müşteriler API\'den yüklenemedi. Lütfen daha sonra tekrar deneyin.', 'warning');
+        }
     }
 
     // --- Ana Sayfa İstatistiklerini Güncelleme Fonksiyonu ---
@@ -474,34 +460,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function initializePageData() {
+        showToast('Veriler yükleniyor, lütfen bekleyin...', 'info', 2000);
         try {
-            // Başlangıçta test modu pasif
-            testModuAktif = false; 
-
             await Promise.all([
                 malzemeleriYukle(),
                 tedarikcileriYukle(),
-                fiyatlariYukle()
+                fiyatlariYukle(),
+                teklifleriYukle(),
+                musterileriYukle()
             ]);
-            // Yükleme fonksiyonları içindeki catch blokları testModuAktif'i true yapabilir.
-            // Eğer buraya kadar bir hata olmadıysa ve testModuAktif hala false ise, tüm yüklemeler başarılıdır.
-            // Eğer bir veya daha fazla yükleme başarısız olduysa, testModuAktif true olacaktır.
-            
-            guncelleAnasayfaIstatistikleri(); 
-            testModuDurumunuGuncelleUI(testModuAktif); 
-
-            const gunlukTarihInput = document.getElementById('gunlukTarihInput');
-            if (gunlukTarihInput) {
+            console.log('Tüm başlangıç veri yükleme denemeleri tamamlandı.');
+        
+        const gunlukTarihInput = document.getElementById('gunlukTarihInput');
+        if (gunlukTarihInput) {
                 gunlukTarihInput.value = new Date().toISOString().split('T')[0];
             }
-        } catch (error) {
-            globalHataYakala(error, "Sayfa başlatılırken genel bir hata oluştu. Test moduna geçiliyor.");
-            testModuAktif = true;
-            setUrunler(DUMMY_URUNLER);
-            setTedarikciler(DUMMY_TEDARIKCILER);
-            setFiyatlar(DUMMY_FIYATLAR);
             guncelleAnasayfaIstatistikleri();
-            testModuDurumunuGuncelleUI(testModuAktif);
+            
+        } catch (error) {
+            console.error('initializePageData Promise.all BEKLENMEDİK HATA:', error);
+            // Hata durumunda UI'ı bilgilendir, ancak dummy data yükleme.
+            // Gerekirse, her bir yükleme fonksiyonu kendi içinde boş veri setleyebilir.
+            guncelleAnasayfaIstatistikleri(); // Boş veya hatalı verilerle istatistikleri yine de güncellemeye çalış
+            showToast('Genel bir veri yükleme hatası oluştu. Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.', 'error');
         }
     }
 
@@ -541,31 +522,11 @@ document.addEventListener('DOMContentLoaded', function() {
         guncelleAnasayfaIstatistikleri(); // Ana sayfa istatistiklerini de güncelle
     });
 
-    // Hızlı İşlem Butonları İçin Olay Dinleyicileri (href zaten çalışıyor ama section geçişini manuel tetikleyebiliriz)
-    const quickActionButtons = document.querySelectorAll('.quick-action-button');
-    quickActionButtons.forEach(button => {
-        button.addEventListener('click', function(event) {
-            // event.preventDefault(); // Eğer sadece JS ile section değiştireceksek bunu açarız.
-            const targetId = this.getAttribute('href').substring(1);
-            
-            // İlgili nav linkini aktif yap
-            navLinks.forEach(navLink => {
-                if (navLink.getAttribute('href') === `#${targetId}`) {
-                    navLink.classList.add('active');
-                } else {
-                    navLink.classList.remove('active');
-                }
-            });
-
-            // İlgili section'ı göster
-            sections.forEach(section => {
-                if (section.id === targetId) {
-                    section.classList.add('active-section');
-                } else {
-                    section.classList.remove('active-section');
-                }
-            });
-        });
+    // Teklifler değiştiğinde UI'ı güncelle (şimdilik sadece ana sayfa için, sonra teklifler tablosu eklenecek)
+    subscribe('tekliflerChanged', (guncelTeklifler) => {
+        // TODO: Teklifler tablosunu güncelleme fonksiyonu buraya gelecek
+        // guncelleTekliflerTablosu(guncelTeklifler, tekliflerTabloBodyEl);
+        guncelleAnasayfaIstatistikleri(); // Ana sayfa istatistiklerini de güncelle
     });
 
 }); // DOMContentLoaded kapanışı 

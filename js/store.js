@@ -2,6 +2,8 @@ const state = {
     _urunler: [],
     _tedarikciler: [],
     _fiyatlar: [],
+    _teklifler: [],
+    _musteriler: [],
     // Diğer state verileri buraya eklenebilir (örn: aktifFiltreler)
 };
 
@@ -62,12 +64,28 @@ export function getFiyatlar() {
     return [...state._fiyatlar].sort((a, b) => new Date(b.tarih) - new Date(a.tarih)); // Her zaman sıralı döndür
 }
 
+export function getTeklifler() {
+    return [...state._teklifler].sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
+}
+
 export function getUrunById(id) {
     return state._urunler.find(u => String(u.id) === String(id));
 }
 
 export function getTedarikciById(id) {
     return state._tedarikciler.find(t => String(t.id) === String(id));
+}
+
+export function getTeklifById(id) {
+    return state._teklifler.find(t => String(t.id) === String(id));
+}
+
+export function getMusteriler() {
+    return state._musteriler.map(m => ({...m}));
+}
+
+export function getMusteriById(id) {
+    return state._musteriler.find(m => String(m.id) === String(id));
 }
 
 // --- Setters / Actions ---
@@ -186,9 +204,104 @@ export function removeFiyatById(fiyatId) {
     notify('fiyatlarChanged', getFiyatlar());
 }
 
-// Başlangıçta boş state ile olayları tetikleyebiliriz (opsiyonel)
-// notify('urunlerChanged', getUrunler());
-// notify('tedarikcilerChanged', getTedarikciler());
-// notify('fiyatlarChanged', getFiyatlar());
+/**
+ * Teklif listesini günceller ve 'tekliflerChanged' olayını tetikler.
+ * @param {Array} teklifler Yeni teklif listesi.
+ */
+export function setTeklifler(teklifler) {
+    state._teklifler = Array.isArray(teklifler) ? [...teklifler] : [];
+    notify('tekliflerChanged', getTeklifler());
+}
 
-console.log('Store modülü yüklendi.'); 
+/**
+ * Store'a yeni bir teklif ekler.
+ * @param {object} teklif Eklenecek teklif.
+ */
+export function addTeklifToStore(teklif) {
+    state._teklifler.push(teklif);
+    notify('tekliflerChanged', getTeklifler());
+}
+
+/**
+ * Store'daki mevcut bir teklifi günceller.
+ * @param {object} teklif Güncellenecek teklif (ID içermeli).
+ */
+export function updateTeklifInStore(teklif) {
+    const index = state._teklifler.findIndex(t => String(t.id) === String(teklif.id));
+    if (index > -1) {
+        state._teklifler[index] = { ...state._teklifler[index], ...teklif };
+        notify('tekliflerChanged', getTeklifler());
+    } else {
+        console.warn(`Güncellenmek istenen teklif ID'si (${teklif.id}) store'da bulunamadı.`);
+    }
+}
+
+/**
+ * ID'ye göre bir teklifi store'dan siler.
+ * @param {string|number} teklifId Silinecek teklifin ID'si.
+ */
+export function removeTeklifByIdFromStore(teklifId) {
+    const initialLength = state._teklifler.length;
+    state._teklifler = state._teklifler.filter(t => String(t.id) !== String(teklifId));
+    if (state._teklifler.length < initialLength) {
+        notify('tekliflerChanged', getTeklifler());
+    }
+}
+
+/**
+ * Müşteri listesini günceller ve 'musterilerChanged' olayını tetikler.
+ * @param {Array} musteriler Yeni müşteri listesi.
+ */
+export function setMusteriler(musteriler) {
+    state._musteriler = Array.isArray(musteriler) ? musteriler.map(m => ({...m})) : [];
+    notify('musterilerChanged', getMusteriler());
+}
+
+/**
+ * Müşteri ekleme fonksiyonu.
+ * @param {object} yeniMusteri Eklenecek müşteri.
+ */
+export function addMusteriToStore(yeniMusteri) {
+    // Backend'den ID gelmiyorsa burada basit bir ID oluşturulabilir (test amaçlı)
+    if (!yeniMusteri.id) yeniMusteri.id = `musteri_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    state._musteriler.push(yeniMusteri);
+    notify('musterilerChanged', getMusteriler());
+}
+
+/**
+ * Müşteri güncelleme fonksiyonu.
+ * @param {object} guncelMusteri Güncellenecek müşteri.
+ */
+export function updateMusteriInStore(guncelMusteri) {
+    const index = state._musteriler.findIndex(m => String(m.id) === String(guncelMusteri.id));
+    if (index !== -1) {
+        state._musteriler[index] = {...state._musteriler[index], ...guncelMusteri};
+        notify('musterilerChanged', getMusteriler());
+    } else {
+        console.warn('Güncellenecek müşteri storeda bulunamadı:', guncelMusteri.id);
+    }
+}
+
+/**
+ * Müşteri silme fonksiyonu.
+ * @param {string|number} musteriId Silinecek müşterinin ID'si.
+ */
+export function removeMusteriByIdFromStore(musteriId) {
+    const initialLength = state._musteriler.length;
+    state._musteriler = state._musteriler.filter(m => String(m.id) !== String(musteriId));
+    if (state._musteriler.length < initialLength) {
+        notify('musterilerChanged', getMusteriler());
+    }
+}
+
+// Başlangıçta boş state ile olayları tetikleyebiliriz (opsiyonel)
+// Örneğin, uygulama ilk yüklendiğinde boş listelerle ilgili olayları tetiklemek için:
+// document.addEventListener('DOMContentLoaded', () => {
+//     notify('urunlerChanged', getUrunler());
+//     notify('tedarikcilerChanged', getTedarikciler());
+//     notify('fiyatlarChanged', getFiyatlar());
+//     notify('tekliflerChanged', getTeklifler());
+//     notify('musterilerChanged', getMusteriler());
+// });
+
+// console.log('Store modülü yüklendi.'); // Bu satır geçici olarak kaldırıldı 

@@ -31,6 +31,9 @@
                     <li><a href="#gunluk-fiyat-girisi"><span class="nav-icon">✏️</span> Günlük Fiyat Girişi</a></li>
                     <li><a href="#tedarikci-yonetimi"><span class="nav-icon">🚚</span> Tedarikçi Yönetimi</a></li>
                     <li><a href="#fiyat-grafikleri"><span class="nav-icon">📊</span> Fiyat Grafikleri</a></li>
+                    <li><a href="#teklif-yonetimi"><span class="nav-icon">📝</span> Teklif Yönetimi</a></li>
+                    <li><a href="#musteri-yonetimi"><span class="nav-icon">👥</span> Müşteri Yönetimi</a></li>
+                    <li><a href="#proje-yonetimi"><span class="nav-icon">🛠️</span> Proje Yönetimi</a></li>
                 </ul>
             </nav>
         </aside>
@@ -90,6 +93,12 @@
                         </a>
                         <a href="#fiyat-grafikleri" class="quick-action-button">
                             <span class="nav-icon">📊</span> Fiyat Grafikleri
+                        </a>
+                        <a href="#teklif-yonetimi" class="quick-action-button">
+                            <span class="nav-icon">📝</span> Teklif Yönetimi
+                        </a>
+                        <a href="#proje-yonetimi" class="quick-action-button">
+                            <span class="nav-icon">🛠️</span> Proje Yönetimi
                         </a>
                     </div>
                 </div>
@@ -293,6 +302,233 @@
             </section>
             <!-- Diğer section'lar buraya eklenebilir -->
 
+            <section id="teklif-yonetimi">
+                <div class="page-header">
+                    <h1>Teklif Yönetimi</h1>
+                    <p class="page-subtitle">Tekliflerinizi oluşturun, düzenleyin ve takip edin.</p>
+                </div>
+                
+                <div class="form-container card">
+                    <h3>Yeni Teklif Ekle / Güncelle</h3>
+                    <form id="teklifForm">
+                        <input type="hidden" id="teklifIdInput" name="teklifIdInput">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="teklifNoInput">Teklif No:</label>
+                                <input type="text" id="teklifNoInput" name="teklifNoInput" placeholder="Örn: T2024001">
+                            </div>
+                            <div class="form-group">
+                                <label for="teklifMusteriSecimi">Müşteri Seçin:</label>
+                                <select id="teklifMusteriSecimi" name="musteriId" required>
+                                    <option value="">-- Müşteri Seçiniz --</option>
+                                    <!-- Müşteriler buraya JS ile eklenecek -->
+                                </select>
+                                <input type="hidden" id="teklifMusteriAdiInput" name="musteriAdi">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="teklifMusteriIletisimInput">Müşteri İletişim (Tel/Email):</label>
+                                <input type="text" id="teklifMusteriIletisimInput" name="musteriIletisim" readonly placeholder="Müşteri seçilince otomatik dolacak">
+                            </div>
+                            <div class="form-group">
+                                <!-- Bu form-group boş kalabilir veya başka bir alanla doldurulabilir -->
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="teklifTarihiInput">Teklif Tarihi:</label>
+                                <input type="date" id="teklifTarihiInput" name="teklifTarihiInput" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="teklifGecerlilikTarihiInput">Geçerlilik Tarihi:</label>
+                                <input type="date" id="teklifGecerlilikTarihiInput" name="teklifGecerlilikTarihiInput" required>
+                            </div>
+                        </div>
+                        
+                        <h4>Ürünler</h4>
+                        <div id="teklifUrunListesiContainer">
+                            <!-- Ürün satırları buraya dinamik olarak eklenecek -->
+                            <div class="teklif-urun-satiri">
+                                <!-- Örnek Ürün Satırı (JS ile oluşturulacak) -->
+                            </div>
+                        </div>
+                        <button type="button" id="teklifUrunEkleButton" class="btn-secondary">Ürün Ekle</button>
+                        
+                        <h4>Toplamlar</h4>
+                        <div class="teklif-toplamlar-container">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Ara Toplam:</label>
+                                    <span id="teklifAraToplamSpan" class="toplam-deger">0.00</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="teklifIndirimOraniInput">İndirim Oranı (%):</label>
+                                    <input type="number" id="teklifIndirimOraniInput" name="indirimOrani" min="0" max="100" value="0">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>İndirim Tutarı:</label>
+                                    <span id="teklifIndirimTutariSpan" class="toplam-deger">0.00</span>
+                                </div>
+                                 <div class="form-group">
+                                    <label for="teklifKdvOraniInput">KDV Oranı (%):</label>
+                                    <input type="number" id="teklifKdvOraniInput" name="kdvOrani" min="0" value="20"> 
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>KDV Tutarı:</label>
+                                    <span id="teklifKdvTutariSpan" class="toplam-deger">0.00</span>
+                                </div>
+                                <div class="form-group">
+                                    <label>Genel Toplam:</label>
+                                    <strong id="teklifGenelToplamSpan" class="toplam-deger genel-toplam-vurgu">0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="teklifParaBirimiInput">Para Birimi:</label>
+                                <select id="teklifParaBirimiInput" name="teklifParaBirimiInput">
+                                    <option value="TL">TL</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="teklifDurumInput">Durum:</label>
+                                <select id="teklifDurumInput" name="teklifDurumInput">
+                                    <option value="Hazırlanıyor">Hazırlanıyor</option>
+                                    <option value="Gönderildi">Gönderildi</option>
+                                    <option value="Onaylandı">Onaylandı</option>
+                                    <option value="Reddedildi">Reddedildi</option>
+                                    <option value="İptal Edildi">İptal Edildi</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="teklifNotlarInput">Notlar:</label>
+                            <textarea id="teklifNotlarInput" name="teklifNotlarInput" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit">Teklifi Kaydet</button>
+                            <button type="button" id="teklifFormTemizleButton" style="display:none;">Formu Temizle</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="liste-container card">
+                    <h3>Teklif Listesi</h3>
+                    <table id="teklifListesiTablosu">
+                        <thead>
+                            <tr>
+                                <th>Teklif No</th>
+                                <th>Müşteri Adı</th>
+                                <th>Teklif Tarihi</th>
+                                <th>Geçerlilik Tarihi</th>
+                                <th>Genel Toplam</th>
+                                <th>Para Birimi</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Teklifler buraya JS ile eklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="musteri-yonetimi">
+                <div class="page-header">
+                    <h1>Müşteri Yönetimi</h1>
+                    <p class="page-subtitle">Müşteri bilgilerinizi yönetin ve takip edin.</p>
+                </div>
+                
+                <div class="form-container card">
+                    <h3>Yeni Müşteri Ekle / Güncelle</h3>
+                    <form id="musteriForm">
+                        <input type="hidden" id="musteriIdInput" name="musteriIdInput">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="musteriAdiInput">Müşteri Adı/Firma Adı:</label>
+                                <input type="text" id="musteriAdiInput" name="musteriAdiInput" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="musteriYetkiliKisiInput">Yetkili Kişi:</label>
+                                <input type="text" id="musteriYetkiliKisiInput" name="musteriYetkiliKisiInput">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="musteriTelefonInput">Telefon:</label>
+                                <input type="tel" id="musteriTelefonInput" name="musteriTelefonInput">
+                            </div>
+                            <div class="form-group">
+                                <label for="musteriEmailInput">Email:</label>
+                                <input type="email" id="musteriEmailInput" name="musteriEmailInput">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="musteriAdresInput">Adres:</label>
+                            <textarea id="musteriAdresInput" name="musteriAdresInput" rows="3"></textarea>
+                        </div>
+                        <div class="form-row">
+                             <div class="form-group">
+                                <label for="musteriVergiNoInput">Vergi No/TC Kimlik No:</label>
+                                <input type="text" id="musteriVergiNoInput" name="musteriVergiNoInput">
+                            </div>
+                            <div class="form-group">
+                                <!-- Boş bırakılabilir veya Vergi Dairesi eklenebilir -->
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="musteriNotlarInput">Notlar:</label>
+                            <textarea id="musteriNotlarInput" name="musteriNotlarInput" rows="3"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit">Müşteriyi Kaydet</button>
+                            <button type="button" id="musteriFormTemizleButton" style="display:none;">Formu Temizle</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="liste-container card">
+                    <h3>Müşteri Listesi</h3>
+                    <table id="musteriListesiTablosu">
+                        <thead>
+                            <tr>
+                                <th>Müşteri Adı</th>
+                                <th>Yetkili Kişi</th>
+                                <th>Telefon</th>
+                                <th>Email</th>
+                                <th>Adres</th>
+                                <th>Vergi/TC No</th>
+                                <th>Notlar</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Müşteriler buraya JS ile eklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="proje-yonetimi">
+                <div class="page-header">
+                    <h1>Proje Yönetimi</h1>
+                    <p class="page-subtitle">Projelerinizi planlayın, yönetin ve izleyin.</p>
+                </div>
+                <!-- Proje Yönetimi içeriği buraya gelecek -->
+                <p>Proje yönetimi modülü yakında burada olacak.</p>
+            </section>
+
             <footer class="main-footer">
                 <p>&copy; 2024 Fiyat Takip Paneli. Tüm Hakları Saklıdır.</p>
             </footer>
@@ -305,5 +541,8 @@
     <script src="js/grafik.js?v=1.6" type="module"></script>
     <script src="js/hataYonetimi.js?v=1.6" type="module"></script>
     <script src="js/script.js?v=1.6" type="module"></script>
+    <script src="js/teklifYonetimi.js?v=1.0" type="module"></script>
+    <script src="js/musteriYonetimi.js?v=1.0" type="module"></script>
+    <script src="js/projeYonetimi.js?v=1.0" type="module"></script>
 </body>
 </html> 

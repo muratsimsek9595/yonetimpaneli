@@ -586,4 +586,267 @@ form button[type="button"]:hover {
 
 .test-mode-banner strong {
     font-weight: 600;
+}
+
+/* Teklif Yönetimi Stilleri */
+#teklif-yonetimi .form-container h3, 
+#teklif-yonetimi .liste-container h3 {
+    margin-bottom: 25px;
+}
+
+#teklif-yonetimi .form-container h4 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.teklif-urun-satiri {
+    display: flex;
+    align-items: flex-end; /* Buton ve labelları hizalamak için */
+    gap: 15px; /* Öğeler arası boşluk */
+    padding: 15px 0;
+    border-bottom: 1px solid #f7f7f7;
+    margin-bottom: 10px;
+}
+
+.teklif-urun-satiri:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.teklif-urun-satiri .form-group {
+    margin-bottom: 0; /* Flex ile hizalandığı için alttaki boşluğu sıfırla */
+    flex-grow: 1; /* Genişleyebilen alanlar */
+}
+
+.teklif-urun-satiri .form-group.urun-secimi {
+    flex-basis: 35%; /* Malzeme seçimi daha geniş olsun */
+}
+.teklif-urun-satiri .form-group.miktar,
+.teklif-urun-satiri .form-group.birim-fiyat {
+    flex-basis: 18%; 
+}
+
+.teklif-urun-satiri .form-group.satir-toplami {
+    flex-basis: 20%;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #1890ff;
+    padding-bottom: 10px; /* Butonla hizalamak için */
+}
+.teklif-urun-satiri .teklif-urun-satir-toplami {
+     display: inline-block; /* Span'ı blok gibi davranması için */
+     padding: 10px;
+     background-color: #f0f8ff;
+     border-radius: 4px;
+     min-width: 70px; /* Minimum genişlik */
+     text-align: right;
+}
+
+
+.teklif-urun-satiri .remove-urun-satiri-btn {
+    background: transparent;
+    border: none;
+    color: #ff4d4f;
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0 5px;
+    margin-left: 5px; /* Solunda boşluk */
+    align-self: center; /* Dikey ortala */
+    line-height: 1; /* Buton içindeki yazıyı ortala */
+    margin-bottom: 10px; /* Diğer inputlarla aynı hizada olması için */
+}
+
+.teklif-urun-satiri .remove-urun-satiri-btn:hover {
+    color: #d9363e;
+}
+
+#teklifUrunEkleButton {
+    margin-top: 15px;
+    margin-bottom: 25px;
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border: 1px dashed #1890ff;
+    font-weight: 500;
+}
+#teklifUrunEkleButton:hover {
+    background-color: #d9f0ff;
+    border-color: #1890ff;
+}
+
+/* Formda genel satır düzeni için (Müşteri Adı ve Teklif No gibi) */
+.form-row {
+    display: flex;
+    gap: 20px; /* İki form group arası boşluk */
+    margin-bottom: 0; /* .form-group'lar zaten margin-bottom alıyor*/
+}
+
+.form-row .form-group {
+    flex: 1; /* Eşit genişlikte dağılsınlar */
+    margin-bottom: 18px; /* Standart form-group boşluğu */
+}
+
+#teklifForm .form-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+    text-align: right;
+}
+
+/* Teklif Listesi Tablosu Stilleri */
+#teklifListesiTablosu {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.9rem; /* Biraz daha küçük font */
+}
+
+#teklifListesiTablosu th, 
+#teklifListesiTablosu td {
+    border: 1px solid #e8e8e8;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+#teklifListesiTablosu th {
+    background-color: #fafafa;
+    font-weight: 600;
+    color: #333;
+}
+
+#teklifListesiTablosu tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#teklifListesiTablosu tbody tr:hover {
+    background-color: #f0f8ff;
+}
+
+#teklifListesiTablosu .btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 5px;
+    margin-right: 5px;
+    color: #555;
+}
+#teklifListesiTablosu .edit-teklif-btn:hover {
+    color: #1890ff;
+}
+#teklifListesiTablosu .delete-teklif-btn:hover {
+    color: #ff4d4f;
+}
+
+/* Durum Rozetleri */
+.durum-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+    text-transform: capitalize;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.durum-hazirlaniyor {
+    background-color: #e6f7ff; /* Açık Mavi */
+    color: #1890ff;
+    border: 1px solid #91d5ff;
+}
+
+.durum-gonderildi {
+    background-color: #fffbe6; /* Açık Sarı */
+    color: #faad14;
+    border: 1px solid #ffe58f;
+}
+
+.durum-onaylandi {
+    background-color: #f6ffed; /* Açık Yeşil */
+    color: #52c41a;
+    border: 1px solid #b7eb8f;
+}
+
+.durum-reddedildi {
+    background-color: #fff1f0; /* Açık Kırmızı */
+    color: #f5222d;
+    border: 1px solid #ffa39e;
+}
+
+.durum-iptal-edildi {
+    background-color: #fafafa; /* Açık Gri */
+    color: #8c8c8c;
+    border: 1px solid #d9d9d9;
+}
+
+/* Teklif Formu Toplamlar Alanı */
+.teklif-toplamlar-container {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #e8e8e8;
+}
+
+.teklif-toplamlar-container .form-group label {
+    font-weight: 500;
+    color: #555;
+}
+
+.teklif-toplamlar-container .toplam-deger {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    padding-top: 5px;
+}
+
+.teklif-toplamlar-container .genel-toplam-vurgu {
+    font-size: 1.3rem;
+    color: #1890ff; /* Ana vurgu rengi */
+}
+
+#teklifIndirimOraniInput,
+#teklifKdvOraniInput {
+    max-width: 100px; /* Yüzde inputları çok geniş olmasın */
+}
+
+/* Müşteri Yönetimi Bölümü Stilleri */
+#musteri-yonetimi .page-header {
+    margin-bottom: 20px; /* Diğer page-header'lar gibi */
+}
+
+/* Teklif Durum Rozetleri (Mevcut) */
+.status-Hazirlaniyor {
+    background-color: #e6f7ff; /* Açık Mavi */
+    color: #1890ff;
+    border: 1px solid #91d5ff;
+}
+
+.status-Gonderildi {
+    background-color: #fffbe6; /* Açık Sarı */
+    color: #faad14;
+    border: 1px solid #ffe58f;
+}
+
+.status-Onaylandi {
+    background-color: #f6ffed; /* Açık Yeşil */
+    color: #52c41a;
+    border: 1px solid #b7eb8f;
+}
+
+.status-Reddedildi {
+    background-color: #fff1f0; /* Açık Kırmızı */
+    color: #f5222d;
+    border: 1px solid #ffa39e;
+}
+
+.status-IptalEdildi {
+    background-color: #fafafa; /* Açık Gri */
+    color: #8c8c8c;
+    border: 1px solid #d9d9d9;
 } 
