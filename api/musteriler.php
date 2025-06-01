@@ -16,22 +16,24 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// --- GEÇİCİ TEST BAŞLANGICI ---
-echo json_encode(["status" => "musteriler_api_test", "message" => "Veritabanı bağlantısı olmadan test ediliyor"]);
-exit();
-// --- GEÇİCİ TEST SONU ---
-
-/* // GEÇİCİ OLARAK DEVRE DIŞI BIRAKILDI
-// Veritabanı bağlantısı
+// --- db_config.php ve bağlantı kontrolünü geri etkinleştir ---
 require_once '../config/db_config.php'; 
 
-// $conn bağlantısının varlığını kontrol et (db_config.php sonrası hemen yapılmalı)
 if (!$conn || $conn->connect_error) { 
     http_response_code(503); 
-    echo json_encode(array("message" => "Veritabanı bağlantısı kurulamadı.", "error_detail" => ($conn ? $conn->connect_error : "Bağlantı nesnesi oluşturulamadı.")));
+    echo json_encode(array(
+        "status" => "db_connection_error", 
+        "message" => "Veritabanı bağlantısı kurulamadı.", 
+        "error_detail" => ($conn ? $conn->connect_error : "Bağlantı nesnesi (\$conn) oluşturulamadı veya null.")
+    ));
     exit();
 }
+// --- db_config.php ve bağlantı kontrolü sonu ---
 
+echo json_encode(["status" => "musteriler_api_test_with_db_config", "message" => "db_config.php yüklendi ve bağlantı başarılı görünüyor."]);
+exit();
+
+/* // GERİ KALAN KISIM HALA DEVRE DIŞI
 $method = $_SERVER['REQUEST_METHOD'];
 $id_param = null;
 if (isset($_GET['id'])) {
