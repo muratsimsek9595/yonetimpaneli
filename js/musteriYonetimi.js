@@ -65,15 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response && response.status === 'success' && response.data && response.data.length > 0) {
                 response.data.forEach(musteri => { // response.data dizisini kullan
+                    console.log('Rendering musteri:', musteri); // Müşteri nesnesini logla
                     const row = musteriListesiTablosuBody.insertRow();
                     row.innerHTML = `
-                        <td>${musteri.adi || ''}</td>
-                        <td>${musteri.yetkiliKisi || ''}</td>
-                        <td>${musteri.telefon || ''}</td>
-                        <td>${musteri.email || ''}</td>
-                        <td>${musteri.adres || ''}</td>
-                        <td>${musteri.vergiNo || ''}</td>
-                        <td>${musteri.notlar || ''}</td>
+                        <td>AD: ${musteri.adi || 'YOK'}</td>
+                        <td>YETKILI: ${musteri.yetkiliKisi || 'YOK'}</td>
+                        <td>TEL: ${musteri.telefon || 'YOK'}</td>
+                        <td>EMAIL: ${musteri.email || 'YOK'}</td>
+                        <td>ADRES: ${musteri.adres || 'YOK'}</td>
+                        <td>VERGINO: ${musteri.vergiNo || 'YOK'}</td>
+                        <td>NOT: ${musteri.notlar || 'YOK'}</td>
                         <td>
                             <button class="btn-edit" data-id="${musteri.id}">Düzenle</button>
                             <button class="btn-delete" data-id="${musteri.id}">Sil</button>
