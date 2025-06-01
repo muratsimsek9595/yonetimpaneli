@@ -103,23 +103,29 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', async (e) => {
                 const musteriId = e.target.dataset.id;
                 try {
-                    const musteriler = await getMusteriler(); // API'dan güncel listeyi çek
-                    const musteri = musteriler.find(m => String(m.id) === String(musteriId));
-                    if (musteri) {
-                        musteriIdInput.value = musteri.id;
-                        document.getElementById('musteriAdiInput').value = musteri.adi || '';
-                        document.getElementById('musteriYetkiliKisiInput').value = musteri.yetkiliKisi || '';
-                        document.getElementById('musteriTelefonInput').value = musteri.telefon || '';
-                        document.getElementById('musteriEmailInput').value = musteri.email || '';
-                        document.getElementById('musteriAdresInput').value = musteri.adres || '';
-                        document.getElementById('musteriVergiNoInput').value = musteri.vergiNo || '';
-                        document.getElementById('musteriNotlarInput').value = musteri.notlar || '';
-                        
-                        musteriForm.querySelector('button[type="submit"]').textContent = 'Müşteriyi Güncelle';
-                        musteriFormTemizleButton.style.display = 'inline-block';
-                        document.getElementById('musteri-yonetimi').scrollIntoView({ behavior: 'smooth' });
+                    const apiResponse = await getMusteriler(); // API'dan güncel listeyi çek
+                    if (apiResponse && apiResponse.data && Array.isArray(apiResponse.data)) {
+                        const musteriListesi = apiResponse.data;
+                        const musteri = musteriListesi.find(m => String(m.id) === String(musteriId));
+                        if (musteri) {
+                            musteriIdInput.value = musteri.id;
+                            document.getElementById('musteriAdiInput').value = musteri.ad || '';
+                            document.getElementById('musteriYetkiliKisiInput').value = musteri.yetkiliKisi || '';
+                            document.getElementById('musteriTelefonInput').value = musteri.telefon || '';
+                            document.getElementById('musteriEmailInput').value = musteri.email || '';
+                            document.getElementById('musteriAdresInput').value = musteri.adres || '';
+                            document.getElementById('musteriVergiNoInput').value = musteri.vergiNo || '';
+                            document.getElementById('musteriNotlarInput').value = musteri.notlar || '';
+                            
+                            musteriForm.querySelector('button[type="submit"]').textContent = 'Müşteriyi Güncelle';
+                            musteriFormTemizleButton.style.display = 'inline-block';
+                            document.getElementById('musteri-yonetimi').scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                            showToast('Düzenlenecek müşteri bulunamadı.', 'error');
+                        }
                     } else {
-                        showToast('Düzenlenecek müşteri bulunamadı.', 'error');
+                         showToast('Müşteri verileri alınamadı veya format hatalı.', 'error');
+                         console.error("API'dan beklenen formatta müşteri listesi alınamadı:", apiResponse);
                     }
                 } catch (error) {
                     console.error('Müşteri bilgileri getirilirken hata:', error);
