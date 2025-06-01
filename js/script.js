@@ -775,15 +775,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) {
                 throw new Error(`Fiyatlar API hatası: ${response.status} - ${response.statusText}\nYanıt: ${responseText}`);
             }
-            
-            // JSON parse etmeyi dene
-            let tumGelenFiyatlar;
-            try {
-                tumGelenFiyatlar = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error("Fiyatlar JSON parse hatası:", parseError);
-                throw new Error(`Fiyatlar API yanıtı geçerli JSON değil: ${responseText}`);
-            }
+            const tumGelenFiyatlar = await response.json();
             
             fiyatlar = tumGelenFiyatlar.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
             console.log("Global fiyatlar güncellendi (API\'den çekildi), toplam:", fiyatlar.length, "adet.");
@@ -802,11 +794,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${fiyat.malzeme_birim_adi || '-'}</td>
                         <td>${new Date(fiyat.tarih).toLocaleDateString('tr-TR')}</td>
                         <td>${fiyat.tedarikci_adi || '-'}</td>
-<<<<<<< HEAD
-                        <td class="actions actions-dar">
-=======
                         <td class="actions">
->>>>>>> dccc68f (.)
                             <button class="delete-fiyat-btn" data-id="${fiyat.id}">Sil</button>
                         </td>
                     `;
