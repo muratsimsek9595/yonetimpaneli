@@ -116,51 +116,51 @@ function getMusteri($conn, $id) {
 }
 
 function addMusteri($conn) {
-    $data = json_decode(file_get_contents("php://input"));
+    $raw_input = file_get_contents("php://input");
+    $data = json_decode($raw_input);
 
     if (!$data) {
         http_response_code(400);
+        // Content-Type başlığı dosyanın en başında zaten ayarlandı.
         echo json_encode(array("status" => "error", "message" => "Geçersiz JSON formatı.", "json_error" => json_last_error_msg()));
         exit();
     }
 
-    // --- TRIM TEŞHİS BAŞLANGICI ---
-    header("Content-Type: text/plain; charset=UTF-8"); // Yanıtın JSON olmadığını belirt
-    echo "Data nesnesi:\n";
-    var_dump($data);
-    echo "\n\n";
-
-    if (isset($data->ad)) {
-        echo "data->ad mevcut.\n";
-        $trimmed_ad = trim((string)$data->ad);
-        echo "(string)data->ad değeri:\n";
-        var_dump((string)$data->ad);
-        echo "\n\ntrim((string)data->ad) sonucu:\n";
-        var_dump($trimmed_ad);
-        echo "\n\nstrlen(trim((string)data->ad)): " . strlen($trimmed_ad) . "\n";
-        echo "trim((string)data->ad) === \'\': ";
-        var_dump($trimmed_ad === '');
-        echo "\n\n";
-    } else {
-        echo "data->ad mevcut DEĞİL.\n";
+    // Anahtar adını boşluklu olarak deneyelim, çünkü isset($data->ad) false dönmüştü.
+    // Diğer alanlar için de aynı mantıkla boşluklu erişim denenebilir eğer sorun devam ederse,
+    // ama öncelikle 'ad' alanını çözelim.
+    $musteri_adi_key = 'ad'; // Varsayılan anahtar
+    if (!isset($data->ad) && isset($data->{' ad'})) { // Eğer 'ad' yoksa ama ' ad' varsa
+        $musteri_adi_key = ' ad'; // Boşluklu anahtarı kullan
     }
-    // --- TRIM TEŞHİS SONU ---
-    exit(); // Sadece teşhis için çıkış
+    // Diğer tüm alanlar için de benzer bir kontrol yapılabilir veya doğrudan boşluklu denenebilir.
+    // Şimdilik sadece 'ad' için bu dinamikliği ekleyelim.
 
-    // Müşteri adı kontrolünü değiştir
-    if (!isset($data->ad) || trim((string)$data->ad) === '') { // (string) cast eklendi
+    if (!isset($data->{$musteri_adi_key}) || trim((string)$data->{$musteri_adi_key}) === '') {
         http_response_code(400); 
-        echo json_encode(array("status" => "error", "message" => "Müşteri adı boş olamaz veya sadece boşluk içeremez."));
+        echo json_encode(array("status" => "error", "message" => "Müşteri adı [key: {$musteri_adi_key}] boş olamaz veya sadece boşluk içeremez."));
         exit();
     }
 
-    $ad = $conn->real_escape_string(trim((string)$data->ad)); // (string) cast ve trim eklendi
-    $yetkiliKisi = isset($data->yetkiliKisi) ? $conn->real_escape_string(trim((string)$data->yetkiliKisi)) : null;
-    $telefon = isset($data->telefon) ? $conn->real_escape_string(trim((string)$data->telefon)) : null;
-    $email = isset($data->email) ? $conn->real_escape_string(trim((string)$data->email)) : null;
-    $adres = isset($data->adres) ? $conn->real_escape_string(trim((string)$data->adres)) : null;
-    $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string(trim((string)$data->vergiNo)) : null;
-    $notlar = isset($data->notlar) ? $conn->real_escape_string(trim((string)$data->notlar)) : null;
+    // Verileri alırken dinamik anahtarı veya doğrudan boşluklu anahtarı kullan
+    $ad = $conn->real_escape_string(trim((string)$data->{$musteri_adi_key}));
+    
+    // Diğer alanlar için de, eğer sorun devam ederse, anahtar adlarını kontrol et ( 'yetkiliKisi' vs yetkiliKisi )
+    // Şimdilik JavaScript'ten doğru geldiğini varsayarak devam edelim.
+    $yetkiliKisi_key = isset($data->{' yetkiliKisi'}) ? ' yetkiliKisi' : 'yetkiliKisi';
+    $telefon_key = isset($data->{' telefon'}) ? ' telefon' : 'telefon';
+    $email_key = isset($data->{' email'}) ? ' email' : 'email';
+    $adres_key = isset($data->{' adres'}) ? ' adres' : 'adres';
+    $vergiNo_key = isset($data->{' vergiNo'}) ? ' vergiNo' : 'vergiNo';
+    $notlar_key = isset($data->{' notlar'}) ? ' notlar' : 'notlar';
+
+    $yetkiliKisi = isset($data->{$yetkiliKisi_key}) ? $conn->real_escape_string(trim((string)$data->{$yetkiliKisi_key})) : null;
+    $telefon = isset($data->{$telefon_key}) ? $conn->real_escape_string(trim((string)$data->{$telefon_key})) : null;
+    $email = isset($data->{$email_key}) ? $conn->real_escape_string(trim((string)$data->{$email_key})) : null;
+    $adres = isset($data->{$adres_key}) ? $conn->real_escape_string(trim((string)$data->{$adres_key})) : null;
+    $vergiNo = isset($data->{$vergiNo_key}) ? $conn->real_escape_string(trim((string)$data->{$vergiNo_key})) : null;
+    $notlar = isset($data->{$notlar_key}) ? $conn->real_escape_string(trim((string)$data->{$notlar_key})) : null;
+
     $created_at = date('Y-m-d H:i:s');
     $updated_at = date('Y-m-d H:i:s');
 
@@ -171,20 +171,17 @@ function addMusteri($conn) {
         exit(); 
     }
 
-    // bind_param için tipler: ad (s), yetkiliKisi (s), telefon (s), email (s), adres (s), vergiNo (s), notlar (s), created_at (s), updated_at (s)
     $stmt->bind_param("sssssssss", $ad, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar, $created_at, $updated_at);
 
     if ($stmt->execute()) {
         $yeniMusteriId = $conn->insert_id; 
         http_response_code(201);
-        // Content-Type başlığı dosyanın en başında zaten ayarlandı.
         echo json_encode(array("status" => "success", "message" => "Müşteri başarıyla eklendi.", "id" => $yeniMusteriId));
     } else {
         http_response_code(500);
         echo json_encode(array("status" => "error", "message" => "Müşteri eklenirken hata: " . $stmt->error . " (Query: INSERT ...)"));
     }
     $stmt->close();
-    // exit(); // Bu exit genellikle gereksizdir çünkü script zaten burada sonlanır ve $conn->close() dışarıda çağrılır.
 }
 
 function updateMusteri($conn, $id) {
