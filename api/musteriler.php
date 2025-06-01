@@ -1,7 +1,4 @@
 <?php
-echo json_encode(["status" => "test_ok", "message" => "API script started"]);
-exit;
-
 // ÖNEMLİ: Content-Type başlığını, olası HTML hata çıktılarından önce ayarla
 header("Content-Type: application/json; charset=UTF-8");
 
@@ -14,6 +11,9 @@ error_reporting(E_ALL);
 // Bu dosya genellikle $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME); gibi bir bağlantı içerir
 // ve karakter setini mysqli_set_charset($conn, "utf8mb4"); ile ayarlar.
 require_once '../config/db_config.php'; 
+
+echo json_encode(["status" => "test_ok_after_db_config", "message" => "API script processed db_config.php", "db_conn_error" => isset($conn) ? $conn->connect_error : "conn_not_set"]);
+exit;
 
 $method = $_SERVER['REQUEST_METHOD'];
 
