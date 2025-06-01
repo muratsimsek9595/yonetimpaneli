@@ -81,9 +81,6 @@ function getMusteriler($conn) {
         http_response_code(500); // Internal Server Error
         $musteriler = array("message" => "Müşteriler getirilirken SQL hatası oluştu.", "error" => $conn->error);
     }
-    if (ob_get_level() > 0) {
-        ob_end_clean();
-    }
     echo json_encode($musteriler);
 }
 
@@ -107,9 +104,6 @@ function getMusteri($conn, $id) {
         http_response_code(500); // Internal Server Error
         echo json_encode(array("message" => "Müşteri getirilirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
-    if (ob_get_level() > 0) {
-        ob_end_clean();
-    }
 }
 
 function addMusteri($conn) {
@@ -119,9 +113,6 @@ function addMusteri($conn) {
     if (empty($data->adi)) {
         http_response_code(400); // Bad Request
         echo json_encode(array("message" => "Müşteri eklemek için 'adi' alanı zorunludur."));
-        if (ob_get_level() > 0) {
-            ob_end_clean();
-        }
         return;
     }
 
@@ -142,7 +133,6 @@ function addMusteri($conn) {
         if (!$stmt_check) {
             http_response_code(500);
             echo json_encode(array("message" => "ID kontrolü SQL hazırlama hatası.", "error" => $conn->error));
-            if (ob_get_level() > 0) { ob_end_clean(); }
             return;
         }
         $stmt_check->bind_param("s", $id);
@@ -152,7 +142,6 @@ function addMusteri($conn) {
             http_response_code(409); // Conflict
             echo json_encode(array("message" => "Bu ID ('$id') ile zaten bir müşteri kayıtlı."));
             $stmt_check->close();
-            if (ob_get_level() > 0) { ob_end_clean(); }
             return;
         }
         $stmt_check->close();
@@ -199,25 +188,19 @@ function addMusteri($conn) {
         http_response_code(500); // Internal Server Error
         echo json_encode(array("message" => "Müşteri eklenirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
-    if (ob_get_level() > 0) {
-        ob_end_clean();
-    }
 }
 
 function updateMusteri($conn, $id_param) {
     $data = json_decode(file_get_contents("php://input"));
 
-    // Gerekli alan kontrolü (en azından bir alan güncellenmeli, genelde \'ad\' zorunlu tutulur)
+    // Gerekli alan kontrolü (en azından bir alan güncellenmeli, genelde 'ad' zorunlu tutulur)
     if (empty($data->adi)) { 
         http_response_code(400); // Bad Request
-        echo json_encode(array("message" => "Müşteri güncellemek için \'adi\' alanı gereklidir."));
-        if (ob_get_level() > 0) {
-            ob_end_clean();
-        }
+        echo json_encode(array("message" => "Müşteri güncellemek için 'adi' alanı gereklidir."));
         return;
     }
 
-    $id = $conn->real_escape_string(trim($id_param)); // URL\'den gelen ID
+    $id = $conn->real_escape_string(trim($id_param)); // URL'den gelen ID
 
     // Müşterinin var olup olmadığını kontrol et
     $checkSql = "SELECT id FROM musteriler WHERE id = ?";
@@ -225,7 +208,6 @@ function updateMusteri($conn, $id_param) {
     if (!$stmt_check) {
         http_response_code(500);
         echo json_encode(array("message" => "Müşteri varlık kontrolü SQL hazırlama hatası.", "error" => $conn->error));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->bind_param("s", $id);
@@ -236,7 +218,6 @@ function updateMusteri($conn, $id_param) {
         http_response_code(404); // Not Found
         echo json_encode(array("message" => "Güncellenecek müşteri bulunamadı. ID: " . $id));
         $stmt_check->close();
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->close();
@@ -284,9 +265,6 @@ function updateMusteri($conn, $id_param) {
         http_response_code(500); // Internal Server Error
         echo json_encode(array("message" => "Müşteri güncellenirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
-    if (ob_get_level() > 0) {
-        ob_end_clean();
-    }
 }
 
 function deleteMusteri($conn, $id_param) {
@@ -298,7 +276,6 @@ function deleteMusteri($conn, $id_param) {
      if (!$stmt_check) {
         http_response_code(500);
         echo json_encode(array("message" => "Müşteri varlık kontrolü SQL hazırlama hatası.", "error" => $conn->error));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->bind_param("s", $id);
@@ -309,7 +286,6 @@ function deleteMusteri($conn, $id_param) {
         http_response_code(404); // Not Found
         echo json_encode(array("message" => "Silinecek müşteri bulunamadı. ID: " . $id));
         $stmt_check->close();
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->close();
@@ -332,7 +308,7 @@ function deleteMusteri($conn, $id_param) {
         if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
                 http_response_code(200); // OK
-                // Bazı API\'ler 204 No Content döner, bu da bir seçenek.
+                // Bazı API'ler 204 No Content döner, bu da bir seçenek.
                 // http_response_code(204); 
                 echo json_encode(array("message" => "Müşteri başarıyla silindi."));
             } else {
@@ -348,9 +324,6 @@ function deleteMusteri($conn, $id_param) {
     } else {
         http_response_code(500); // Internal Server Error
         echo json_encode(array("message" => "Müşteri silinirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
-    }
-    if (ob_get_level() > 0) {
-        ob_end_clean();
     }
 }
 
