@@ -84,14 +84,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const fiyatGirisBirimGostergesi = document.getElementById('fiyatGirisBirimGostergesi');
     const sonFiyatlarTablosuBody = document.querySelector('#sonFiyatlarTablosu tbody');
 
-    // Veri Saklama (LocalStorage)
     let urunler = []; // Ürünler artık API'den yüklenecek
     let fiyatlar = []; // Fiyatlar da API'den yüklenecek
     let tedarikciler = []; // Tedarikçiler artık API'den yüklenecek
-
-    function verileriKaydet() { 
-        // localStorage artık kullanılmayacak, bu fonksiyonun içeriği boşaltıldı veya tamamen kaldırılabilir.
-    }
 
     function tedarikciAdiniGetir(tedarikciId) {
         const tedarikci = tedarikciler.find(t => t.id === tedarikciId);
@@ -485,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         const urunAdi = seciliUrun.ad;
-        const urunBirimi = seciliUrun.birimAdi || '';
+        const urunBirimi = seciliUrun.birim_adi || '';
 
         let urunFiyatlari = fiyatlar.filter(f => f.urunId === seciliUrunId);
         const filtrelenmisFiyatlarTumTedarikciler = tarihiFiltrele([...urunFiyatlari], seciliZamanAraligi); // Kopyasını gönder
@@ -690,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
         urunler.forEach(urun => {
             const option = document.createElement('option');
             option.value = urun.id;
-            option.textContent = `${urun.ad} (${urun.birimAdi || 'Tanımsız Birim'})`;
+            option.textContent = `${urun.ad} (${urun.birim_adi || 'Tanımsız Birim'})`;
             fiyatGirisMalzemeSecimi.appendChild(option);
         });
         if (mevcutDeger && urunler.some(u => u.id === mevcutDeger)) {
@@ -703,8 +698,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function guncelleFiyatGirisBirimGostergesi() {
         const seciliUrunId = fiyatGirisMalzemeSecimi.value;
         if (seciliUrunId) {
-            const seciliUrun = urunler.find(u => u.id === seciliUrunId);
-            fiyatGirisBirimGostergesi.textContent = seciliUrun ? (seciliUrun.birimAdi || '-') : '-';
+            const seciliUrun = urunler.find(u => String(u.id) === String(seciliUrunId));
+            fiyatGirisBirimGostergesi.textContent = seciliUrun ? (seciliUrun.birim_adi || '-') : '-';
         } else {
             fiyatGirisBirimGostergesi.textContent = '-';
         }
@@ -851,7 +846,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Sayfa verileri yükleniyor...");
         await tedarikciListesiniGuncelle();
         await malzemeleriYukle();
-        await sonFiyatlariGuncelle(); // Sayfa ilk yüklendiğinde son fiyatları API'den çek
+        
+        console.log("initializePageData: sonFiyatlariGuncelle ÇAĞRILMADAN ÖNCE"); // YENİ LOG
+        try {
+            await sonFiyatlariGuncelle();
+            console.log("initializePageData: sonFiyatlariGuncelle BAŞARIYLA TAMAMLANDI"); // YENİ LOG
+        } catch (error) {
+            console.error("initializePageData: sonFiyatlariGuncelle ÇAĞRISINDA HATA:", error); // YENİ LOG
+        }
         
         const gunlukTarihInput = document.getElementById('gunlukTarihInput');
         if (gunlukTarihInput) {
