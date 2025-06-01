@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(musteriForm);
         const musteriData = {
             // id: formData.get('musteriIdInput') || null, // saveMusteri fonksiyonu ID'yi ayrı parametre olarak alıyor
-            adi: formData.get('musteriAdiInput'),
+            ad: formData.get('musteriAdiInput'),
             yetkiliKisi: formData.get('musteriYetkiliKisiInput'),
             telefon: formData.get('musteriTelefonInput'),
             email: formData.get('musteriEmailInput'),
