@@ -84,7 +84,6 @@ function getIsciler($conn) {
         $isciler = array("message" => "İşçiler getirilirken SQL hatası oluştu.", "error" => $conn->error);
     }
     echo json_encode($isciler);
-    if (ob_get_level() > 0) { ob_end_clean(); }
 }
 
 function getIsci($conn, $id) {
@@ -110,7 +109,6 @@ function getIsci($conn, $id) {
         http_response_code(500);
         echo json_encode(array("message" => "İşçi getirilirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
 }
 
 function addIsci($conn) {
@@ -120,7 +118,6 @@ function addIsci($conn) {
     if (empty($data->adSoyad)) {
         http_response_code(400);
         echo json_encode(array("message" => "İşçi eklemek için gerekli alan (adSoyad) eksik."));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
 
@@ -195,7 +192,6 @@ function addIsci($conn) {
         http_response_code(500);
         echo json_encode(array("message" => "İşçi eklenirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
 }
 
 function updateIsci($conn, $id_param) {
@@ -205,7 +201,6 @@ function updateIsci($conn, $id_param) {
     if (empty($data->adSoyad)) {
         http_response_code(400);
         echo json_encode(array("message" => "İşçi güncellemek için 'adSoyad' alanı gereklidir."));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
 
@@ -215,7 +210,6 @@ function updateIsci($conn, $id_param) {
      if (!$stmt_check) {
         http_response_code(500);
         echo json_encode(array("message" => "İşçi varlık SQL hazırlama hatası.", "error" => $conn->error));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->bind_param("s", $isci_id_url);
@@ -224,7 +218,6 @@ function updateIsci($conn, $id_param) {
         $stmt_check->close();
         http_response_code(404);
         echo json_encode(array("message" => "Güncellenecek işçi bulunamadı. ID: " . $isci_id_url));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->close();
@@ -261,7 +254,6 @@ function updateIsci($conn, $id_param) {
     if (count($fields) == 0) {
         http_response_code(400);
         echo json_encode(array("message" => "Güncellenecek bir alan gönderilmedi."));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
 
@@ -291,7 +283,6 @@ function updateIsci($conn, $id_param) {
         http_response_code(500);
         echo json_encode(array("message" => "İşçi güncellenirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
 }
 
 
@@ -304,7 +295,6 @@ function deleteIsci($conn, $id_param) {
     if (!$stmt_check) {
         http_response_code(500);
         echo json_encode(array("message" => "İşçi varlık SQL hazırlama hatası.", "error" => $conn->error));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->bind_param("s", $id);
@@ -313,7 +303,6 @@ function deleteIsci($conn, $id_param) {
         $stmt_check->close();
         http_response_code(404);
         echo json_encode(array("message" => "Silinecek işçi bulunamadı. ID: " . $id));
-        if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->close();
@@ -348,7 +337,6 @@ function deleteIsci($conn, $id_param) {
         http_response_code(500);
         echo json_encode(array("message" => "İşçi silinirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
-    if (ob_get_level() > 0) { ob_end_clean(); }
 }
 
 if (isset($conn)) {
