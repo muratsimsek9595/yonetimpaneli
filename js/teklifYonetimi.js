@@ -199,7 +199,14 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
     const urunlerListesi = getUrunler() || []; 
     console.log("[teklifYonetimi.js] getUrunler() sonucu:", urunlerListesi);
 
-    const urunSecenekleri = urunlerListesi.map(urun => `<option value="${urun.id}" data-birim="${urun.birim_adi}">${urun.ad.trim()} (${urun.birim_adi})</option>`).join('');
+    const urunSecenekleri = urunlerListesi.map(urun => {
+        const ad = (urun && urun.ad) ? String(urun.ad).trim() : 'Bilinmeyen Ürün';
+        const birim = (urun && urun.birim_adi) ? String(urun.birim_adi) : 'adet';
+        const id = (urun && urun.id) ? urun.id : '';
+        // Malzeme ID'si olmayan veya adı olmayan ürünleri seçeneklere ekleme (isteğe bağlı)
+        // if (!id || ad === 'Bilinmeyen Ürün') return ''; 
+        return `<option value="${id}" data-birim="${birim}">${ad} (${birim})</option>`;
+    }).join('');
 
     const urunSatiriHTML = `
         <div class="teklif-urun-satiri" id="${satirId}">
