@@ -7,7 +7,7 @@ ob_start();
 require_once '../config/db_config.php'; // Veritabanı bağlantısını include et
 
 $tedarikciler = array();
-$sql = "SELECT id, ad, yetkili_kisi, telefon, email, adres FROM tedarikciler ORDER BY ad ASC";
+$sql = "SELECT id, ad FROM tedarikciler ORDER BY ad ASC";
 $result = $conn->query($sql);
 
 if ($result) {

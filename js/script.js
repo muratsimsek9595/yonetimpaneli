@@ -221,18 +221,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             tedarikciListesiTablosuBody.innerHTML = '';
             if (!Array.isArray(tedarikciler) || tedarikciler.length === 0) {
-                tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="6">Kayıtlı tedarikçi bulunamadı.</td></tr>'; // colspan güncellendi
+                tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="3">Kayıtlı tedarikçi bulunamadı.</td></tr>'; // colspan güncellendi 2'ye (Ad + İşlemler)
             } else {
                 tedarikciler.forEach(tedarikci => {
                     const tr = document.createElement('tr');
-                    // Backend'den gelen `id` (sayısal) ve `ad` alanlarını kullanıyoruz
-                    // Ayrıca, backend'den yetkili_kisi, telefon, email, adres de geliyor, tabloya eklenebilir.
                     tr.innerHTML = `
                         <td>${tedarikci.ad}</td>
-                        <td>${tedarikci.yetkili_kisi || '-'}</td>
-                        <td>${tedarikci.telefon || '-'}</td>
-                        <td>${tedarikci.email || '-'}</td>
-                        <td>${tedarikci.adres || '-'}</td>
                         <td class="actions">
                             <button class="edit-btn" data-id="${tedarikci.id}">Düzenle</button>
                             <button class="delete-btn" data-id="${tedarikci.id}">Sil</button>
@@ -244,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
             urunTedarikciSeciminiDoldur(); // Tedarikçi listesi güncellendiğinde ürün formundaki dropdown da güncellensin
         } catch (error) {
             console.error('Tedarikçiler API\'den getirilirken hata:', error);
-            tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="6">Tedarikçiler yüklenirken bir hata oluştu.</td></tr>'; 
+            tedarikciListesiTablosuBody.innerHTML = '<tr><td colspan="3">Tedarikçiler yüklenirken bir hata oluştu.</td></tr>'; // colspan güncellendi
         }
     }
 
