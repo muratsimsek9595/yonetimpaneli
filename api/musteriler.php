@@ -1,4 +1,7 @@
 <?php
+echo json_encode(["status" => "test_ok", "message" => "API script started"]);
+exit;
+
 // ÖNEMLİ: Content-Type başlığını, olası HTML hata çıktılarından önce ayarla
 header("Content-Type: application/json; charset=UTF-8");
 
