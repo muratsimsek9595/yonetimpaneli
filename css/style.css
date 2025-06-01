@@ -569,4 +569,21 @@ form button[type="button"]:hover {
     color: #fff;
     border-color: #1890ff;
     box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+/* Test Modu Bildirimi Stili */
+.test-mode-banner {
+    background-color: #fffbe6; /* Açık sarı */
+    color: #8a6d3b; /* Koyu sarı/kahve */
+    padding: 15px 20px;
+    border: 1px solid #ffe58f; /* Sarı border */
+    border-radius: 6px;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.test-mode-banner strong {
+    font-weight: 600;
 } 
