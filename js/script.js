@@ -713,9 +713,12 @@ document.addEventListener('DOMContentLoaded', function() {
     fiyatGirisMalzemeSecimi.addEventListener('change', guncelleFiyatGirisBirimGostergesi);
 
     async function sonFiyatlariGuncelle(limit = 5) {
+        console.log("sonFiyatlariGuncelle fonksiyonu çağrıldı. Limit:", limit); // Kontrol için eklendi
         sonFiyatlarTablosuBody.innerHTML = '';
         try {
-            const response = await fetch(`api/fiyatlar.php?limit=${limit}&sortBy=tarih&order=DESC`); // API'den son N fiyatı çek
+            const apiUrl = `api/fiyatlar.php?limit=${limit}`; // sortBy ve order parametreleri şimdilik kaldırıldı
+            console.log("Son fiyatlar için API isteği yapılacak:", apiUrl); // Kontrol için eklendi
+            const response = await fetch(apiUrl); 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
                 throw new Error(errorData?.message || `Son fiyatlar API hatası: ${response.status} - ${response.statusText}`);
