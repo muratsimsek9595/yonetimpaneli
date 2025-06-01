@@ -62,9 +62,9 @@ switch ($method) {
         // exit(); // exit() zaten updateMusteri içinde var, burada gereksiz olabilir veya kalabilir.
         break;
     case 'DELETE':
-        // deleteMusteri($conn, $id_param); // Devre dışı
-        echo json_encode(["status" => "switch_case_delete_test_active", "id_param" => $id_param]); 
-        exit();
+        deleteMusteri($conn, $id_param); // Devre dışı olan satırı aktif ettim.
+        // echo json_encode(["status" => "switch_case_delete_test_active", "id_param" => $id_param]); // Test echo satırını yoruma aldım.
+        // exit(); // deleteMusteri içinde exit() var.
         break;
     default:
         http_response_code(405); 
