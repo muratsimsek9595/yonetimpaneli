@@ -1,12 +1,10 @@
 <?php
-// Çıktı tamponlamasını başlat ve mevcut çıktıları temizle
-ob_start();
+// ÖNEMLİ: Content-Type başlığını, olası HTML hata çıktılarından önce ayarla
+header("Content-Type: application/json; charset=UTF-8");
+ob_start(); // Çıktı tamponlamasını Content-Type'dan sonra başlat
 if (ob_get_level() > 0) {
     ob_clean();
 }
-
-// ÖNEMLİ: Content-Type başlığını, olası HTML hata çıktılarından önce ayarla
-header("Content-Type: application/json; charset=UTF-8");
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -19,37 +17,34 @@ error_reporting(E_ALL);
 require_once '../config/db_config.php'; 
 
 $method = $_SERVER['REQUEST_METHOD'];
-// ID string olabileceği için real_escape_string uyguluyoruz.
-// $conn nesnesinin db_config.php yüklendikten sonra var olduğundan emin olun
-$id = null;
-if (isset($conn) && $conn instanceof mysqli && isset($_GET['id'])) {
-    $id = $conn->real_escape_string(trim($_GET['id']));
-} elseif (isset($_GET['id'])) {
-    // $conn düzgün başlatılmadıysa veya $_GET['id'] varsa ama $conn yoksa hata durumu
-    // Bu durum, db_config.php hatası veya $conn'in başlatılmaması anlamına gelebilir.
-    // Güvenlik için burada bir JSON hatası döndürebiliriz veya loglayabiliriz.
-    // Şimdilik null bırakıyoruz, switch case içinde $id kontrolü yapılacaktır.
+
+$id_param = null;
+if (isset($_GET['id'])) {
+    $id_param = trim($_GET['id']); 
 }
 
 // CORS Başlıkları (Content-Type zaten yukarıda ayarlandı)
-header("Access-Control-Allow-Origin: *"); // Geliştirme için *, canlı ortamda kendi domaininizle değiştirin
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-// OPTIONS isteği için (pre-flight)
 if ($method == 'OPTIONS') {
     http_response_code(200);
-    if (ob_get_level() > 0) {
-        ob_end_clean();
-    }
+    exit();
+}
+
+// $conn bağlantısının varlığını kontrol et
+if (!$conn) {
+    http_response_code(503); // Service Unavailable
+    echo json_encode(array("message" => "Veritabanı bağlantısı kurulamadı."));
     exit();
 }
 
 switch ($method) {
     case 'GET':
-        if ($id) {
-            getMusteri($conn, $id);
+        if ($id_param !== null) {
+            getMusteri($conn, $id_param);
         } else {
             getMusteriler($conn);
         }
@@ -58,23 +53,23 @@ switch ($method) {
         addMusteri($conn);
         break;
     case 'PUT':
-        if ($id) {
-            updateMusteri($conn, $id);
+        if ($id_param !== null) {
+            updateMusteri($conn, $id_param);
         } else {
-            http_response_code(400); // Bad Request
-            echo json_encode(array("message" => "Güncellenecek müşteri ID\'si belirtilmedi."));
+            http_response_code(400); 
+            echo json_encode(array("message" => "Güncellenecek müşteri ID'si belirtilmedi."));
         }
         break;
     case 'DELETE':
-        if ($id) {
-            deleteMusteri($conn, $id);
+        if ($id_param !== null) {
+            deleteMusteri($conn, $id_param);
         } else {
-            http_response_code(400); // Bad Request
-            echo json_encode(array("message" => "Silinecek müşteri ID\'si belirtilmedi."));
+            http_response_code(400); 
+            echo json_encode(array("message" => "Silinecek müşteri ID'si belirtilmedi."));
         }
         break;
     default:
-        http_response_code(405); // Method Not Allowed
+        http_response_code(405); 
         echo json_encode(array("message" => "Desteklenmeyen Metod: " . $method));
         break;
 }
@@ -85,34 +80,42 @@ function getMusteriler($conn) {
     $musteriler = array();
     if ($result) {
         while($row = $result->fetch_assoc()) {
+            $row['id'] = intval($row['id']); // ID'yi integer olarak döndür
             $musteriler[] = $row;
         }
-        http_response_code(200); // OK
+        http_response_code(200);
     } else {
-        http_response_code(500); // Internal Server Error
+        http_response_code(500);
         $musteriler = array("message" => "Müşteriler getirilirken SQL hatası oluştu.", "error" => $conn->error);
     }
     echo json_encode($musteriler);
 }
 
-function getMusteri($conn, $id) {
+function getMusteri($conn, $id_str) {
+    $id = intval($id_str); // ID'yi integer yap
+    if ($id <= 0) {
+        http_response_code(400);
+        echo json_encode(array("message" => "Geçersiz müşteri ID'si."));
+        return;
+    }
     $sql = "SELECT id, adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar FROM musteriler WHERE id = ?";
     $stmt = $conn->prepare($sql);
     if ($stmt) {
-        $stmt->bind_param("s", $id);
+        $stmt->bind_param("i", $id); // "i" for integer
         $stmt->execute();
         $result = $stmt->get_result();
         if ($result->num_rows > 0) {
             $musteri = $result->fetch_assoc();
-            http_response_code(200); // OK
+            $musteri['id'] = intval($musteri['id']); // ID'yi integer olarak döndür
+            http_response_code(200);
             echo json_encode($musteri);
         } else {
-            http_response_code(404); // Not Found
+            http_response_code(404);
             echo json_encode(array("message" => "Müşteri bulunamadı. ID: " . $id));
         }
         $stmt->close();
     } else {
-        http_response_code(500); // Internal Server Error
+        http_response_code(500);
         echo json_encode(array("message" => "Müşteri getirilirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
 }
@@ -120,17 +123,11 @@ function getMusteri($conn, $id) {
 function addMusteri($conn) {
     $data = json_decode(file_get_contents("php://input"));
 
-    // Gerekli alan kontrolü (sadece adi zorunlu)
     if (empty($data->adi)) {
-        http_response_code(400); // Bad Request
+        http_response_code(400);
         echo json_encode(array("message" => "Müşteri eklemek için 'adi' alanı zorunludur."));
         return;
     }
-
-    // Veri temizleme ve atama
-    // Yeni müşteri eklendiği için ID sunucuda üretilecek.
-    // İstemciden gelen $data->id (eğer varsa) bu fonksiyonda dikkate alınmayacak.
-    $new_musteri_id = uniqid('musteri_', true); // Benzersiz bir ID oluştur (örn: musteri_60c725b0a31a05.03678597)
 
     $adi = $conn->real_escape_string(trim($data->adi));
     $yetkiliKisi = isset($data->yetkiliKisi) ? $conn->real_escape_string(trim($data->yetkiliKisi)) : null;
@@ -140,21 +137,23 @@ function addMusteri($conn) {
     $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string(trim($data->vergiNo)) : null;
     $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
     
-    // SQL sorgusu her zaman üretilen yeni ID'yi içerecek
-    $sql = "INSERT INTO musteriler (id, adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+    // ID artık veritabanı tarafından AUTO_INCREMENT ile atanacak
+    // created_at ve updated_at için NOW() kullanılacak
+    $sql = "INSERT INTO musteriler (adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        // s = string (id, adi, yetkiliKisi, telefon, email, adres, vergiNo, notlar)
-        $bind_types = "ssssssss"; 
-        $stmt->bind_param($bind_types, $new_musteri_id, $adi, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar);
+        // ID kaldırıldığı için 7 string parametre
+        $bind_types = "sssssss"; 
+        $stmt->bind_param($bind_types, $adi, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar);
 
         if ($stmt->execute()) {
-            http_response_code(201); // Created
+            $inserted_id = $conn->insert_id; // Yeni eklenen müşterinin ID'sini al
+            http_response_code(201);
             echo json_encode(array(
                 "message" => "Müşteri başarıyla eklendi.", 
                 "data" => array(
-                    "id" => $new_musteri_id, // Üretilen ID'yi geri dönüyoruz
+                    "id" => intval($inserted_id), // Integer olarak ID
                     "adi" => $adi,
                     "yetkiliKisi" => $yetkiliKisi,
                     "telefon" => $telefon,
@@ -162,51 +161,34 @@ function addMusteri($conn) {
                     "adres" => $adres,
                     "vergiNo" => $vergiNo,
                     "notlar" => $notlar
-                    // created_at ve updated_at veritabanında NOW() ile ayarlandığı için burada tekrar göndermeye gerek yok
                 )
             ));
         } else {
-            http_response_code(500); // Internal Server Error
+            http_response_code(500);
             echo json_encode(array("message" => "Müşteri eklenirken SQL hatası oluştu.", "error" => $stmt->error, "sql_errno" => $stmt->errno));
         }
         $stmt->close();
     } else {
-        http_response_code(500); // Internal Server Error
+        http_response_code(500);
         echo json_encode(array("message" => "Müşteri eklenirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
 }
 
-function updateMusteri($conn, $id_param) {
+function updateMusteri($conn, $id_str) {
+    $id = intval($id_str); // ID'yi integer yap
+    if ($id <= 0) {
+        http_response_code(400);
+        echo json_encode(array("message" => "Geçersiz müşteri ID'si."));
+        return;
+    }
+
     $data = json_decode(file_get_contents("php://input"));
 
-    // Gerekli alan kontrolü (en azından bir alan güncellenmeli, genelde 'ad' zorunlu tutulur)
     if (empty($data->adi)) { 
-        http_response_code(400); // Bad Request
+        http_response_code(400);
         echo json_encode(array("message" => "Müşteri güncellemek için 'adi' alanı gereklidir."));
         return;
     }
-
-    $id = $conn->real_escape_string(trim($id_param)); // URL'den gelen ID
-
-    // Müşterinin var olup olmadığını kontrol et
-    $checkSql = "SELECT id FROM musteriler WHERE id = ?";
-    $stmt_check = $conn->prepare($checkSql);
-    if (!$stmt_check) {
-        http_response_code(500);
-        echo json_encode(array("message" => "Müşteri varlık kontrolü SQL hazırlama hatası.", "error" => $conn->error));
-        return;
-    }
-    $stmt_check->bind_param("s", $id);
-    $stmt_check->execute();
-    $result_check = $stmt_check->get_result();
-
-    if ($result_check->num_rows == 0) {
-        http_response_code(404); // Not Found
-        echo json_encode(array("message" => "Güncellenecek müşteri bulunamadı. ID: " . $id));
-        $stmt_check->close();
-        return;
-    }
-    $stmt_check->close();
 
     // Veri temizleme ve atama
     $adi = $conn->real_escape_string(trim($data->adi));
@@ -217,17 +199,20 @@ function updateMusteri($conn, $id_param) {
     $vergiNo = isset($data->vergiNo) ? $conn->real_escape_string(trim($data->vergiNo)) : null;
     $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
 
-    $sql = "UPDATE musteriler SET adi = ?, yetkiliKisi = ?, telefon = ?, email = ?, adres = ?, vergiNo = ?, notlar = ? WHERE id = ?";
+    // updated_at için NOW() kullanılacak
+    $sql = "UPDATE musteriler SET adi = ?, yetkiliKisi = ?, telefon = ?, email = ?, adres = ?, vergiNo = ?, notlar = ?, updated_at = NOW() WHERE id = ?";
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        $stmt->bind_param("ssssssss", $adi, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar, $id);
+        // 7 string, 1 integer (id)
+        $bind_types = "sssssssi"; 
+        $stmt->bind_param($bind_types, $adi, $yetkiliKisi, $telefon, $email, $adres, $vergiNo, $notlar, $id);
         if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
-                http_response_code(200); // OK
+                http_response_code(200);
                  echo json_encode(array(
                     "message" => "Müşteri başarıyla güncellendi.",
-                    "data" => array( // Güncellenmiş veriyi geri döndürmek iyi bir pratik
+                    "data" => array(
                         "id" => $id,
                         "adi" => $adi,
                         "yetkiliKisi" => $yetkiliKisi,
@@ -239,76 +224,51 @@ function updateMusteri($conn, $id_param) {
                     )
                 ));
             } else {
-                http_response_code(200); // OK ama değişiklik olmadı (örneğin aynı veri gönderildi)
-                echo json_encode(array("message" => "Müşteri bilgileri güncellendi ancak gönderilen veriler mevcut verilerle aynıydı."));
+                // Müşteri bulundu ama hiçbir değişiklik yapılmadı veya ID bulunamadı (prepare sonrası nadir)
+                // ID bulunamadıysa, execute 0 affected_rows döndürür. 
+                // Daha iyi bir kontrol için önce müşteri var mı diye bakılabilir ama şimdilik böyle bırakıyorum.
+                http_response_code(200); 
+                echo json_encode(array("message" => "Müşteri bilgileri güncellenmedi. Veri aynı veya müşteri bulunamadı.", "affected_rows" => $stmt->affected_rows));
             }
         } else {
-            http_response_code(500); // Internal Server Error
-            echo json_encode(array("message" => "Müşteri güncellenirken SQL hatası oluştu.", "error" => $stmt->error));
+            http_response_code(500);
+            echo json_encode(array("message" => "Müşteri güncellenirken SQL hatası oluştu.", "error" => $stmt->error, "sql_errno" => $stmt->errno));
         }
         $stmt->close();
     } else {
-        http_response_code(500); // Internal Server Error
+        http_response_code(500);
         echo json_encode(array("message" => "Müşteri güncellenirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
 }
 
-function deleteMusteri($conn, $id_param) {
-    $id = $conn->real_escape_string(trim($id_param));
-
-    // Müşterinin var olup olmadığını kontrol et
-    $checkSql = "SELECT id FROM musteriler WHERE id = ?";
-    $stmt_check = $conn->prepare($checkSql);
-     if (!$stmt_check) {
-        http_response_code(500);
-        echo json_encode(array("message" => "Müşteri varlık kontrolü SQL hazırlama hatası.", "error" => $conn->error));
+function deleteMusteri($conn, $id_str) {
+    $id = intval($id_str); // ID'yi integer yap
+    if ($id <= 0) {
+        http_response_code(400);
+        echo json_encode(array("message" => "Geçersiz müşteri ID'si."));
         return;
     }
-    $stmt_check->bind_param("s", $id);
-    $stmt_check->execute();
-    $result_check = $stmt_check->get_result();
-
-    if ($result_check->num_rows == 0) {
-        http_response_code(404); // Not Found
-        echo json_encode(array("message" => "Silinecek müşteri bulunamadı. ID: " . $id));
-        $stmt_check->close();
-        return;
-    }
-    $stmt_check->close();
-
-    // İPUCU: Müşteri silinmeden önce ilişkili kayıtlar varsa (örneğin teklifler)
-    // bu kayıtların ne yapılacağına karar vermelisiniz (silmek, null yapmak, engellemek vb.).
-    // Örneğin:
-    // $deleteTekliflerSql = "DELETE FROM teklifler WHERE musteri_id = ?";
-    // $stmtTeklif = $conn->prepare($deleteTekliflerSql);
-    // $stmtTeklif->bind_param("s", $id);
-    // $stmtTeklif->execute();
-    // $stmtTeklif->close();
-    // Bu kısım projenizin iş mantığına göre detaylandırılmalıdır.
 
     $sql = "DELETE FROM musteriler WHERE id = ?";
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        $stmt->bind_param("s", $id);
+        $stmt->bind_param("i", $id); // "i" for integer
         if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
-                http_response_code(200); // OK
-                // Bazı API'ler 204 No Content döner, bu da bir seçenek.
-                // http_response_code(204); 
+                http_response_code(200); 
                 echo json_encode(array("message" => "Müşteri başarıyla silindi."));
             } else {
-                // Bu durum normalde checkSql nedeniyle oluşmamalı ama yine de bir kontrol.
                 http_response_code(404); 
-                echo json_encode(array("message" => "Silinecek müşteri bulunamadı (veya zaten silinmişti)."));
+                echo json_encode(array("message" => "Silinecek müşteri bulunamadı."));
             }
         } else {
-            http_response_code(500); // Internal Server Error
-            echo json_encode(array("message" => "Müşteri silinirken SQL hatası oluştu.", "error" => $stmt->error));
+            http_response_code(500); 
+            echo json_encode(array("message" => "Müşteri silinirken SQL hatası oluştu.", "error" => $stmt->error, "sql_errno" => $stmt->errno));
         }
         $stmt->close();
     } else {
-        http_response_code(500); // Internal Server Error
+        http_response_code(500); 
         echo json_encode(array("message" => "Müşteri silinirken SQL hazırlama hatası oluştu.", "error" => $conn->error));
     }
 }
@@ -317,8 +277,7 @@ if (isset($conn)) {
     $conn->close();
 }
 
-// En sonda kalan tüm çıktıları temizle (güvenlik önlemi)
 if (ob_get_level() > 0) {
-    ob_end_flush(); // veya ob_end_clean(); eğer hiçbir çıktı gönderilmeyeceğinden eminseniz.
+    ob_end_flush();
 }
 ?> 

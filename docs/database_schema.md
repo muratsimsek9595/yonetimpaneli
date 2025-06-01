@@ -73,7 +73,7 @@ Hizmet verilen veya ürün satılan müşterilerin bilgilerini tutar.
 
 | Sütun Adı     | Veri Türü     | Notlar                                            |
 |---------------|---------------|---------------------------------------------------|
-| `id`          | VARCHAR(64)   | Primary Key (Muhtemelen UUID)                   |
+| `id`          | INT           | Primary Key, AUTO_INCREMENT                       |
 | `ad`          | VARCHAR(255)  | Müşteri adı veya firma adı                        |
 | `yetkiliKisi` | VARCHAR(255)  |                                                   |
 | `telefon`     | VARCHAR(30)   |                                                   |
@@ -92,7 +92,7 @@ Müşterilere sunulan fiyat tekliflerinin ana bilgilerini içerir.
 |-----------------------|---------------|---------------------------------------------------|
 | `id`                  | VARCHAR(64)   | Primary Key (Muhtemelen UUID)                   |
 | `teklifNo`            | VARCHAR(50)   | Teklife özel numara                               |
-| `musteri_id`          | VARCHAR(64)   | Foreign Key -> `musteriler.id`                    |
+| `musteri_id`          | INT           | Foreign Key -> `musteriler.id`                    |
 | `musteriAdi`          | VARCHAR(255)  | (Denormalize edilmiş olabilir, `musteriler` tablosundan da çekilebilir) |
 | `musteriIletisim`     | VARCHAR(255)  | (Denormalize edilmiş)                             |
 | `projeAdi`            | VARCHAR(255)  |                                                   |
@@ -138,8 +138,8 @@ Bir teklifin içerdiği malzeme ve işçilik kalemlerini detaylandırır. Her bi
 
 ## Önemli Notlar
 
-*   **VARCHAR ID'ler:** `isciler`, `musteriler`, `teklifler` tablolarındaki `id` sütunları `VARCHAR(64)` olarak tanımlanmıştır. Bu, genellikle UUID (Universally Unique Identifier) veya benzeri benzersiz metin tabanlı anahtarlar kullanıldığını gösterir. API tarafında bu ID'lerin oluşturulması ve yönetilmesi gerekmektedir.
-*   **AUTO_INCREMENT ID'ler:** `fiyatlar`, `malzemeler`, `tedarikciler`, `teklif_urunleri` tablolarındaki `id` sütunları `INT` olarak tanımlanmıştır ve büyük olasılıkla `AUTO_INCREMENT PRIMARY KEY` özelliktedir.
+*   **VARCHAR ID'ler:** `isciler`, `teklifler` tablolarındaki `id` sütunları `VARCHAR(64)` olarak tanımlanmıştır. Bu, genellikle UUID (Universally Unique Identifier) veya benzeri benzersiz metin tabanlı anahtarlar kullanıldığını gösterir. API tarafında bu ID'lerin oluşturulması ve yönetilmesi gerekmektedir.
+*   **AUTO_INCREMENT ID'ler:** `fiyatlar`, `malzemeler`, `tedarikciler`, `musteriler`, `teklif_urunleri` tablolarındaki `id` sütunları `INT` olarak tanımlanmıştır ve büyük olasılıkla `AUTO_INCREMENT PRIMARY KEY` özelliktedir.
 *   **Denormalizasyon:** `teklifler` tablosundaki `musteriAdi` ve `musteriIletisim` gibi alanlar, `musteriler` tablosundan da elde edilebilecek olmasına rağmen, teklif oluşturulduğu andaki bilgiyi saklamak veya sorgu performansını artırmak amacıyla denormalize edilmiş olabilir.
 *   **Zaman Damgaları:** Çoğu tabloda `created_at` ve `updated_at` TIMESTAMP sütunları bulunmaktadır. Bunlar genellikle kaydın ne zaman oluşturulduğunu ve son güncellendiğini otomatik olarak izlemek için kullanılır (örn: `DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`).
 *   **Finansal Veriler:** Fiyat, maliyet ve toplam gibi finansal veriler için `DECIMAL` veri tipi kullanılmıştır. Bu, ondalık sayılarda hassasiyet kaybını önlemek için doğru bir yaklaşımdır.
