@@ -457,4 +457,116 @@ form button[type="button"]:hover {
 
 .toast-notification.info {
     background-color: #3498db; /* Mavi - Bilgi */
+}
+
+/* Ana Sayfa - Kontrol Paneli Stilleri */
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    font-size: 2.2rem; /* Ana başlık için biraz daha büyük */
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive kart düzeni */
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.info-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center; /* İkon ve içeriği dikeyde ortala */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.card-icon {
+    font-size: 2.8rem; /* İkon boyutu */
+    margin-right: 20px;
+    padding: 15px;
+    border-radius: 50%; /* Yuvarlak ikon arka planı */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px; /* Sabit genişlik */
+    height: 70px; /* Sabit yükseklik */
+}
+
+/* Farklı kartlar için ikon renkleri (örnek) */
+.icon-malzeme { background-color: #e6f7ff; color: #1890ff; }
+.icon-tedarikci { background-color: #fff7e6; color: #fa8c16; }
+.icon-fiyat { background-color: #f6ffed; color: #52c41a; }
+.icon-takvim { background-color: #fff1f0; color: #f5222d; }
+
+.card-content h3 {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.card-content p {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.quick-actions-container {
+    margin-top: 30px;
+}
+
+.quick-actions-container h2 {
+    font-size: 1.6rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.quick-actions {
+    display: flex;
+    flex-wrap: wrap; /* Butonların sığmazsa alt satıra geçmesi */
+    gap: 15px; /* Butonlar arası boşluk */
+}
+
+.quick-action-button {
+    background-color: #f0f2f5;
+    color: #333;
+    padding: 15px 25px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #d9d9d9;
+}
+
+.quick-action-button .nav-icon {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.quick-action-button:hover {
+    background-color: #1890ff;
+    color: #fff;
+    border-color: #1890ff;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
 } 

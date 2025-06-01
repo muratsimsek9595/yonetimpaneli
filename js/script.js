@@ -115,6 +115,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const zamanAraligiSecimi = document.getElementById('zamanAraligiSecimi');
     const fiyatGrafigiCanvas = document.getElementById('fiyatGrafigi');
     
+    // Ana Sayfa İstatistik Elementleri
+    const statsToplamMalzemeEl = document.getElementById('statsToplamMalzeme');
+    const statsToplamTedarikciEl = document.getElementById('statsToplamTedarikci');
+    const statsToplamFiyatEl = document.getElementById('statsToplamFiyat');
+    const statsSonFiyatTarihiEl = document.getElementById('statsSonFiyatTarihi');
+
     let fiyatGrafigi; // Chart.js nesnesi için
 
     // Fonksiyon Tanımlamaları
@@ -384,14 +390,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- Ana Sayfa İstatistiklerini Güncelleme Fonksiyonu ---
+    function guncelleAnasayfaIstatistikleri() {
+        const urunler = getUrunler();
+        const tedarikciler = getTedarikciler();
+        const fiyatlar = getFiyatlar(); // Bu zaten sıralı geliyor (en sonuncusu en yeni)
+
+        if (statsToplamMalzemeEl) statsToplamMalzemeEl.textContent = urunler.length;
+        if (statsToplamTedarikciEl) statsToplamTedarikciEl.textContent = tedarikciler.length;
+        if (statsToplamFiyatEl) statsToplamFiyatEl.textContent = fiyatlar.length;
+        
+        if (statsSonFiyatTarihiEl) {
+            if (fiyatlar.length > 0) {
+                // Fiyatlar store'dan zaten tarihe göre tersten sıralı geldiği için ilk eleman en yenisidir.
+                const sonFiyat = fiyatlar[0]; 
+                statsSonFiyatTarihiEl.textContent = new Date(sonFiyat.tarih).toLocaleDateString('tr-TR');
+            } else {
+                statsSonFiyatTarihiEl.textContent = '-';
+            }
+        }
+    }
+
     async function initializePageData() {
         try {
             await Promise.all([
                 malzemeleriYukle(),
                 tedarikcileriYukle()
             ]);
-            await fiyatlariYukle();
+            await fiyatlariYukle(); 
             
+            // İlk yüklemede de ana sayfa istatistiklerini doldur
+            // Bu, abonelikler tetiklenmeden önce de bir ilk değer ataması yapar.
+            // Alternatif olarak, initializePageData sonunda bir kez çağrılabilir veya ilk notify'lar beklenebilir.
+            guncelleAnasayfaIstatistikleri(); 
+
             const gunlukTarihInput = document.getElementById('gunlukTarihInput');
             if (gunlukTarihInput) {
                 gunlukTarihInput.value = new Date().toISOString().split('T')[0];
@@ -407,9 +439,10 @@ document.addEventListener('DOMContentLoaded', function() {
     subscribe('urunlerChanged', (guncelUrunler) => {
         guncelleUrunListesiTablosu(guncelUrunler, urunListesiTablosuBody);
         populeEtUrunSecimDropdown(guncelUrunler, grafikUrunSecimi, "-- Ürün Seçiniz --", true, null);
-        guncelleGrafikTedarikciFiltresi();
+        guncelleGrafikTedarikciFiltresi(); 
         populeEtUrunSecimDropdown(guncelUrunler, fiyatGirisMalzemeSecimi, "-- Malzeme Seçiniz --", true, urun => ` (${urun.birim_adi || 'Tanımsız Birim'})`);
         guncelleFiyatGirisBirimGostergesi();
+        guncelleAnasayfaIstatistikleri(); // Ana sayfa istatistiklerini de güncelle
     });
 
     // Tedarikçiler değiştiğinde UI'ı güncelle
@@ -417,6 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         guncelleTedarikciListesiTablosu(guncelTedarikciler, tedarikciListesiTablosuBody);
         populeTedarikciDropdown(guncelTedarikciler, fiyatGirisTedarikciSecimi, "-- Tedarikçi Seçiniz --");
         guncelleGrafikTedarikciFiltresi();
+        guncelleAnasayfaIstatistikleri(); // Ana sayfa istatistiklerini de güncelle
     });
 
     // Fiyatlar değiştiğinde UI'ı güncelle
@@ -432,6 +466,34 @@ document.addEventListener('DOMContentLoaded', function() {
             getTedarikciler(),
             fiyatGrafigi
         );
+        guncelleAnasayfaIstatistikleri(); // Ana sayfa istatistiklerini de güncelle
+    });
+
+    // Hızlı İşlem Butonları İçin Olay Dinleyicileri (href zaten çalışıyor ama section geçişini manuel tetikleyebiliriz)
+    const quickActionButtons = document.querySelectorAll('.quick-action-button');
+    quickActionButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            // event.preventDefault(); // Eğer sadece JS ile section değiştireceksek bunu açarız.
+            const targetId = this.getAttribute('href').substring(1);
+            
+            // İlgili nav linkini aktif yap
+            navLinks.forEach(navLink => {
+                if (navLink.getAttribute('href') === `#${targetId}`) {
+                    navLink.classList.add('active');
+                } else {
+                    navLink.classList.remove('active');
+                }
+            });
+
+            // İlgili section'ı göster
+            sections.forEach(section => {
+                if (section.id === targetId) {
+                    section.classList.add('active-section');
+                } else {
+                    section.classList.remove('active-section');
+                }
+            });
+        });
     });
 
 }); // DOMContentLoaded kapanışı 

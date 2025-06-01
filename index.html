@@ -37,8 +37,59 @@
 
         <main class="main-content">
             <section id="anasayfa">
-                <h1>Hoş Geldiniz!</h1>
-                <p>Bu sizin tedarikçi ürün fiyat takip paneliniz.</p>
+                <div class="page-header">
+                    <h1>Kontrol Paneli</h1>
+                    <p class="page-subtitle">Sisteme genel bir bakış ve hızlı işlemler.</p>
+                </div>
+
+                <div class="dashboard-cards">
+                    <div class="info-card">
+                        <div class="card-icon icon-malzeme">📦</div>
+                        <div class="card-content">
+                            <h3>Toplam Malzeme</h3>
+                            <p id="statsToplamMalzeme">0</p>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon icon-tedarikci">🚚</div>
+                        <div class="card-content">
+                            <h3>Toplam Tedarikçi</h3>
+                            <p id="statsToplamTedarikci">0</p>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-icon icon-fiyat">💰</div>
+                        <div class="card-content">
+                            <h3>Toplam Fiyat Kaydı</h3>
+                            <p id="statsToplamFiyat">0</p>
+                        </div>
+                    </div>
+                     <div class="info-card">
+                        <div class="card-icon icon-takvim">📅</div>
+                        <div class="card-content">
+                            <h3>Son Fiyat Giriş Tarihi</h3>
+                            <p id="statsSonFiyatTarihi">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions-container">
+                    <h2>Hızlı İşlemler</h2>
+                    <div class="quick-actions">
+                        <a href="#malzeme-tanimlama" class="quick-action-button">
+                            <span class="nav-icon">📦</span> Yeni Malzeme Ekle
+                        </a>
+                        <a href="#tedarikci-yonetimi" class="quick-action-button">
+                            <span class="nav-icon">🚚</span> Yeni Tedarikçi Ekle
+                        </a>
+                        <a href="#gunluk-fiyat-girisi" class="quick-action-button">
+                            <span class="nav-icon">✏️</span> Günlük Fiyat Gir
+                        </a>
+                        <a href="#fiyat-grafikleri" class="quick-action-button">
+                            <span class="nav-icon">📊</span> Fiyat Grafikleri
+                        </a>
+                    </div>
+                </div>
             </section>
 
             <section id="malzeme-tanimlama">
