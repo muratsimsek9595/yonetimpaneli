@@ -219,7 +219,7 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
             </div>
             <div class="form-group miktar">
                 <label for="miktar_${urunSatirSayaci}">Miktar:</label>
-                <input type="number" id="miktar_${urunSatirSayaci}" name="miktar" class="teklif-urun-miktar" min="0" step="any" required value="${urunVerisi ? urunVerisi.miktar : '1'}">
+                <input type="number" id="miktar_${urunSatirSayaci}" name="miktar" class="teklif-urun-miktar" min="0" step="any" required value="${(urunVerisi && urunVerisi.miktar) ? urunVerisi.miktar : '1'}">
             </div>
             <div class="form-group birim-fiyat">
                 <label for="birimFiyat_${urunSatirSayaci}">Birim Fiyat:</label>
