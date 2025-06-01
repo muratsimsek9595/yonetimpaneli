@@ -8,7 +8,6 @@ import {
     getUrunById,
     getTeklifById,
     getFiyatlar,
-    getSonFiyatByUrunId,
     getMusteriler,
     getMusteriById
 } from './store.js';

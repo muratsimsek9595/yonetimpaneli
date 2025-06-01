@@ -111,14 +111,15 @@ function getIsci($conn, $id) {
 function addIsci($conn) {
     $data = json_decode(file_get_contents("php://input"));
 
-    if (empty($data->id) || empty($data->adSoyad)) {
+    // ID alanı artık yeni eklemelerde beklenmiyor, sadece adSoyad kontrol edilecek.
+    if (empty($data->adSoyad)) {
         http_response_code(400);
-        echo json_encode(array("message" => "İşçi eklemek için gerekli alanlar (id, adSoyad) eksik."));
+        echo json_encode(array("message" => "İşçi eklemek için gerekli alan (adSoyad) eksik."));
         if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
 
-    $id = $conn->real_escape_string(trim($data->id));
+    // $id = $conn->real_escape_string(trim($data->id)); // ID artık payload'dan alınmayacak.
     $adSoyad = $conn->real_escape_string(trim($data->adSoyad));
     $pozisyon = isset($data->pozisyon) ? $conn->real_escape_string(trim($data->pozisyon)) : null;
     $gunlukUcret = isset($data->gunlukUcret) ? floatval($data->gunlukUcret) : 0.00;
@@ -131,7 +132,8 @@ function addIsci($conn) {
     $adres = isset($data->adres) ? $conn->real_escape_string(trim($data->adres)) : null;
     $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
 
-    // ID benzersizlik kontrolü
+    // ID benzersizlik kontrolü yeni eklemeler için kaldırıldı, ID veritabanı tarafından atanacak (AUTO_INCREMENT varsayımı)
+    /*
     $checkSql = "SELECT id FROM isciler WHERE id = ?";
     $stmt_check = $conn->prepare($checkSql);
     if (!$stmt_check) {
@@ -145,22 +147,40 @@ function addIsci($conn) {
     if ($stmt_check->get_result()->num_rows > 0) {
         $stmt_check->close();
         http_response_code(409); // Conflict
-        echo json_encode(array("message" => "Bu ID (\'$id\') ile zaten bir işçi kayıtlı."));
+        echo json_encode(array("message" => "Bu ID (\\'$id\\') ile zaten bir işçi kayıtlı."));
         if (ob_get_level() > 0) { ob_end_clean(); }
         return;
     }
     $stmt_check->close();
+    */
 
-    $sql = "INSERT INTO isciler (id, adSoyad, pozisyon, gunlukUcret, saatlikUcret, paraBirimi, iseBaslamaTarihi, aktif, telefon, email, adres, notlar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // SQL INSERT sorgusu ID olmadan (AUTO_INCREMENT varsayımı)
+    $sql = "INSERT INTO isciler (adSoyad, pozisyon, gunlukUcret, saatlikUcret, paraBirimi, iseBaslamaTarihi, aktif, telefon, email, adres, notlar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     if ($stmt) {
         // iseBaslamaTarihi null olabilir, aktif için integer (0 veya 1)
         $aktif_int = $aktif ? 1 : 0;
-        $stmt->bind_param("ssdddsdsisss", $id, $adSoyad, $pozisyon, $gunlukUcret, $saatlikUcret, $paraBirimi, $iseBaslamaTarihi, $aktif_int, $telefon, $email, $adres, $notlar);
+        // bind_param ID olmadan güncellendi (sdddsdsisss -> ssdddsdsisss)
+        $stmt->bind_param("ssdddsdsiss", $adSoyad, $pozisyon, $gunlukUcret, $saatlikUcret, $paraBirimi, $iseBaslamaTarihi, $aktif_int, $telefon, $email, $adres, $notlar);
         if ($stmt->execute()) {
+            $last_id = $conn->insert_id; // Eklenen son ID'yi al
             http_response_code(201);
-            $data->aktif = $aktif; // Boolean olarak geri gönder
-            echo json_encode(array("message" => "İşçi başarıyla eklendi.", "data" => $data));
+            // Dönen veriye eklenen ID'yi ve diğer alanları ekle
+            $responseData = array(
+                "id" => $last_id,
+                "adSoyad" => $adSoyad,
+                "pozisyon" => $pozisyon,
+                "gunlukUcret" => $gunlukUcret,
+                "saatlikUcret" => $saatlikUcret,
+                "paraBirimi" => $paraBirimi,
+                "iseBaslamaTarihi" => $iseBaslamaTarihi,
+                "aktif" => $aktif, // Boolean olarak
+                "telefon" => $telefon,
+                "email" => $email,
+                "adres" => $adres,
+                "notlar" => $notlar
+            );
+            echo json_encode(array("message" => "İşçi başarıyla eklendi.", "data" => $responseData));
         } else {
             http_response_code(500);
             echo json_encode(array("message" => "İşçi eklenirken SQL hatası oluştu.", "error" => $stmt->error));
