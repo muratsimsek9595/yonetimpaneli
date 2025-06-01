@@ -802,7 +802,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${fiyat.malzeme_birim_adi || '-'}</td>
                         <td>${new Date(fiyat.tarih).toLocaleDateString('tr-TR')}</td>
                         <td>${fiyat.tedarikci_adi || '-'}</td>
+<<<<<<< HEAD
                         <td class="actions actions-dar">
+=======
+                        <td class="actions">
+>>>>>>> dccc68f (.)
                             <button class="delete-fiyat-btn" data-id="${fiyat.id}">Sil</button>
                         </td>
                     `;

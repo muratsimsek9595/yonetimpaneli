@@ -38,7 +38,11 @@ switch ($method) {
         } elseif (isset($_GET['malzeme_id']) || isset($_GET['tedarikci_id'])) {
             handleBulkDelete($conn, $_GET);
         } else {
+<<<<<<< HEAD
             ob_end_clean();
+=======
+            ob_clean();
+>>>>>>> dccc68f (.)
             http_response_code(400);
             echo json_encode(array("message" => "Silme için id, malzeme_id veya tedarikci_id belirtilmedi."));
         }
@@ -152,7 +156,11 @@ function getFiyatlar($conn, $params) {
 
 function deleteFiyat($conn, $id) {
     if (empty($id)) {
+<<<<<<< HEAD
         ob_end_clean();
+=======
+        ob_clean();
+>>>>>>> dccc68f (.)
         http_response_code(400);
         echo json_encode(array("message" => "Silinecek fiyat ID'si belirtilmedi."));
         return;
@@ -166,7 +174,11 @@ function deleteFiyat($conn, $id) {
     $resultCheck = $stmtCheck->get_result();
 
     if ($resultCheck->num_rows === 0) {
+<<<<<<< HEAD
         ob_end_clean();
+=======
+        ob_clean();
+>>>>>>> dccc68f (.)
         http_response_code(404); // Not Found
         echo json_encode(array("message" => "Silinecek fiyat kaydı bulunamadı."));
         $stmtCheck->close();
@@ -180,16 +192,28 @@ function deleteFiyat($conn, $id) {
 
     if ($stmt->execute()) {
         if ($stmt->affected_rows > 0) {
+<<<<<<< HEAD
             ob_end_clean();
             echo json_encode(array("message" => "Fiyat kaydı başarıyla silindi."));
         } else {
             // Bu durum normalde yukarıdaki varlık kontrolü ile yakalanmalı, ama bir güvenlik önlemi
             ob_end_clean();
+=======
+            ob_clean();
+            echo json_encode(array("message" => "Fiyat kaydı başarıyla silindi."));
+        } else {
+            // Bu durum normalde yukarıdaki varlık kontrolü ile yakalanmalı, ama bir güvenlik önlemi
+            ob_clean();
+>>>>>>> dccc68f (.)
             http_response_code(404);
             echo json_encode(array("message" => "Silinecek fiyat kaydı bulunamadı veya zaten silinmiş."));
         }
     } else {
+<<<<<<< HEAD
         ob_end_clean();
+=======
+        ob_clean();
+>>>>>>> dccc68f (.)
         http_response_code(500);
         echo json_encode(array("message" => "Fiyat kaydı silinirken SQL hatası oluştu.", "error" => $stmt->error));
     }
