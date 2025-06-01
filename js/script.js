@@ -85,12 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const sonFiyatlarTablosuBody = document.querySelector('#sonFiyatlarTablosu tbody');
 
     // Veri Saklama (LocalStorage)
-    let urunler = []; // Ürünler artık API'den yüklenecek
-    let fiyatlar = []; // Fiyatlar da API'den yüklenecek (sonraki adım)
-    let tedarikciler = []; // Tedarikçiler artık API'den yüklenecek
+    // let urunler = []; // Ürünler artık API'den yüklenecek
+    // let fiyatlar = []; // Fiyatlar da API'den yüklenecek (sonraki adım)
+    // let tedarikciler = []; // Tedarikçiler artık API'den yüklenecek
 
-    function verileriKaydet() {
-        // localStorage artık kullanılmayacak
+    function verileriKaydet() { 
+        // localStorage artık kullanılmayacak, bu fonksiyonun içeriği boşaltıldı veya tamamen kaldırılabilir.
     }
 
     function tedarikciAdiniGetir(tedarikciId) {
@@ -99,34 +99,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function urunListesiniGuncelle() {
-        urunListesiTablosuBody.innerHTML = ''; // Tabloyu temizle
-        urunler.forEach(urun => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${urun.ad}</td>
-                <td>${urun.birimAdi || '-'}</td>
-                <td class="actions">
-                    <button class="edit-btn" data-id="${urun.id}">Düzenle</button>
-                    <button class="delete-btn" data-id="${urun.id}">Sil</button>
-                </td>
-            `;
-            urunListesiTablosuBody.appendChild(tr);
-        });
+        urunListesiTablosuBody.innerHTML = ''; 
+        if (!Array.isArray(urunler) || urunler.length === 0) {
+            urunListesiTablosuBody.innerHTML = '<tr><td colspan="3">Kayıtlı malzeme bulunamadı.</td></tr>';
+        } else {
+            urunler.forEach(urun => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${urun.ad}</td>
+                    <td>${urun.birim_adi || '-'}</td> 
+                    <td class="actions">
+                        <button class="edit-btn" data-id="${urun.id}">Düzenle</button>
+                        <button class="delete-btn" data-id="${urun.id}">Sil</button>
+                    </td>
+                `;
+                urunListesiTablosuBody.appendChild(tr);
+            });
+        }
         urunleriGrafikSecimineYukle();
         urunleriGunlukFiyatGirisSecimineYukle();
-        grafigiOlusturVeyaGuncelle();
+        // grafigiOlusturVeyaGuncelle(); // Bu, fiyatlar yüklendikten sonra çağrılmalı
     }
 
-    function formuTemizle() {
+    function formuTemizle() { // urunForm için
         urunForm.reset();
         urunIdInput.value = '';
-        urunBirimTipiInput.value = '';
-        urunBirimAdiInput.value = '';
+        // urunBirimTipiInput.value = ''; // Form reset ile temizleniyor
+        // urunBirimAdiInput.value = ''; // Form reset ile temizleniyor
         formTemizleButton.style.display = 'none';
         urunAdiInput.focus();
     }
 
-    urunForm.addEventListener('submit', function(event) {
+    urunForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         const id = urunIdInput.value;
         const ad = urunAdiInput.value.trim();
@@ -138,48 +142,85 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const malzemeVerisi = {
+            ad: ad,
+            birim_tipi: birimTipi, // API'ye göndereceğimiz isimler DB ile aynı olmalı
+            birim_adi: birimAdi
+        };
+
+        let url = 'api/malzemeler.php';
+        let method = 'POST';
+
         if (id) { // Güncelleme
-            const index = urunler.findIndex(u => u.id === id);
-            if (index > -1) {
-                urunler[index] = { ...urunler[index], ad, birimTipi, birimAdi };
-            }
-        } else { // Yeni Ekleme
-            const yeniUrun = {
-                id: 'urun-' + Date.now(),
-                ad,
-                birimTipi,
-                birimAdi,
-            };
-            urunler.push(yeniUrun);
+            url = `api/malzemeler.php?id=${id}`;
+            method = 'PUT';
         }
-        verileriKaydet();
-        urunListesiniGuncelle();
-        formuTemizle();
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(malzemeVerisi),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
+                throw new Error(errorData.message || `Malzeme ${id ? 'güncellenirken' : 'eklenirken'} API hatası: ${response.status}`);
+            }
+
+            const sonuc = await response.json();
+            console.log(sonuc.message, sonuc);
+            // alert(sonuc.message);
+
+            await malzemeleriYukle(); // Listeyi API'den tazeleyerek güncelle
+            formuTemizle();
+        } catch (error) {
+            console.error(`Malzeme ${id ? 'güncellenirken' : 'eklenirken'} hata:`, error);
+            alert(`Hata: ${error.message}`);
+        }
     });
 
     formTemizleButton.addEventListener('click', formuTemizle);
 
-    urunListesiTablosuBody.addEventListener('click', function(event) {
+    urunListesiTablosuBody.addEventListener('click', async function(event) {
         const target = event.target;
         const urunId = target.dataset.id;
 
         if (target.classList.contains('edit-btn')) {
-            const urun = urunler.find(u => u.id === urunId);
+            const urun = urunler.find(u => String(u.id) === String(urunId)); // API'den gelen ID'ler string olabilir
             if (urun) {
                 urunIdInput.value = urun.id;
                 urunAdiInput.value = urun.ad;
-                urunBirimTipiInput.value = urun.birimTipi || '';
-                urunBirimAdiInput.value = urun.birimAdi || '';
+                urunBirimTipiInput.value = urun.birim_tipi || ''; // API'den gelen isim
+                urunBirimAdiInput.value = urun.birim_adi || '';   // API'den gelen isim
                 formTemizleButton.style.display = 'inline-block';
                 urunAdiInput.focus();
             }
         } else if (target.classList.contains('delete-btn')) {
-            if (confirm('Bu malzemeyi silmek istediğinize emin misiniz? Bu işlem malzemenin tüm fiyat geçmişini de silecektir.')) {
-                urunler = urunler.filter(u => u.id !== urunId);
-                fiyatlar = fiyatlar.filter(f => f.urunId !== urunId);
-                verileriKaydet();
-                urunListesiniGuncelle(); 
-                formuTemizle(); 
+            const urunAdiSil = urunler.find(u => String(u.id) === String(urunId))?.ad || 'Bu malzeme';
+            // Fiyat silme uyarısını API'ye göre güncelleyeceğiz
+            if (confirm(`'${urunAdiSil}' malzemesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) { 
+                try {
+                    const response = await fetch(`api/malzemeler.php?id=${urunId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
+                        throw new Error(errorData.message || `Malzeme silinirken API hatası: ${response.status}`);
+                    }
+                    const sonuc = await response.json();
+                    console.log(sonuc.message, sonuc);
+                    // alert(sonuc.message);
+
+                    await malzemeleriYukle(); // Listeyi API'den tazeleyerek güncelle
+                    formuTemizle(); 
+                } catch (error) {
+                    console.error('Malzeme silinirken hata:', error);
+                    alert(`Hata: ${error.message}`);
+                }
             }
         }
     });
