@@ -72,7 +72,7 @@ switch ($method) {
         exit();
         break;
 }
-// --- switch bloğu sonu ---
+// --- switch bloğu sonu  ---
 
 // --- FONKSİYON TANIMLARI VE BAĞLANTI KAPATMA ETKİNLEŞTİRİLDİ ---
 function getMusteriler($conn) {
