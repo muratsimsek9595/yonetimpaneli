@@ -130,10 +130,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = urunIdInput.value;
         const ad = urunAdiInput.value.trim();
         const birimTipi = urunBirimTipiInput.value;
-        const birimAdi = urunBirimAdiInput.value.trim();
+        const birimAdi = urunBirimAdiInput.value.trim(); // Boş olabilir
 
-        if (!ad || !birimTipi || !birimAdi) {
-            alert('Malzeme adı, birim tipi ve birim adı boş bırakılamaz!');
+        if (!ad || !birimTipi) { // birimAdi kontrolü kaldırıldı
+            alert('Malzeme adı ve birim tipi boş bırakılamaz!');
             return;
         }
 
