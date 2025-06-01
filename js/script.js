@@ -195,8 +195,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
-                throw new Error(errorData.message || `Malzeme ${id ? 'güncellenirken' : 'eklenirken'} API hatası: ${response.status}`);
+                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
+                throw new Error(errorData.message || `Malzeme ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
             }
 
             const sonuc = await response.json();
@@ -252,8 +252,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
-                        throw new Error(errorData.message || `Malzeme silinirken API hatası: ${response.status}`);
+                        const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
+                        throw new Error(errorData.message || `Malzeme silinirken bir sorun oluştu.`);
                     }
                     const sonuc = await response.json();
                     console.log(sonuc.message, sonuc);
@@ -369,8 +369,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
-                    throw new Error(errorData.message || `Tedarikçi ${id ? 'güncellenirken' : 'eklenirken'} API hatası: ${response.status}`);
+                    const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
+                    throw new Error(errorData.message || `Tedarikçi ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
                 }
                 
                 const sonuc = await response.json();
@@ -417,8 +417,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
 
                         if (!response.ok) {
-                            const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
-                            throw new Error(errorData.message || `Tedarikçi silinirken API hatası: ${response.status}`);
+                            const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
+                            throw new Error(errorData.message || `Tedarikçi silinirken bir sorun oluştu.`);
                         }
                         const sonuc = await response.json();
                         console.log(sonuc.message);
@@ -773,7 +773,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("Fiyatlar API ham yanıtı:", responseText);
             
             if (!response.ok) {
-                throw new Error(`Fiyatlar API hatası: ${response.status} - ${response.statusText}\nYanıt: ${responseText}`);
+                throw new Error(`Fiyatlar yüklenirken bir sorun oluştu. Yanıt: ${responseText}`);
             }
             const tumGelenFiyatlar = await response.json();
             
@@ -830,8 +830,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             method: 'DELETE'
                         });
                         if (!response.ok) {
-                            const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
-                            throw new Error(errorData.message || `Fiyat silinirken API hatası: ${response.status}`);
+                            const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
+                            throw new Error(errorData.message || `Fiyat silinirken bir sorun oluştu.`);
                         }
                         const sonuc = await response.json();
                         console.log(sonuc.message);
@@ -885,8 +885,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status} - ${response.statusText}` }));
-                throw new Error(errorData.message || `Fiyat eklenirken API hatası: ${response.status}`);
+                const errorData = await response.json().catch(() => ({ message: `API hatası: ${response.status}` }));
+                throw new Error(errorData.message || `Fiyat eklenirken bir sorun oluştu.`);
             }
 
             const sonuc = await response.json();
@@ -937,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("API ham yanıtı:", responseText);
             
             if (!response.ok) {
-                throw new Error(`Malzeme API hatası: ${response.status} - ${response.statusText}\nYanıt: ${responseText}`);
+                throw new Error(`Malzemeler yüklenirken bir sorun oluştu. Yanıt: ${responseText}`);
             }
             
             // JSON parse etmeyi dene
@@ -970,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("Tedarikçi API ham yanıtı:", responseText);
             
             if (!response.ok) {
-                throw new Error(`Tedarikçi API hatası: ${response.status} - ${response.statusText}\nYanıt: ${responseText}`);
+                throw new Error(`Tedarikçiler yüklenirken bir sorun oluştu. Yanıt: ${responseText}`);
             }
             
             // JSON parse etmeyi dene
@@ -995,30 +995,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function initializePageData() {
         console.log("Sayfa verileri yükleniyor...");
-        
-        // Önce test API'si ile bağlantıyı kontrol et
-        console.log("Test API çağrısı yapılıyor...");
-        try {
-            const testResponse = await fetch('api/test.php');
-            console.log("Test API yanıtı durumu:", testResponse.status, testResponse.statusText);
-            console.log("Test API yanıtı headers:", testResponse.headers.get('content-type'));
-            
-            const testResponseText = await testResponse.text();
-            console.log("Test API ham yanıtı:", testResponseText);
-            
-            if (testResponse.ok) {
-                try {
-                    const testData = JSON.parse(testResponseText);
-                    console.log("Test API başarılı:", testData);
-                } catch (parseError) {
-                    console.error("Test API JSON parse hatası:", parseError);
-                }
-            } else {
-                console.error("Test API başarısız:", testResponse.status, testResponseText);
-            }
-        } catch (error) {
-            console.error("Test API çağrısında hata:", error);
-        }
         
         await tedarikcileriYukle(); // Değişiklik burada: tedarikciListesiniGuncelle -> tedarikcileriYukle
         await malzemeleriYukle();
