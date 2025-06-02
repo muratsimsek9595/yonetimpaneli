@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *"); // Geliştirme için, canlıda daha kısıtlı olmalı
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -277,7 +281,11 @@ function updateIsci($conn) {
     }
     
     // Spread operatörü (...) PHP 5.6+ için
-    $stmt->bind_param($types, ...$params);
+    // $stmt->bind_param($types, ...$params);
+    // Daha geniş PHP sürüm uyumluluğu için call_user_func_array kullanımı:
+    $bind_params = array_merge(array($types), $params);
+    call_user_func_array(array($stmt, 'bind_param'), ref_values($bind_params));
+
 
     if ($stmt->execute()) {
         // Güncellenmiş işçiyi geri döndür
@@ -339,6 +347,18 @@ function deleteIsci($conn, $id) {
         echo json_encode(array("message" => "İşçi silme hatası: " . $stmt->error, "success" => false));
     }
     $stmt->close();
+}
+
+// call_user_func_array ile bind_param kullanırken referans değerler göndermek için yardımcı fonksiyon
+function ref_values($arr){
+    if (strnatcmp(phpversion(),'5.3') >= 0) // PHP 5.3+
+    {
+        $refs = array();
+        foreach($arr as $key => $value)
+            $refs[$key] = &$arr[$key];
+        return $refs;
+    }
+    return $arr;
 }
 
 ?>
