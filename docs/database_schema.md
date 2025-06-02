@@ -24,20 +24,20 @@ Malzeme fiyatlarının zaman içindeki değişimini kaydeder.
 
 | Sütun Adı           | Veri Türü     | Notlar                                            |
 |---------------------|---------------|---------------------------------------------------|
-| `id`                | VARCHAR(64)   | Primary Key (Muhtemelen UUID)                   |
-| `adSoyad`           | VARCHAR(255)  |                                                   |
-| `pozisyon`          | VARCHAR(100)  |                                                   |
-| `gunlukUcret`       | DECIMAL(10,2) |                                                   |
-| `saatlikUcret`      | DECIMAL(10,2) |                                                   |
-| `paraBirimi`        | VARCHAR(10)   | (Örn: TL, USD, EUR)                             |
-| `iseBaslamaTarihi`  | DATE          |                                                   |
-| `aktif`             | TINYINT(1)    | (1: Aktif, 0: Pasif)                            |
-| `telefon`           | VARCHAR(30)   |                                                   |
-| `email`             | VARCHAR(255)  |                                                   |
-| `adres`             | TEXT          |                                                   |
-| `notlar`            | TEXT          |                                                   |
-| `created_at`        | TIMESTAMP     |                                                   |
-| `updated_at`        | TIMESTAMP     |                                                   |
+| `id`                | INT           | Primary Key, AUTO_INCREMENT                       |
+| `adSoyad`           | VARCHAR(255)  | NOT NULL                                          |
+| `pozisyon`          | VARCHAR(100)  | NULL                                              |
+| `gunlukUcret`       | DECIMAL(10,2) | NULL                                              |
+| `saatlikUcret`      | DECIMAL(10,2) | NULL                                              |
+| `paraBirimi`        | VARCHAR(10)   | NULL, (Örn: TL, USD, EUR)                       |
+| `iseBaslamaTarihi`  | DATE          | NULL                                              |
+| `aktif`             | TINYINT(1)    | DEFAULT 1                                         |
+| `telefon`           | VARCHAR(30)   | NULL                                              |
+| `email`             | VARCHAR(255)  | NULL                                              |
+| `adres`             | TEXT          | NULL                                              |
+| `notlar`            | TEXT          | NULL                                              |
+| `created_at`        | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP                         |
+| `updated_at`        | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
 
 ### 3. `malzemeler`
 
@@ -112,36 +112,39 @@ Müşterilere sunulan fiyat tekliflerinin ana bilgilerini içerir.
 | `created_at`          | TIMESTAMP     |                                                   |
 | `updated_at`          | TIMESTAMP     |                                                   |
 
-### 7. `teklif_urunleri` (veya `teklif_kalemleri`)
+### 7. `teklif_kalemleri`
 
 Bir teklifin içerdiği malzeme ve işçilik kalemlerini detaylandırır. Her bir kalem, teklif oluşturulduğu andaki maliyet ve satış fiyatlarını kaydeder.
 
-| Sütun Adı                           | Veri Türü     | Notlar                                            |
-|-------------------------------------|---------------|---------------------------------------------------|
-| `id`                                | INT           | Primary Key, AUTO_INCREMENT                       |
-| `teklif_id`                         | VARCHAR(64)   | Foreign Key -> `teklifler.id`                     |
-| `kalemTipi`                         | VARCHAR(20)   | 'malzeme' veya 'iscilik'                          |
-| `referans_id`                       | VARCHAR(64)   | FK -> `malzemeler.id` (eğer `kalemTipi`='malzeme') veya `isciler.id` (eğer `kalemTipi`='iscilik') |
-| `aciklama`                          | VARCHAR(255)  | Kalem için ek açıklama                            |
-| `miktar`                            | DECIMAL(10,2) |                                                   |
-| `birim`                             | VARCHAR(50)   | Kalemin birimi (örn: adet, saat, gün)             |
-| `kaydedilen_birim_maliyet`          | DECIMAL(15,2) | Teklif anındaki birim maliyet                     |
-| `kaydedilen_birim_satis_fiyati`   | DECIMAL(15,2) | Teklif anındaki KDV hariç birim satış fiyatı      |
-| `kdv_orani_kalem`                   | DECIMAL(5,2)  | Bu kaleme özel KDV oranı (genelden farklıysa)   |
-| `satir_toplam_maliyet`              | DECIMAL(15,2) | `miktar * kaydedilen_birim_maliyet`               |
-| `satir_toplam_satis_fiyati_kdv_haric` | DECIMAL(15,2) | `miktar * kaydedilen_birim_satis_fiyati`          |
-| `satir_kdv_tutari`                  | DECIMAL(15,2) | Bu satır için hesaplanan KDV tutarı               |
-| `satir_toplam_satis_fiyati_kdv_dahil`| DECIMAL(15,2) | KDV dahil satır toplamı                           |
-| `siraNo`                            | INT           | Teklif içindeki kalem sırası                      |
-| `created_at`                        | TIMESTAMP     |                                                   |
-| `updated_at`                        | TIMESTAMP     |                                                   |
+| Sütun Adı                           | Veri Türü     | Notlar                                                               |
+|-------------------------------------|---------------|----------------------------------------------------------------------|
+| `id`                                | INT           | Primary Key, AUTO_INCREMENT                                          |
+| `teklif_id`                         | VARCHAR(64)   | NOT NULL, Foreign Key -> `teklifler.id`                              |
+| `kalemTipi`                         | VARCHAR(20)   | NOT NULL, ('malzeme', 'iscilik')                                     |
+| `malzeme_id`                        | INT           | NULL, Foreign Key -> `malzemeler.id` (Eğer `kalemTipi`='malzeme')      |
+| `isci_id`                           | INT           | NULL, Foreign Key -> `isciler.id` (Eğer `kalemTipi`='iscilik')         |
+| `aciklama`                          | VARCHAR(255)  | Kalem için ek açıklama                                               |
+| `miktar`                            | DECIMAL(10,2) | NOT NULL                                                             |
+| `birim`                             | VARCHAR(50)   | Kalemin birimi (örn: adet, saat, gün, kg, m²)                        |
+| `kaydedilen_birim_maliyet`          | DECIMAL(15,2) | NULL, Teklif anındaki birim maliyet                                  |
+| `kaydedilen_birim_satis_fiyati`   | DECIMAL(15,2) | NOT NULL, Teklif anındaki KDV hariç birim satış fiyatı             |
+| `kdv_orani_kalem`                   | DECIMAL(5,2)  | DEFAULT 0.00, Bu kaleme özel KDV oranı (genelden farklıysa)        |
+| `satir_toplam_maliyet`              | DECIMAL(15,2) | NULL, `miktar * kaydedilen_birim_maliyet`                            |
+| `satir_toplam_satis_fiyati_kdv_haric` | DECIMAL(15,2) | NULL, `miktar * kaydedilen_birim_satis_fiyati`                       |
+| `satir_kdv_tutari`                  | DECIMAL(15,2) | NULL, Bu satır için hesaplanan KDV tutarı                            |
+| `satir_toplam_satis_fiyati_kdv_dahil`| DECIMAL(15,2) | NULL, KDV dahil satır toplamı                                        |
+| `siraNo`                            | INT           | NULL, Teklif içindeki kalem sırası                                   |
+| `created_at`                        | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP                                            |
+| `updated_at`                        | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP                |
 
 ## Önemli Notlar
 
-*   **VARCHAR ID'ler:** `isciler`, `teklifler` tablolarındaki `id` sütunları `VARCHAR(64)` olarak tanımlanmıştır. Bu, genellikle UUID (Universally Unique Identifier) veya benzeri benzersiz metin tabanlı anahtarlar kullanıldığını gösterir. API tarafında bu ID'lerin oluşturulması ve yönetilmesi gerekmektedir.
-*   **AUTO_INCREMENT ID'ler:** `fiyatlar`, `malzemeler`, `tedarikciler`, `musteriler`, `teklif_urunleri` tablolarındaki `id` sütunları `INT` olarak tanımlanmıştır ve büyük olasılıkla `AUTO_INCREMENT PRIMARY KEY` özelliktedir.
+*   **VARCHAR ID'ler:** `teklifler` tablosundaki `id` sütunu `VARCHAR(64)` olarak tanımlanmıştır. Bu, genellikle UUID (Universally Unique Identifier) veya benzeri benzersiz metin tabanlı anahtarlar kullanıldığını gösterir. API tarafında bu ID'lerin oluşturulması ve yönetilmesi gerekmektedir.
+*   **AUTO_INCREMENT ID'ler:** `fiyatlar`, `isciler`, `malzemeler`, `tedarikciler`, `musteriler`, `teklif_kalemleri` tablolarındaki `id` sütunları `INT` olarak tanımlanmıştır ve `AUTO_INCREMENT PRIMARY KEY` özelliktedir.
 *   **Denormalizasyon:** `teklifler` tablosundaki `musteriAdi` ve `musteriIletisim` gibi alanlar, `musteriler` tablosundan da elde edilebilecek olmasına rağmen, teklif oluşturulduğu andaki bilgiyi saklamak veya sorgu performansını artırmak amacıyla denormalize edilmiş olabilir.
-*   **Zaman Damgaları:** Çoğu tabloda `created_at` ve `updated_at` TIMESTAMP sütunları bulunmaktadır. Bunlar genellikle kaydın ne zaman oluşturulduğunu ve son güncellendiğini otomatik olarak izlemek için kullanılır (örn: `DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`).
+*   **Zaman Damgaları:** Çoğu tabloda `created_at` ve `updated_at` TIMESTAMP sütunları bulunmaktadır. Bunlar genellikle kaydın ne zaman oluşturulduğunu ve son güncellendiğini otomatik olarak izlemek için kullanılır.
 *   **Finansal Veriler:** Fiyat, maliyet ve toplam gibi finansal veriler için `DECIMAL` veri tipi kullanılmıştır. Bu, ondalık sayılarda hassasiyet kaybını önlemek için doğru bir yaklaşımdır.
+*   **Foreign Key İlişkileri:** `teklif_kalemleri.malzeme_id` -> `malzemeler.id`; `teklif_kalemleri.isci_id` -> `isciler.id` gibi foreign key ilişkilerinin veritabanında doğru kurulduğundan emin olunmalıdır.
+*   **`teklif_kalemleri` Tablosu:** Bu tablo hem malzeme hem de işçilik kalemlerini `kalemTipi` alanı ile ayırt ederek saklar. `malzeme_id` alanı sadece `kalemTipi` 'malzeme' olduğunda, `isci_id` alanı ise sadece `kalemTipi` 'iscilik' olduğunda kullanılır.
 
-Bu şema, gelecekteki geliştirmeler ve sorgular için bir referans noktası olacaktır. 
+Bu şema, gelecekteki geliştirmeler ve sorgular için bir referans noktası olacaktır.

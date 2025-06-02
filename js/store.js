@@ -4,6 +4,7 @@ const state = {
     _fiyatlar: [],
     _teklifler: [],
     _musteriler: [],
+    _isciler: [],
     // Diğer state verileri buraya eklenebilir (örn: aktifFiltreler)
 };
 
@@ -294,65 +295,65 @@ export function removeMusteriByIdFromStore(musteriId) {
     }
 }
 
-// --- İşçiler State ---
-let isciler = [];
-
-export function getIscilerState() {
-    return [...isciler]; // Dizinin kopyasını döndür
+// --- İşçiler ---
+export function getIsciler() {
+    return [...state._isciler];
 }
 
-export function setIscilerState(newIsciler) {
-    if (Array.isArray(newIsciler)) {
-        isciler = [...newIsciler]; // Yeni diziyi kopyala
-        // Veri bütünlüğü için sıralama (isteğe bağlı ama genellikle iyi bir pratik)
-        isciler.sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
-        notify('iscilerChanged', isciler);
+export function getIsciById(id) {
+    const isciId = parseInt(id, 10);
+    return state._isciler.find(i => i.id === isciId);
+}
+
+export function setIsciler(iscilerData) {
+    state._isciler = Array.isArray(iscilerData) ? [...iscilerData] : [];
+    notify('iscilerChanged', getIsciler());
+}
+
+export function addIsci(isci) {
+    if (!isci || typeof isci.id === 'undefined') {
+        console.error("addIsci: Geçersiz işçi nesnesi veya ID eksik.", isci);
+        return;
+    }
+    // Zaten var mı diye kontrol et (API'den gelen veri her zaman güncel olmalı)
+    const existingIndex = state._isciler.findIndex(i => i.id === parseInt(isci.id, 10));
+    if (existingIndex === -1) {
+        state._isciler.push(isci);
     } else {
-        console.error("setIscilerState: newIsciler bir dizi olmalıdır.", newIsciler);
-        isciler = []; // Hata durumunda boşalt
-        notify('iscilerChanged', isciler);
+        // Genelde addIsci sadece yeni eklenenler için çağrılır.
+        // Eğer güncelleme de buradan yapılacaksa updateIsci gibi davranmalı.
+        // Şimdilik, API'den sonra eklendiği için var olanı güncelleyelim.
+        state._isciler[existingIndex] = { ...state._isciler[existingIndex], ...isci };
+        console.warn(`addIsci: İşçi ID ${isci.id} zaten store'da mevcuttu, üzerine yazıldı.`);
+    }
+    notify('iscilerChanged', getIsciler());
+}
+
+export function updateIsci(updatedIsci) {
+    if (!updatedIsci || typeof updatedIsci.id === 'undefined') {
+        console.error("updateIsci: Geçersiz işçi nesnesi veya ID eksik.", updatedIsci);
+        return;
+    }
+    const isciId = parseInt(updatedIsci.id, 10);
+    const index = state._isciler.findIndex(i => i.id === isciId);
+    if (index > -1) {
+        state._isciler[index] = { ...state._isciler[index], ...updatedIsci };
+        notify('iscilerChanged', getIsciler());
+    } else {
+        console.warn(`updateIsci: Güncellenmek istenen işçi ID'si (${isciId}) store'da bulunamadı.`);
+        // İsteğe bağlı olarak yeni işçi olarak eklenebilir:
+        // state._isciler.push(updatedIsci);
+        // notify('iscilerChanged', getIsciler());
     }
 }
 
-export function addIsciToState(isci) {
-    if (isci && typeof isci === 'object' && isci.id) {
-        const index = isciler.findIndex(i => i.id === isci.id);
-        if (index === -1) {
-            isciler.push(isci);
-        } else {
-            // Eğer ID varsa güncelle (saveIsci hem ekleme hem güncelleme için kullanılabilir)
-            isciler[index] = { ...isciler[index], ...isci };
-        }
-        isciler.sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
-        notify('iscilerChanged', isciler);
-    } else {
-        console.error("addIsciToState: Geçersiz işçi nesnesi veya ID eksik.", isci);
+export function removeIsciById(isciId) {
+    const idToRemove = parseInt(isciId, 10);
+    const initialLength = state._isciler.length;
+    state._isciler = state._isciler.filter(i => i.id !== idToRemove);
+    if (state._isciler.length < initialLength) {
+        notify('iscilerChanged', getIsciler());
     }
-}
-
-export function updateIsciInState(id, updatedIsciData) {
-    const index = isciler.findIndex(i => i.id === id);
-    if (index !== -1) {
-        isciler[index] = { ...isciler[index], ...updatedIsciData };
-        isciler.sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
-        notify('iscilerChanged', isciler);
-    } else {
-        console.warn(`updateIsciInState: Güncellenecek işçi bulunamadı. ID: ${id}`);
-    }
-}
-
-export function removeIsciFromState(id) {
-    const initialLength = isciler.length;
-    isciler = isciler.filter(i => i.id !== id);
-    if (isciler.length < initialLength) {
-        notify('iscilerChanged', isciler);
-    } else {
-        console.warn(`removeIsciFromState: Silinecek işçi bulunamadı. ID: ${id}`);
-    }
-}
-
-export function getIsciByIdState(id) {
-    return isciler.find(i => i.id === id) || null;
 }
 
 // Başlangıçta boş state ile olayları tetikleyebiliriz (opsiyonel)

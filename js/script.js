@@ -10,9 +10,10 @@ import {
     deleteFiyat as deleteFiyatAPI,
     getTeklifler as fetchTekliflerAPI,
     getMusteriler as getMusterilerAPI,
-    getIsciler as fetchIscilerAPI,
-    saveIsci as saveIsciAPI,
-    deleteIsci as deleteIsciAPI
+    fetchIsciler,
+    addIsciAPI,
+    updateIsciAPI,
+    deleteIsciAPI
 } from './api.js';
 import {
     subscribe,
@@ -32,12 +33,12 @@ import {
     setTeklifler,
     getMusteriler,
     setMusteriler,
-    getIscilerState,
-    setIscilerState,
-    addIsciToState,
-    updateIsciInState,
-    removeIsciFromState,
-    getIsciByIdState
+    getIsciler,
+    setIsciler,
+    addIsci,
+    updateIsci,
+    removeIsciById as removeIsciFromStore,
+    getIsciById
 } from './store.js';
 import {
     temizleUrunFormu,
@@ -54,7 +55,8 @@ import {
     doldurTedarikciFormu,
     guncelleIscilerTablosu,
     doldurIsciFormu,
-    temizleIsciFormu
+    temizleIsciFormu,
+    populeEtIsciSecimDropdown
 } from './ui.js';
 import {
     cizVeyaGuncelleFiyatGrafigi
@@ -174,16 +176,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const isciIdInput = document.getElementById('isciIdInput');
     const isciListesiTablosuBody = document.querySelector('#isciListesiTablosu tbody');
     const isciFormTemizleButton = document.getElementById('isciFormTemizleButton');
+    const isciKaydetBtn = isciForm ? isciForm.querySelector('button[type="submit"]') : null;
 
     let fiyatGrafigi;
 
     async function iscileriYukle() {
         try {
-            const apiIsciler = await fetchIscilerAPI();
-            setIscilerState(apiIsciler && Array.isArray(apiIsciler) ? apiIsciler : []);
+            const apiIsciler = await fetchIsciler();
+            setIsciler(apiIsciler && Array.isArray(apiIsciler) ? apiIsciler : []);
         } catch (error) {
             globalHataYakala(error, 'İşçiler yüklenirken bir sorun oluştu.');
-            setIscilerState([]);
+            setIsciler([]);
         }
     }
 
@@ -242,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const urunler = getUrunler();
         const tedarikciler = getTedarikciler();
         const fiyatlar = getFiyatlar();
-        const mevcutIsciler = getIscilerState();
+        const mevcutIsciler = getIsciler();
         const mevcutMusteriler = getMusteriler();
         const mevcutTeklifler = getTeklifler();
 
@@ -328,9 +331,9 @@ document.addEventListener('DOMContentLoaded', function() {
         guncelleAnasayfaIstatistikleri();
     });
 
-    subscribe('iscilerChanged', (guncelIsciler) => {
+    subscribe('iscilerChanged', (guncelIscilerListesi) => {
         if (isciListesiTablosuBody) {
-            guncelleIscilerTablosu(guncelIsciler, isciListesiTablosuBody);
+            guncelleIscilerTablosu(guncelIscilerListesi, isciListesiTablosuBody);
         }
         guncelleAnasayfaIstatistikleri();
     });
@@ -586,106 +589,142 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if(fiyatGirisMalzemeSecimi) fiyatGirisMalzemeSecimi.addEventListener('change', guncelleFiyatGirisBirimGostergesi);
 
-    if (isciForm) {
-        isciForm.addEventListener('submit', async (event) => {
+    // --- İşçi Yönetimi Başlangıcı ---
+    if (isciForm && isciListesiTablosuBody && isciKaydetBtn && isciFormTemizleButton && isciIdInput) {
+        
+        // Form Gönderme (Ekleme/Güncelleme)
+        isciForm.addEventListener('submit', async function(event) {
             event.preventDefault();
-            const submitButton = isciForm.querySelector('button[type="submit"]');
-            if(!submitButton) return;
-            setButtonLoading(submitButton, 'Kaydediliyor...');
+            setButtonLoading(isciKaydetBtn, 'Kaydediliyor...');
 
             const id = isciIdInput.value;
-            const isciVerisi = {
-                adSoyad: isciForm.querySelector('#isciAdSoyadInput').value.trim(),
-                pozisyon: isciForm.querySelector('#isciPozisyonInput').value.trim(),
-                gunlukUcret: parseFloat(isciForm.querySelector('#isciGunlukUcretInput').value) || null,
-                saatlikUcret: parseFloat(isciForm.querySelector('#isciSaatlikUcretInput').value) || null,
-                paraBirimi: isciForm.querySelector('#isciParaBirimiInput').value,
-                iseBaslamaTarihi: isciForm.querySelector('#isciIseBaslamaTarihiInput').value || null,
-                aktif: isciForm.querySelector('#isciAktifCheckbox').checked,
-                telefon: isciForm.querySelector('#isciTelefonInput').value.trim(),
-                email: isciForm.querySelector('#isciEmailInput').value.trim(),
-                adres: isciForm.querySelector('#isciAdresInput').value.trim(),
-                notlar: isciForm.querySelector('#isciNotlarInput').value.trim()
-            };
+            const adSoyad = isciForm.elements.adSoyad.value.trim();
+            const pozisyon = isciForm.elements.pozisyon.value.trim() || null;
             
-            if (id) {
-                isciVerisi.id = id;
+            const gunlukUcretValue = isciForm.elements.gunlukUcret.value.trim();
+            const gunlukUcret = gunlukUcretValue ? parseFloat(gunlukUcretValue) : null;
+            
+            const saatlikUcretValue = isciForm.elements.saatlikUcret.value.trim();
+            const saatlikUcret = saatlikUcretValue ? parseFloat(saatlikUcretValue) : null;
+            
+            const paraBirimi = isciForm.elements.paraBirimi.value || 'TL';
+            
+            let iseBaslamaTarihi = isciForm.elements.iseBaslamaTarihi.value.trim();
+            if (iseBaslamaTarihi && !/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/.test(iseBaslamaTarihi)) {
+                showToast('İşe başlama tarihi geçerli bir formatta (YYYY-AA-GG) olmalıdır.', 'error');
+                resetButtonLoading(isciKaydetBtn);
+                return;
+            }
+            iseBaslamaTarihi = iseBaslamaTarihi || null;
+
+            const aktif = isciForm.elements.aktif.checked;
+            const telefon = isciForm.elements.telefon.value.trim() || null;
+            const email = isciForm.elements.email.value.trim() || null;
+            const adres = isciForm.elements.adres.value.trim() || null;
+            const notlar = isciForm.elements.notlar.value.trim() || null;
+
+            if (!adSoyad) {
+                showToast('Ad Soyad alanı zorunludur.', 'error');
+                resetButtonLoading(isciKaydetBtn);
+                isciForm.elements.adSoyad.focus();
+                return;
             }
 
-            if (!isciVerisi.adSoyad) {
-                resetButtonLoading(submitButton);
-                return showToast('İşçi adı soyadı boş bırakılamaz!', 'warning');
-            }
+            const isciData = {
+                adSoyad, pozisyon, gunlukUcret, saatlikUcret, paraBirimi,
+                iseBaslamaTarihi, aktif, telefon, email, adres, notlar
+            };
 
             try {
-                const apiYaniti = await saveIsciAPI(isciVerisi, id ? id : null);
-                
-                if (apiYaniti && apiYaniti.data) {
-                    if (id) { 
-                        updateIsciInState(id, apiYaniti.data); 
-                    } else { 
-                        addIsciToState(apiYaniti.data); 
-                    }
-                    showToast(apiYaniti.message || (id ? 'İşçi güncellendi.' : 'İşçi eklendi.'), 'success');
-                    if(isciForm && isciIdInput) temizleIsciFormu(isciForm, isciIdInput);
+                let savedIsci;
+                if (id) {
+                    isciData.id = parseInt(id, 10);
+                    savedIsci = await updateIsciAPI(isciData);
+                    updateIsci(savedIsci); // Store'u güncelle
+                    showToast('İşçi başarıyla güncellendi.', 'success');
                 } else {
-                    showToast(apiYaniti?.message || 'İşlem tamamlandı ama veri alınamadı.', apiYaniti?.data ? 'success' : 'warning');
-                    await iscileriYukle();
-                    if(isciForm && isciIdInput) temizleIsciFormu(isciForm, isciIdInput);
+                    savedIsci = await addIsciAPI(isciData);
+                    addIsci(savedIsci); // Store'u güncelle
+                    showToast('İşçi başarıyla eklendi.', 'success');
                 }
+                temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
             } catch (error) {
-                globalHataYakala(error, `İşçi ${id ? 'güncellenirken' : 'eklenirken'} bir sorun oluştu.`);
+                console.error('İşçi kaydetme/güncelleme hatası:', error);
+                // globalHataYakala kullanılabilir veya doğrudan showToast
+                showToast(error.message || 'İşçi kaydedilirken bir hata oluştu.', 'error');
             } finally {
-                resetButtonLoading(submitButton);
+                resetButtonLoading(isciKaydetBtn);
             }
         });
-    }
 
-    if (isciFormTemizleButton && isciForm && isciIdInput) {
-        isciFormTemizleButton.addEventListener('click', () => {
-            temizleIsciFormu(isciForm, isciIdInput);
-        });
-    }
-
-    if (isciListesiTablosuBody) {
-        isciListesiTablosuBody.addEventListener('click', async (event) => {
+        // Tablo Üzerindeki Butonlar için Olay Dinleyicisi (Düzenle/Sil)
+        isciListesiTablosuBody.addEventListener('click', async function(event) {
             const target = event.target;
             const editButton = target.closest('.edit-isci-btn');
             const deleteButton = target.closest('.delete-isci-btn');
 
             if (editButton) {
                 const isciId = editButton.dataset.id;
-                const isci = getIsciByIdState(isciId);
-                if (isci && isciForm && isciIdInput) {
-                    doldurIsciFormu(isci, isciForm, isciIdInput);
-                    showSection('isciler'); 
-                    const adSoyadInputEl = isciForm.querySelector('#isciAdSoyadInput');
-                    if(adSoyadInputEl) adSoyadInputEl.focus();
-                    showToast(`${isci.adSoyad} düzenleniyor...`, 'info');
+                const isci = getIsciById(isciId); // Store'dan al
+                if (isci) {
+                    doldurIsciFormu(isci, isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
+                    // Formun olduğu bölüme scroll yapabilirsiniz:
+                    isciForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+                    // window.scrollTo({ top: isciForm.offsetTop - 20, behavior: 'smooth' }); 
+                    showToast(`${isci.adSoyad} düzenleniyor...`, 'info', 2000);
                 } else {
-                    globalHataYakala(new Error("Düzenlenecek işçi bulunamadı veya form elemanları eksik."), "İşçi düzenleme hatası");
+                    showToast('Düzenlenecek işçi bulunamadı.', 'error');
                 }
             } else if (deleteButton) {
                 const isciId = deleteButton.dataset.id;
-                const isci = getIsciByIdState(isciId);
-                if (isci && confirm(`'${isci.adSoyad}' adlı işçiyi silmek istediğinize emin misiniz?`)) {
-                    const silmeButonuIkon = deleteButton.querySelector('i');
-                    const silmeButonuTarget = silmeButonuIkon || deleteButton;
-                    setButtonLoading(silmeButonuTarget, '...'); 
+                const isci = getIsciById(isciId); // Store'dan al
+
+                if (isci && confirm(`'${isci.adSoyad}' adlı işçiyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
+                    const originalIconHTML = deleteButton.innerHTML;
+                    setButtonLoading(deleteButton, '...');
+                    deleteButton.disabled = true;
+
                     try {
-                        const apiYaniti = await deleteIsciAPI(isciId);
-                        removeIsciFromState(isciId);
-                        showToast(apiYaniti?.message || 'İşçi başarıyla silindi.', 'success');
-                        if (isciIdInput && isciIdInput.value === isciId && isciForm) {
-                            temizleIsciFormu(isciForm, isciIdInput);
+                        await deleteIsciAPI(isciId);
+                        removeIsciFromStore(isciId); // Store'dan sil
+                        showToast('İşçi başarıyla silindi.', 'success');
+                        if (isciIdInput.value === isciId) {
+                            temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
                         }
                     } catch (error) {
-                        globalHataYakala(error, 'İşçi silinirken bir sorun oluştu.');
+                        console.error('İşçi silme hatası:', error);
+                        showToast(error.message || 'İşçi silinirken bir hata oluştu.', 'error');
                     } finally {
-                        resetButtonLoading(silmeButonuTarget); 
+                         resetButtonLoading(deleteButton);
+                         deleteButton.innerHTML = originalIconHTML;
+                         deleteButton.disabled = false;
                     }
+                }
+                 else if (!isci && !editButton) { // Silinecek işçi yoksa ve düzenle butonu da değilse
+                    showToast('Silinecek işçi bulunamadı.', 'error');
                 }
             }
         });
+
+        // Form Temizleme Butonu
+        isciFormTemizleButton.addEventListener('click', function() {
+            temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
+        });
+
+        // Sayfa ilk yüklendiğinde formu temizle (Bu zaten yukarida DOMContentLoaded icinde yapilmis olabilir, duruma gore tekrar gerekebilir)
+        // temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
+        // iscileriYukle() zaten initializePageData içinde çağrılıyor.
+        // İlk render subscribe ('iscilerChanged') ile otomatik yapılacak.
+
+    } else {
+        console.warn("İşçi yönetimi için gerekli DOM elementlerinden bazıları bulunamadı. Fonksiyonlar düzgün çalışmayabilir.");
+        // Hangi elementlerin eksik olduğunu loglayabilirsiniz:
+        if (!isciForm) console.warn("DOM Elementi bulunamadı: isciForm");
+        if (!isciListesiTablosuBody) console.warn("DOM Elementi bulunamadı: isciListesiTablosuBody");
+        if (!isciKaydetBtn) console.warn("DOM Elementi bulunamadı: isciKaydetBtn");
+        if (!isciFormTemizleButton) console.warn("DOM Elementi bulunamadı: isciFormTemizleButton");
+        if (!isciIdInput) console.warn("DOM Elementi bulunamadı: isciIdInput");
     }
-}); // DOMContentLoaded Kapanışı
+    // --- İşçi Yönetimi Sonu ---
+
+}); // Tek DOMContentLoaded Kapanışı

@@ -324,83 +324,161 @@ export function doldurTedarikciFormu(tedarikci, tedarikciIdInput, tedarikciAdiIn
 
 // --- İşçi UI Fonksiyonları ---
 
-export function guncelleIscilerTablosu(iscilerData, tabloBodyElement) {
-    if (!tabloBodyElement) {
-        console.error("guncelleIscilerTablosu: Tablo body elementi bulunamadı.");
-        return;
-    }
-    tabloBodyElement.innerHTML = ''; // Tabloyu temizle
+export function guncelleIscilerTablosu(iscilerListesi, tabloBodyElementi) {
+    if (!tabloBodyElementi) return;
+    tabloBodyElementi.innerHTML = ''; 
+    if (!Array.isArray(iscilerListesi) || iscilerListesi.length === 0) {
+        tabloBodyElementi.innerHTML = '<tr><td colspan="9">Kayıtlı işçi bulunamadı.</td></tr>';
+    } else {
+        iscilerListesi.forEach(isci => {
+            const tr = document.createElement('tr');
+            tr.dataset.isciId = isci.id; // Satıra da ID ekleyelim belki lazım olur
 
-    if (!iscilerData || iscilerData.length === 0) {
-        tabloBodyElement.innerHTML = '<tr><td colspan="8" class="text-center">Kayıtlı işçi bulunamadı.</td></tr>';
-        return;
-    }
+            // Aktiflik durumunu daha okunabilir yapalım
+            const aktifDurumu = isci.aktif ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Pasif</span>';
+            
+            // Tarih formatlama
+            let iseBaslamaFormatted = '-';
+            if (isci.iseBaslamaTarihi) {
+                try {
+                    const date = new Date(isci.iseBaslamaTarihi);
+                    // Tarih geçerli mi kontrolü
+                    if (!isNaN(date.getTime())) {
+                        iseBaslamaFormatted = date.toLocaleDateString('tr-TR');
+                    } else {
+                        // console.warn(\`Geçersiz tarih formatı: \${isci.iseBaslamaTarihi}\`);
+                        // Gelen format YYYY-MM-DD ise ve toLocaleDateString bunu yanlış parse ediyorsa
+                        // manuel parse etmeyi deneyebiliriz. Ancak API'den zaten doğru formatta gelmeli.
+                        // Şimdilik, eğer parse edilemezse orijinal string'i veya '-' gösterelim.
+                        iseBaslamaFormatted = isci.iseBaslamaTarihi || '-';
+                    }
+                } catch (e) {
+                    // console.warn(\`Tarih formatlama hatası: \${isci.iseBaslamaTarihi}\`, e);
+                    iseBaslamaFormatted = isci.iseBaslamaTarihi || '-';
+                }
+            }
 
-    iscilerData.forEach(isci => {
-        const row = tabloBodyElement.insertRow();
-        row.innerHTML = `
-            <td>${isci.id || '-'}</td>
-            <td>${isci.adSoyad || '-'}</td>
-            <td>${isci.pozisyon || '-'}</td>
-            <td>${isci.gunlukUcret ? parseFloat(isci.gunlukUcret).toFixed(2) : (isci.saatlikUcret ? parseFloat(isci.saatlikUcret).toFixed(2) + ' (Saatlik)' : '-')}</td>
-            <td>${isci.paraBirimi || 'TL'}</td>
-            <td><span class="status ${isci.aktif ? 'status-active' : 'status-inactive'}">${isci.aktif ? 'Aktif' : 'Pasif'}</span></td>
-            <td>${isci.iseBaslamaTarihi ? new Date(isci.iseBaslamaTarihi).toLocaleDateString('tr-TR') : '-'}</td>
-            <td class="actions">
-                <button class="btn-icon edit-isci-btn" data-id="${isci.id}" title="Düzenle"><i class="fas fa-edit"></i></button>
-                <button class="btn-icon delete-isci-btn" data-id="${isci.id}" title="Sil"><i class="fas fa-trash-alt"></i></button>
-            </td>
-        `;
-    });
+            tr.innerHTML = `
+                <td>${isci.adSoyad || '-'}</td>
+                <td>${isci.pozisyon || '-'}</td>
+                <td>${isci.gunlukUcret !== null && isci.gunlukUcret !== undefined ? parseFloat(isci.gunlukUcret).toFixed(2) : '-'} ${isci.paraBirimi || ''}</td>
+                <td>${isci.saatlikUcret !== null && isci.saatlikUcret !== undefined ? parseFloat(isci.saatlikUcret).toFixed(2) : '-'} ${isci.paraBirimi || ''}</td>
+                <td>${iseBaslamaFormatted}</td>
+                <td>${aktifDurumu}</td>
+                <td>${isci.telefon || '-'}</td>
+                <td>${isci.email || '-'}</td>
+                <td class="actions">
+                    <button class="btn btn-sm btn-info edit-isci-btn" data-id="${isci.id}" title="Düzenle"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger delete-isci-btn" data-id="${isci.id}" title="Sil"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tabloBodyElementi.appendChild(tr);
+        });
+    }
 }
 
-export function temizleIsciFormu(formElement, idInputElement) {
-    if (formElement) {
-        formElement.reset(); // Formdaki tüm inputları sıfırlar
-        // Varsayılan değerleri ayarla (örneğin para birimi, aktif checkbox)
-        const paraBirimiInput = formElement.querySelector('#isciParaBirimiInput');
-        if (paraBirimiInput) paraBirimiInput.value = 'TL';
-        const aktifCheckbox = formElement.querySelector('#isciAktifCheckbox');
-        if (aktifCheckbox) aktifCheckbox.checked = true;
+export function temizleIsciFormu(formElement, idInputElement, submitButton, resetButton) {
+    if (formElement) formElement.reset();
+    if (idInputElement) idInputElement.value = '';
+    
+    if (formElement.elements.aktif) { // 'aktif' checkbox'ı için özel reset
+      formElement.elements.aktif.checked = true; // Varsayılan olarak aktif olsun
     }
-    if (idInputElement) {
-        idInputElement.value = ''; // Gizli ID inputunu temizle
+    if (formElement.elements.paraBirimi) { // 'paraBirimi' dropdown'ı için
+        formElement.elements.paraBirimi.value = 'TL'; // Varsayılan TL
     }
-    const submitButton = formElement.querySelector('button[type="submit"]');
+
     if (submitButton) {
-        submitButton.textContent = 'Kaydet'; // Buton metnini 'Kaydet' yap
-        submitButton.classList.remove('btn-warning'); // Eğer 'Güncelle' için farklı class varsa
+        submitButton.textContent = 'Kaydet';
+        submitButton.classList.remove('btn-warning');
         submitButton.classList.add('btn-primary');
     }
-    const adSoyadInput = formElement.querySelector('#isciAdSoyadInput');
-    if (adSoyadInput) {
-        adSoyadInput.focus(); // İlk inputa odaklan
+    if (resetButton) { // Düzenleme modunda bu buton "İptal" metni alır, temizleme modunda gizlenir/farklı davranır.
+        resetButton.style.display = 'none'; // Genellikle temizle butonu düzenleme modunda görünür olur.
+    }
+    
+    // Odaklanılacak ilk alan (genellikle Ad Soyad)
+    if (formElement.elements.adSoyad) {
+        formElement.elements.adSoyad.focus();
     }
 }
 
-export function doldurIsciFormu(isci, formElement, idInputElement) {
+export function doldurIsciFormu(isci, formElement, idInputElement, submitButton, resetButton) {
     if (!isci || !formElement) return;
 
-    if (idInputElement) idInputElement.value = isci.id || '';
+    idInputElement.value = isci.id;
+    formElement.elements.adSoyad.value = isci.adSoyad || '';
+    formElement.elements.pozisyon.value = isci.pozisyon || '';
+    formElement.elements.gunlukUcret.value = isci.gunlukUcret !== null && isci.gunlukUcret !== undefined ? parseFloat(isci.gunlukUcret) : '';
+    formElement.elements.saatlikUcret.value = isci.saatlikUcret !== null && isci.saatlikUcret !== undefined ? parseFloat(isci.saatlikUcret) : '';
+    formElement.elements.paraBirimi.value = isci.paraBirimi || 'TL';
     
-    // Formdaki her bir inputu isci nesnesindeki karşılık gelen değerle doldur
-    formElement.querySelector('#isciAdSoyadInput').value = isci.adSoyad || '';
-    formElement.querySelector('#isciPozisyonInput').value = isci.pozisyon || '';
-    formElement.querySelector('#isciGunlukUcretInput').value = isci.gunlukUcret || '';
-    formElement.querySelector('#isciSaatlikUcretInput').value = isci.saatlikUcret || '';
-    formElement.querySelector('#isciParaBirimiInput').value = isci.paraBirimi || 'TL';
-    formElement.querySelector('#isciIseBaslamaTarihiInput').value = isci.iseBaslamaTarihi || '';
-    formElement.querySelector('#isciAktifCheckbox').checked = typeof isci.aktif === 'boolean' ? isci.aktif : true;
-    formElement.querySelector('#isciTelefonInput').value = isci.telefon || '';
-    formElement.querySelector('#isciEmailInput').value = isci.email || '';
-    formElement.querySelector('#isciAdresInput').value = isci.adres || '';
-    formElement.querySelector('#isciNotlarInput').value = isci.notlar || '';
+    // Tarih formatını YYYY-MM-DD olarak ayarla (input type="date" için)
+    if (isci.iseBaslamaTarihi) {
+        try {
+            const date = new Date(isci.iseBaslamaTarihi);
+            if (!isNaN(date.getTime())) {
+                // JavaScript Date objesi ayları 0-11 arası tutar, bu yüzden +1 eklenir.
+                // Gün ve ay için '0' padding'i eklenir.
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                formElement.elements.iseBaslamaTarihi.value = `${year}-${month}-${day}`;
+            } else {
+                formElement.elements.iseBaslamaTarihi.value = ''; // Geçersizse boş bırak
+            }
+        } catch (e) {
+            formElement.elements.iseBaslamaTarihi.value = ''; // Hata olursa boş bırak
+            console.error("Tarih parse hatası doldurIsciFormu:", isci.iseBaslamaTarihi, e);
+        }
+    } else {
+        formElement.elements.iseBaslamaTarihi.value = '';
+    }
+    
+    formElement.elements.aktif.checked = !!isci.aktif; // Boolean değere çevir ve ata
+    formElement.elements.telefon.value = isci.telefon || '';
+    formElement.elements.email.value = isci.email || '';
+    formElement.elements.adres.value = isci.adres || '';
+    formElement.elements.notlar.value = isci.notlar || '';
 
-    const submitButton = formElement.querySelector('button[type="submit"]');
     if (submitButton) {
-        submitButton.textContent = 'Güncelle'; // Buton metnini 'Güncelle' yap
+        submitButton.textContent = 'Güncelle';
         submitButton.classList.remove('btn-primary');
-        submitButton.classList.add('btn-warning'); // Güncelleme için farklı bir stil (isteğe bağlı)
+        submitButton.classList.add('btn-warning');
+    }
+    if (resetButton) {
+        resetButton.textContent = 'İptal'; // Düzenleme modunda "İptal"
+        resetButton.style.display = 'inline-block';
+    }
+    formElement.elements.adSoyad.focus();
+}
+
+export function populeEtIsciSecimDropdown(iscilerListesi, selectElement, placeholderMetni = "-- İşçi Seçiniz --", seciliDegeriKoru = true, secilecekId = null) {
+    if (!selectElement) return;
+
+    const mevcutDeger = seciliDegeriKoru ? selectElement.value : null;
+    selectElement.innerHTML = `<option value="">${placeholderMetni}</option>`;
+
+    if (Array.isArray(iscilerListesi)) {
+        // Aktif işçileri ve isme göre sıralı listele
+        const aktifIsciler = iscilerListesi
+            .filter(isci => isci.aktif)
+            .sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
+
+        aktifIsciler.forEach(isci => {
+            const option = document.createElement('option');
+            option.value = isci.id;
+            option.textContent = `${isci.adSoyad}${isci.pozisyon ? ' (' + isci.pozisyon + ')' : ''}`;
+            selectElement.appendChild(option);
+        });
+    }
+
+    if (secilecekId !== null) {
+        selectElement.value = secilecekId;
+    } else if (seciliDegeriKoru && mevcutDeger && Array.isArray(iscilerListesi) && iscilerListesi.some(i => String(i.id) === String(mevcutDeger))) {
+        selectElement.value = mevcutDeger;
+    } else {
+        selectElement.value = ""; // Eğer korunmayacaksa veya bulunamadıysa placeholder'a dön
     }
 }
 
