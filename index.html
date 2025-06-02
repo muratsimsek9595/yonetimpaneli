@@ -652,6 +652,19 @@
                 </div>
             </section>
 
+            <section id="musteriler" style="display:none;">
+                <div class="page-header">
+                    <h1>Tüm Müşteriler</h1>
+                    <p class="page-subtitle">Mevcut müşterilerinizi görüntüleyin ve detaylarına erişin.</p>
+                </div>
+                <div class="liste-container card"> 
+                    <h3>Müşteri Özetleri</h3>
+                    <div id="musteri-ozet-listesi-container" class="musteri-ozetleri-grid">
+                        <!-- Müşteri özet kartları buraya JS ile eklenecek -->
+                    </div>
+                </div>
+            </section>
+
             <footer class="main-footer">
                 <p>&copy; 2024 Fiyat Takip Paneli. Tüm Hakları Saklıdır.</p>
             </footer>
@@ -668,6 +681,7 @@
     <script src="js/musteriYonetimi.js?v=1.0" type="module"></script>
     <script src="js/projeYonetimi.js?v=1.0" type="module"></script>
     <script src="js/teklifListeleme.js?v=1.0" type="module"></script>
+    <script src="js/musteriListeleme.js?v=1.0" type="module"></script>
 
     <div id="teklifDetayModal" class="modal" style="display:none;">
         <div class="modal-dialog"> 
@@ -678,6 +692,23 @@
                 </div>
                 <div class="modal-body" id="teklifDetayKartAlani">
                     <!-- Teklif kartı içeriği buraya JS ile gelecek -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary modal-kapat-buton">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="musteriDetayModal" class="modal" style="display:none;">
+        <div class="modal-dialog"> 
+            <div class="modal-content card"> 
+                <div class="modal-header">
+                    <h3 id="modalMusteriAdi">Müşteri Detayı</h3>
+                    <button type="button" class="modal-kapat-buton">&times;</button>
+                </div>
+                <div class="modal-body" id="musteriDetayKartAlani">
+                    <!-- Müşteri kartı içeriği buraya JS ile gelecek -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary modal-kapat-buton">Kapat</button>

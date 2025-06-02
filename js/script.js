@@ -64,6 +64,8 @@ import {
 import { globalHataYakala } from './hataYonetimi.js';
 import { initTeklifYonetimi } from './teklifYonetimi.js';
 import { initTeklifListeleme } from './teklifListeleme.js';
+import { initMusteriYonetimi } from './musteriYonetimi.js';
+import { initMusteriListeleme } from './musteriListeleme.js';
 
 // Genel JavaScript fonksiyonları ve olay dinleyicileri buraya gelecek.
 // Chart.js DataLabels eklentisini global olarak kaydet
@@ -76,6 +78,8 @@ if (typeof ChartDataLabels !== 'undefined') {
 // Durum değişkenleri, hangi init fonksiyonlarının çağrıldığını takip etmek için
 let isTeklifYonetimiInitialized = false;
 let isTeklifListelemeInitialized = false;
+let isMusteriYonetimiInitialized = false;
+let isMusteriListelemeInitialized = false;
 // Diğer modüller için de benzer flag'ler eklenebilir (örn: isMusteriYonetimiInitialized)
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -104,6 +108,12 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (targetId === 'teklifler' && !isTeklifListelemeInitialized) {
             initTeklifListeleme();
             isTeklifListelemeInitialized = true;
+        } else if (targetId === 'musteri-yonetimi' && !isMusteriYonetimiInitialized) {
+            initMusteriYonetimi();
+            isMusteriYonetimiInitialized = true;
+        } else if (targetId === 'musteriler' && !isMusteriListelemeInitialized) {
+            initMusteriListeleme();
+            isMusteriListelemeInitialized = true;
         }
         // Diğer bölümler için de benzer else if blokları eklenebilir
         // Örn: else if (targetId === 'musteri-yonetimi' && !isMusteriYonetimiInitialized) { ... }

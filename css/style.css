@@ -1145,4 +1145,110 @@ form button[type="button"]:hover {
     white-space: pre-wrap; /* Boşlukları ve satır sonlarını koru */
     font-size: 0.9em;
     color: #444;
+}
+
+/* Müşteri Özetleri Grid (Tekliflerdekine Benzer) */
+.musteri-ozetleri-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Duyarlı grid */
+    gap: 20px;
+    padding: 10px 0; /* Üstte ve altta padding, konteynerin kendi padding'i varsa 0 olabilir */
+}
+
+.musteri-ozet-karti {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.musteri-ozet-karti:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+}
+
+.musteri-ozet-karti h4 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: #1890ff; /* Ana tema rengi */
+    font-size: 1.2em;
+}
+
+.musteri-ozet-karti p {
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    color: #555;
+}
+.musteri-ozet-karti .ozet-label {
+    font-weight: 600;
+    color: #333;
+    margin-right: 5px;
+}
+
+/* Müşteri Detay Kartı (Modal İçi) Stilleri (Tekliflerdekine Benzer) */
+#musteriDetayKartAlani h4 {
+    color: #1890ff; /* Ana tema rengi */
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    font-size: 1.2em;
+}
+#musteriDetayKartAlani h4:first-child {
+    margin-top: 0;
+}
+
+.musteri-detay-bolum { /* Eğer bu sınıfı kullanırsak */
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.musteri-detay-bolum:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+#musteriDetayKartAlani p {
+    margin-bottom: 8px;
+    line-height: 1.5;
+    font-size: 0.95em;
+}
+
+#musteriDetayKartAlani .detail-label { /* Zaten var olan .detail-label kullanılabilir */
+    font-weight: 600;
+    color: #333;
+    margin-right: 8px;
+}
+
+#musteriDetayKartAlani .notlar-kutusu { /* Zaten var olan .notlar-kutusu kullanılabilir */
+    background-color: #f9f9f9;
+    border: 1px solid #e8e8e8;
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 50px;
+    white-space: pre-wrap; 
+    font-size: 0.9em;
+    color: #444;
+}
+
+/* Müşteri detay modalında kullanılabilecek ek bilgi alanları için basit bir grid */
+.musteri-bilgi-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 15px;
+    align-items: start; /* Etiket ve değeri üstten hizala */
+}
+
+.musteri-bilgi-grid p {
+    margin-bottom: 0;
+}
+
+.musteri-bilgi-grid .detail-label {
+    text-align: right;
+    padding-top: 2px; /* Dikey hizalamayı iyileştirmek için */
 } 
