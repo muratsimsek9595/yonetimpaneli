@@ -480,9 +480,73 @@ function updateTeklif($conn, $id_url_param) {
 
     $conn->commit();
     http_response_code(200);
-    // Güncellenmiş teklifi geri döndür
-    // getTeklif($conn, $teklif_id_url); // Bu tekrar JSON çıktısı yapar, bunun yerine manuel oluştur.
-     echo json_encode(array("message" => "Teklif başarıyla güncellendi.", "id" => $id_to_update));
+
+    // Güncellenmiş tam teklif verisini hazırla
+    // Önce $data (istemciden gelen) ve $existingTeklif (veritabanından güncelleme öncesi okunan) birleştirilir.
+    // $data içindeki alanlar $existingTeklif üzerindekileri ezer.
+    $updatedTeklifData = array_merge((array)$existingTeklif, (array)$data);
+    $updatedTeklifData['id'] = $id_to_update; // ID'nin kesin olarak doğru olduğundan emin ol.
+
+    // Para birimi, durum gibi alanlar $data içinde yoksa $existingTeklif'ten zaten gelmiş olur.
+    // Eğer $data içinde varsa, onlar kullanılır.
+
+    // Ürünleri ayarla: $data içinde ürünler varsa onları kullan, yoksa veritabanından çek.
+    if (isset($data->urunler) && is_array($data->urunler)) {
+        // Frontend zaten güncel ürün listesini göndermiş olmalı, bu yüzden onu kullanabiliriz.
+        // Ancak, bu ürünlerin formatının (örn: malzemeAdi vs.) frontend'in beklediği gibi olduğundan emin olmak gerekir.
+        // Genellikle, API'den dönen veri tutarlı olmalı, bu yüzden DB'den çekmek daha güvenli olabilir.
+        // Şimdilik frontend'den geleni kullanıyoruz, ancak bu bir iyileştirme noktası olabilir.
+        $updatedTeklifData['urunler'] = $data->urunler; 
+    } else {
+        // Eğer istemci ürünleri göndermediyse (sadece ana teklif bilgileri güncellendiyse),
+        // mevcut ürünleri veritabanından tekrar yükle.
+        $urunler_sql = "SELECT * FROM teklif_urunleri WHERE teklif_id = ? ORDER BY siraNo ASC";
+        $stmt_urunler_fetch = $conn->prepare($urunler_sql);
+        if ($stmt_urunler_fetch) {
+            $stmt_urunler_fetch->bind_param("s", $id_to_update);
+            $stmt_urunler_fetch->execute();
+            $urunler_result = $stmt_urunler_fetch->get_result();
+            $db_urunler = array();
+            while($urun_row = $urunler_result->fetch_assoc()) {
+                $db_urunler[] = $urun_row;
+            }
+            $updatedTeklifData['urunler'] = $db_urunler;
+            $stmt_urunler_fetch->close();
+        } else {
+            $updatedTeklifData['urunler'] = array(); // Hata durumunda boş dizi
+        }
+    }
+
+    // Güncellenmiş müşteri adını (eğer musteri_id varsa) ekle
+    // $updatedTeklifData'da musteri_id zaten olmalı ($existingTeklif veya $data'dan)
+    if (isset($updatedTeklifData['musteri_id']) && $updatedTeklifData['musteri_id']) {
+        $musteriSql = "SELECT ad FROM musteriler WHERE id = ?";
+        $stmtMusteri = $conn->prepare($musteriSql);
+        if ($stmtMusteri) {
+            $stmtMusteri->bind_param("i", $updatedTeklifData['musteri_id']);
+            $stmtMusteri->execute();
+            $musteriResult = $stmtMusteri->get_result();
+            if ($musteriRow = $musteriResult->fetch_assoc()) {
+                $updatedTeklifData['musteriAdi'] = $musteriRow['ad'];
+            } else {
+                 // Müşteri bulunamazsa, mevcut musteriAdi alanını (eğer varsa) koru veya null yap.
+                 // Frontend bu alanı $updatedTeklifData['musteriAdi'] = $data->musteriAdi gibi zaten set etmiş olabilir.
+                 // Bu yüzden burada explicit bir else durumu şimdilik gerekmeyebilir.
+                 if (!isset($updatedTeklifData['musteriAdi'])) $updatedTeklifData['musteriAdi'] = null;
+            }
+            $stmtMusteri->close();
+        }
+    } elseif (isset($data->musteriAdi) && !isset($updatedTeklifData['musteri_id'])){
+        // Eğer musteri_id yok ama musteriAdi payload'da varsa (örn: müşteri seçilmeden serbest metin girilmişse)
+        $updatedTeklifData['musteriAdi'] = $data->musteriAdi;
+    } else {
+        $updatedTeklifData['musteriAdi'] = null; // Müşteri ID yoksa adı da null yap
+    }
+
+    echo json_encode(array(
+        "message" => "Teklif başarıyla güncellendi.", 
+        "data" => $updatedTeklifData
+    ));
 
 }
 
