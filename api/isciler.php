@@ -19,7 +19,8 @@ if ($method == "OPTIONS") {
     exit();
 }
 
-$conn = db_connect(); // Veritabanı bağlantısını al
+// $conn değişkeni db_config.php dosyasından geliyor, db_connect() çağrısına gerek yok.
+// $conn = db_connect(); // Veritabanı bağlantısını al  <-- BU SATIR KALDIRILACAK
 
 if (!$conn) {
     http_response_code(503); // Service Unavailable
