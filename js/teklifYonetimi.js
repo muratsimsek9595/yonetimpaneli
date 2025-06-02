@@ -526,7 +526,16 @@ function teklifFormunuDoldur(teklif) {
     teklifGecerlilikTarihiInput.value = teklif.gecerlilikTarihi ? new Date(teklif.gecerlilikTarihi).toISOString().split('T')[0] : '';
     if(teklifIndirimOraniInput) teklifIndirimOraniInput.value = teklif.indirimOrani || 0;
     if(teklifKdvOraniInput) teklifKdvOraniInput.value = teklif.kdvOrani === undefined ? 20 : teklif.kdvOrani;
-    teklifParaBirimiInput.value = teklif.paraBirimi || 'TL';
+    
+    // Para birimini ayarla: API'dan "0" geliyorsa "TL" olarak göster
+    if (teklifParaBirimiInput) {
+        if (teklif.paraBirimi === "0" || teklif.paraBirimi === 0) {
+            teklifParaBirimiInput.value = 'TL';
+        } else {
+            teklifParaBirimiInput.value = teklif.paraBirimi || 'TL'; // Diğer durumlar veya null/undefined için varsayılan TL
+        }
+    }
+
     teklifDurumInput.value = teklif.durum || 'Hazırlanıyor';
     teklifNotlarInput.value = teklif.notlar || '';
 
