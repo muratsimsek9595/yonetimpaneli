@@ -255,13 +255,15 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
     urunSatirSayaci++;
     const satirId = `urunSatir_${urunSatirSayaci}`;
 
-    const urunlerListesi = getUrunler() || []; 
+    const urunlerListesi = getUrunler() || [];
 
     const urunSecenekleri = urunlerListesi.map(urun => {
         const ad = (urun && urun.ad) ? String(urun.ad).trim() : 'Bilinmeyen Ürün';
         const birim = (urun && urun.birim_adi) ? String(urun.birim_adi) : 'adet';
         const id = (urun && urun.id) ? urun.id : '';
-        return `<option value="${id}" data-birim="${birim}">${ad} (${birim})</option>`;
+        // urunVerisi varsa ve ID eşleşiyorsa 'selected' attribute'ünü ekle
+        const selectedAttr = (urunVerisi && (String(urunVerisi.id) === String(id) || String(urunVerisi.urunId) === String(id))) ? 'selected' : '';
+        return `<option value="${id}" data-birim="${birim}" ${selectedAttr}>${ad} (${birim})</option>`;
     }).join('');
 
     const birimFiyatValue = (urunVerisi && urunVerisi.kaydedilen_birim_satis_fiyati !== undefined)
@@ -315,6 +317,22 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
     yeniMiktarInput.addEventListener('input', (e) => urunSatiriHesapla(satirId));
     yeniBirimFiyatInput.addEventListener('input', (e) => urunSatiriHesapla(satirId));
     silmeButonu.addEventListener('click', () => urunSatiriniSil(satirId));
+    
+    // Eğer urunVerisi varsa ve dropdown'da seçili değer yoksa (dinamik eklemeden sonra olabilir)
+    // ve map içinde selectedAttr doğru çalıştıysa bu satıra gerek kalmayabilir.
+    // Ancak garanti olması adına, dropdown DOM'a eklendikten sonra value'sunu set edebiliriz.
+    if (urunVerisi && (urunVerisi.id || urunVerisi.urunId)) {
+        yeniSelect.value = String(urunVerisi.id || urunVerisi.urunId); 
+    }
+
+    // Seçili ürün değiştiğinde birim fiyatı otomatik önerme (eğer düzenleme modunda değilse veya birim fiyat sıfırsa)
+    if (yeniSelect.value) { // Eğer bir ürün seçiliyse (ya yeni eklendi ya da veriyle geldi)
+        // Eğer urunVerisi var ve birim fiyatı zaten doluysa, birimFiyatOner'i tetikleme.
+        // Sadece yeni eklenen boş satırlarda veya kullanıcı değiştirdiğinde tetiklensin.
+        if (!urunVerisi || !birimFiyatValue || parseFloat(birimFiyatValue) === 0) {
+             birimFiyatOner(yeniSelect.value, satirId);
+        }
+    }
     
     urunSatiriHesapla(satirId); // İlk hesaplamayı yap
 }
@@ -747,12 +765,22 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
 
     silmeButonu.addEventListener('click', () => iscilikSatiriniSil(satirId));
 
-    // Eğer veriyle dolduruluyorsa, seçili işçiye göre ücreti ayarla
-    if (iscilikVerisi && iscilikVerisi.isciId) {
-        const event = new Event('change');
-        yeniIsciSelect.dispatchEvent(event);
+    // Eğer veriyle dolduruluyorsa, seçili işçiye ve birime göre ayarla
+    if (iscilikVerisi) {
+        if (iscilikVerisi.isciId && yeniIsciSelect) {
+            // populeEtIsciSecimDropdown, seciliIsciId parametresiyle seçimi yapmalı.
+            // Ek güvence olarak ve populeEtIsciSecimDropdown'ın iç yapısını bilmediğimizden, değeri ayrıca set ediyoruz.
+            yeniIsciSelect.value = String(iscilikVerisi.isciId);
+        }
+        if (iscilikVerisi.birim && yeniBirimSelect) {
+            yeniBirimSelect.value = iscilikVerisi.birim;
+        }
+        // Programatik atamalardan sonra change event'i tetiklenmez.
+        // birimUcret zaten iscilikVerisi'nden geliyor, change handler'ın bunu değiştirmesini istemeyiz.
+        iscilikSatiriHesapla(satirId); // Yüklenen değerlerle satır toplamını hesapla.
     } else {
-         iscilikSatiriHesapla(satirId); // Başlangıçta bir hesaplama yap
+         // Yeni, boş satır için başlangıç hesaplaması
+         iscilikSatiriHesapla(satirId);
     }
 }
 
