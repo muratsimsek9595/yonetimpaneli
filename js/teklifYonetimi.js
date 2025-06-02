@@ -399,7 +399,7 @@ function teklifFormundanVeriAl() {
         indirimTutari: indirimTutari,
         kdvOrani: kdvOrani,
         kdvTutari: kdvTutari,
-        genelToplam: genelToplam,
+        genelToplamSatis: genelToplam,
         paraBirimi: teklifParaBirimiInput.value,
         durum: teklifDurumInput.value,
         notlar: teklifNotlarInput.value.trim()
