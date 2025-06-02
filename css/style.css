@@ -77,6 +77,98 @@ body {
     font-weight: 600;
 }
 
+.sidebar nav ul li.has-submenu > a {
+    display: flex;
+    justify-content: space-between; /* İkon ve metin ile ok arasında boşluk bırakır */
+    align-items: center;
+}
+
+.sidebar nav ul li a.menu-toggle {
+    /* menu-toggle için özel bir stil gerekirse buraya eklenebilir */
+    /* Genellikle standart link stili yeterli olacaktır */
+}
+
+.sidebar nav ul .submenu-arrow {
+    font-size: 0.8em; /* Ok boyutunu ayarla */
+    transition: transform 0.3s ease;
+    margin-left: 8px; /* Metinden sonra biraz boşluk */
+}
+
+.sidebar nav ul li.active-group > a .submenu-arrow {
+    transform: rotate(90deg); /* Aktif grup (alt menü açık) olduğunda oku döndür */
+}
+
+.sidebar nav ul .submenu {
+    list-style: none;
+    padding-left: 0; /* Soldaki varsayılan padding'i kaldır */
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background-color: #f8f9fa; /* Alt menü için hafif farklı bir arka plan */
+}
+
+.sidebar nav ul li.active-group > .submenu {
+    /* max-height değeri, alt menü içeriğinin maksimum yüksekliğine göre ayarlanmalı */
+    /* Dinamik olarak JS ile veya yeterince büyük bir sabit değerle ayarlanabilir */
+    /* Örneğin: */
+    max-height: 500px; /* İçeriğin sığacağı kadar büyük bir değer */ 
+}
+
+.sidebar nav ul .submenu li a {
+    padding-left: 40px; /* Alt menü öğelerini biraz içeri al */
+    font-size: 0.95rem; /* Alt menü fontunu biraz küçült */
+    color: #495057; /* Alt menü link rengi */
+    border-left: 3px solid transparent; /* Aktif border için yer */
+}
+
+.sidebar nav ul .submenu li a:hover {
+    background-color: #e9ecef; /* Alt menü hover rengi */
+    color: #007bff; /* Vurgu rengi */
+}
+
+/* Aktif alt menü linki */
+.sidebar nav ul .submenu li a.active {
+    background-color: #e6f7ff; /* Açık mavi aktif arka plan (ana menüdeki gibi) */
+    color: #1890ff; /* Vurgu rengi */
+    border-left-color: #1890ff; /* Vurgu rengi ile sol border */
+    font-weight: 500; /* Biraz daha belirgin */
+}
+
+/* Aktif ana grup başlığı (alt menüsü açık ve/veya bir alt öğesi aktif) */
+.sidebar nav ul li.active-group > a.menu-toggle {
+    background-color: #f0f2f5; /* Hafif vurgulu arka plan */
+    color: #1890ff; /* Vurgu rengi */
+    font-weight: 600;
+}
+
+/* Genel aktif link için stil (Ana Sayfa, Proje Yönetimi gibi tekil linkler) */
+.sidebar nav ul > li > a.active:not(.menu-toggle) {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border-left: 3px solid #1890ff;
+    font-weight: 600;
+}
+
+/* Mevcut .sidebar nav ul li a.active stilini özelleştirerek üsttekiyle çakışmasını engelleyebiliriz.
+   Veya onu kaldırıp yukarıdaki iki spesifik active stilini kullanabiliriz.
+   Şimdilik, .active sınıfını submenu içindeki linkler ve tekil ana linkler için ayrı ayrı tanımladık.
+   .menu-toggle için .active-group üzerinden stil veriyoruz.
+*/
+
+/* Eğer .sidebar nav ul li a.active stili hala genel olarak uygulanıyorsa ve sorun yaratıyorsa,
+   onu daha spesifik hale getirebilir veya kaldırabiliriz.
+   Örnek: 
+   .sidebar nav > ul > li > a.active { ... } -> sadece en üst seviye linklere etki eder.
+*/
+
+/* Eski genel .active stili (gerekirse ayarlanır veya kaldırılır) */
+/* .sidebar nav ul li a.active {
+    background-color: #e6f7ff; 
+    color: #1890ff; 
+    border-left-color: #1890ff;
+    font-weight: 600;
+} */
+
 /* Ana İçerik Alanı Stilleri */
 .main-content {
     flex-grow: 1;

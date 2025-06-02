@@ -80,26 +80,75 @@ let isTeklifYonetimiInitialized = false;
 let isTeklifListelemeInitialized = false;
 let isMusteriYonetimiInitialized = false;
 let isMusteriListelemeInitialized = false;
-// Diğer modüller için de benzer flag'ler eklenebilir (örn: isMusteriYonetimiInitialized)
+// Diğer modüller için de benzer flag'ler eklenebilir
 
 document.addEventListener('DOMContentLoaded', function() {
-    const navLinks = document.querySelectorAll('.sidebar nav a');
+    const navLinks = document.querySelectorAll('.sidebar nav a'); // Tüm linkleri alır (hem ana hem alt menü)
     const sections = document.querySelectorAll('.main-content section');
     const quickActionButtons = document.querySelectorAll('.quick-action-button');
+    const menuToggles = document.querySelectorAll('.sidebar .menu-toggle'); // Sadece alt menü açma/kapama linkleri
+
+    // Alt menü açma/kapama işlevselliği
+    menuToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(event) {
+            event.preventDefault();
+            const parentLi = this.parentElement; // .has-submenu olan li elementi
+            parentLi.classList.toggle('active-group');
+        });
+    });
+
+    function updateActiveMenu(targetId) {
+        // Tüm active ve active-group sınıflarını temizle
+        navLinks.forEach(navLink => navLink.classList.remove('active'));
+        document.querySelectorAll('.sidebar .has-submenu').forEach(li => li.classList.remove('active-group'));
+
+        // Hedef ID'ye sahip linki bul ve active yap
+        const activeLink = document.querySelector(`.sidebar nav a[href="#${targetId}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+            
+            // Eğer aktif link bir alt menü içindeyse, üst menü grubunu da active-group yap
+            const parentSubmenu = activeLink.closest('ul.submenu');
+            if (parentSubmenu) {
+                const parentLiHasSubmenu = parentSubmenu.closest('li.has-submenu');
+                if (parentLiHasSubmenu) {
+                    parentLiHasSubmenu.classList.add('active-group');
+                }
+            }
+        } else {
+            // Eğer doğrudan link bulunamazsa (örn: ana grup linki), # anasayfa için kontrol edilebilir
+            // Veya bir alt menünün ilk elemanını aktif yapabiliriz, bu senaryoya göre değişir.
+            // Şimdilik, doğrudan link bulunamazsa sadece bölüm gösterilir, menüde özel bir aktiflik olmaz.
+        }
+    }
 
     function showSection(targetId) {
+        let sectionFound = false;
         sections.forEach(section => {
             if (section.id === targetId) {
                 section.classList.add('active-section');
                 section.style.display = '';
+                sectionFound = true;
             } else {
                 section.classList.remove('active-section');
                 section.style.display = 'none';
             }
         });
-        navLinks.forEach(navLink => {
-            navLink.getAttribute('href') === `#${targetId}` ? navLink.classList.add('active') : navLink.classList.remove('active');
-        });
+
+        // Eğer hedef ID'ye ait bir section yoksa, anasayfayı göster
+        if (!sectionFound && document.getElementById('anasayfa')) {
+            targetId = 'anasayfa'; // Hedef anasayfa olarak güncellenir
+            document.getElementById('anasayfa').classList.add('active-section');
+            document.getElementById('anasayfa').style.display = '';
+             sections.forEach(s => { // Diğer tüm sectionları gizle
+                if(s.id !== 'anasayfa') {
+                    s.classList.remove('active-section');
+                    s.style.display = 'none';
+                }
+            });
+        }
+
+        updateActiveMenu(targetId); // Aktif menü durumunu güncelle
 
         // İlgili bölüm için init fonksiyonunu çağır (sadece bir kere)
         if (targetId === 'teklif-yonetimi' && !isTeklifYonetimiInitialized) {
@@ -116,36 +165,42 @@ document.addEventListener('DOMContentLoaded', function() {
             isMusteriListelemeInitialized = true;
         }
         // Diğer bölümler için de benzer else if blokları eklenebilir
-        // Örn: else if (targetId === 'musteri-yonetimi' && !isMusteriYonetimiInitialized) { ... }
     }
 
     let initialTargetId = 'anasayfa';
     if (window.location.hash) {
         const hashId = window.location.hash.substring(1);
-        if (document.getElementById(hashId)) {
+        if (document.getElementById(hashId) && document.querySelector(`.sidebar nav a[href="#${hashId}"]`)) { // Linkin varlığını da kontrol et
             initialTargetId = hashId;
         } else {
-            console.warn("URL hash'inde belirtilen bölüm bulunamadı: #", hashId, "Anasayfaya yönlendiriliyor.");
+            console.warn("URL hash'inde belirtilen bölüm veya menü linki bulunamadı: #", hashId, "Anasayfaya yönlendiriliyor.");
+            window.location.hash = 'anasayfa'; // Geçersiz hash ise anasayfaya yönlendir.
         }
     } else if (sections.length > 0 && !document.getElementById(initialTargetId)) {
-        initialTargetId = sections[0].id;
+        // initialTargetId 'anasayfa' ve anasayfa bölümü yoksa ilk bölümü hedefle (bu senaryo nadir)
+        const firstVisibleSection = Array.from(sections).find(s => document.querySelector(`.sidebar nav a[href="#${s.id}"]`));
+        if (firstVisibleSection) initialTargetId = firstVisibleSection.id;
+        else if (sections.length > 0) initialTargetId = sections[0].id; // Fallback
     }
     
     sections.forEach(s => {
-        s.style.display = 'none';
+        s.style.display = 'none'; // Başlangıçta tüm sectionları gizle
     });
-    if (document.getElementById(initialTargetId)) {
-        showSection(initialTargetId);
-    } else if (sections.length > 0) {
-        showSection(sections[0].id);
-    }
+    
+    // `showSection` çağrısı, initialTargetId'ye göre hem bölümü gösterir hem de menüyü günceller.
+    showSection(initialTargetId);
 
+    // Navigasyon linklerine tıklama olayları (hem ana hem alt menü)
     navLinks.forEach(link => {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            showSection(targetId);
-        });
+        // menu-toggle linkleri kendi tıklama işleyicisine sahip, burada tekrar ele alma
+        if (!link.classList.contains('menu-toggle')) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                showSection(targetId);
+                window.location.hash = targetId; // URL hash'ini güncelle
+            });
+        }
     });
 
     quickActionButtons.forEach(button => {
@@ -153,9 +208,9 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
             const targetId = this.getAttribute('href').substring(1);
             showSection(targetId);
-            navLinks.forEach(navLink => {
-                navLink.getAttribute('href') === `#${targetId}` ? navLink.classList.add('active') : navLink.classList.remove('active');
-            });
+            window.location.hash = targetId; // URL hash'ini güncelle
+            // Hızlı işlem butonları için menüde aktifliği de ayarlayabiliriz, 
+            // `updateActiveMenu(targetId);` zaten showSection içinde çağrılıyor.
         });
     });
 

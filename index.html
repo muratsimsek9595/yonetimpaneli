@@ -21,22 +21,46 @@
     <div class="app-container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <!-- Logo veya Proje Adı buraya eklenebilir -->
                 <h2>Fiyat Takip</h2> 
             </div>
             <nav>
                 <ul>
                     <li><a href="#anasayfa" class="active"><span class="nav-icon">🏠</span> Ana Sayfa</a></li>
-                    <li><a href="#malzeme-tanimlama"><span class="nav-icon">📦</span> Malzeme Tanımlama</a></li>
-                    <li><a href="#gunluk-fiyat-girisi"><span class="nav-icon">✏️</span> Günlük Fiyat Girişi</a></li>
-                    <li><a href="#tedarikci-yonetimi"><span class="nav-icon">🚚</span> Tedarikçi Yönetimi</a></li>
-                    <li><a href="#fiyat-grafikleri"><span class="nav-icon">📊</span> Fiyat Grafikleri</a></li>
-                    <li><a href="#teklif-yonetimi"><span class="nav-icon">📝</span> Teklif Yönetimi</a></li>
-                    <li><a href="#musteri-yonetimi"><span class="nav-icon">👥</span> Müşteri Yönetimi</a></li>
-                    <li><a href="#proje-yonetimi"><span class="nav-icon">🛠️</span> Proje Yönetimi</a></li>
-                    <li><a href="#musteriler"><i class="fas fa-users"></i> Müşteriler</a></li>
-                    <li><a href="#teklifler"><i class="fas fa-file-invoice-dollar"></i> Teklifler</a></li>
-                    <li><a href="#isciler"><i class="fas fa-hard-hat"></i> İşçiler</a></li>
+
+                    <li class="has-submenu">
+                        <a href="#" class="menu-toggle"><span class="nav-icon">📈</span> Teklif İşlemleri <span class="submenu-arrow">▶</span></a>
+                        <ul class="submenu">
+                            <li><a href="#teklifler"><span class="nav-icon">📄</span> Teklif Listesi</a></li> 
+                            <li><a href="#teklif-yonetimi"><span class="nav-icon">📝</span> Teklif Oluştur/Düzenle</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has-submenu">
+                        <a href="#" class="menu-toggle"><span class="nav-icon">🤝</span> Müşteri İşlemleri <span class="submenu-arrow">▶</span></a>
+                        <ul class="submenu">
+                            <li><a href="#musteriler"><span class="nav-icon">👥</span> Müşteri Listesi</a></li>
+                            <li><a href="#musteri-yonetimi"><span class="nav-icon">🧑‍💼</span> Müşteri Ekle/Düzenle</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="has-submenu">
+                        <a href="#" class="menu-toggle"><span class="nav-icon">⚙️</span> Kaynaklar <span class="submenu-arrow">▶</span></a>
+                        <ul class="submenu">
+                            <li><a href="#malzeme-tanimlama"><span class="nav-icon">📦</span> Malzeme Tanımlama</a></li>
+                            <li><a href="#gunluk-fiyat-girisi"><span class="nav-icon">✏️</span> Günlük Fiyat Girişi</a></li>
+                            <li><a href="#fiyat-grafikleri"><span class="nav-icon">📊</span> Fiyat Grafikleri</a></li>
+                            <li><a href="#tedarikci-yonetimi"><span class="nav-icon">🚚</span> Tedarikçi Yönetimi</a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="has-submenu">
+                        <a href="#" class="menu-toggle"><span class="nav-icon">👷</span> Personel <span class="submenu-arrow">▶</span></a>
+                        <ul class="submenu">
+                            <li><a href="#isciler"><span class="nav-icon">🛠️</span> İşçi Yönetimi</a></li> 
+                        </ul>
+                    </li>
+
+                    <li><a href="#proje-yonetimi"><span class="nav-icon">📂</span> Proje Yönetimi</a></li>
                 </ul>
             </nav>
         </aside>
