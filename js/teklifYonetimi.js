@@ -72,7 +72,7 @@ function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
 }
 
 function initTeklifYonetimi() {
-    renderTekliflerTabosu(getTeklifler());
+    renderTekliflerTablosu(getTeklifler());
     ayarlamaFormVarsayilanlari();
     // Müşteri dropdown'ını sayfa yüklendiğinde doldur (EKLENDİ)
     if (teklifMusteriSecimi) {
@@ -550,7 +550,7 @@ function teklifFormunuDoldur(teklif) {
     if(teklifNoInput) teklifNoInput.focus();
 }
 
-function renderTekliflerTabosu(teklifler) {
+function renderTekliflerTablosu(teklifler) {
     const tableBody = document.querySelector('#teklifListesiTablosu tbody');
     if (!tableBody) {
         console.warn('#teklifListesiTablosu tbody not found for rendering teklifler.');
@@ -574,7 +574,7 @@ function renderTekliflerTabosu(teklifler) {
             <td>${teklif.teklifTarihi ? new Date(teklif.teklifTarihi).toLocaleDateString('tr-TR') : '-'}</td>
             <td>${teklif.gecerlilikTarihi ? new Date(teklif.gecerlilikTarihi).toLocaleDateString('tr-TR') : '-'}</td>
             <td>${(parseFloat(teklif.genelToplamSatis) || 0).toFixed(2)}</td>
-            <td>${teklif.paraBirimi || '-'}</td>
+            <td>${(teklif.paraBirimi === "0" || teklif.paraBirimi === 0) ? 'TL' : (teklif.paraBirimi || '-')}</td>
             <td><span class="durum-badge durum-${(teklif.durum || '').toLowerCase().replace(/\s+/g, '-')}">${teklif.durum || '-'}</span></td>
             <td>
                 <button class="btn-icon view-teklif-btn" data-id="${teklif.id}" title="Görüntüle">👁️</button>
@@ -588,7 +588,7 @@ function renderTekliflerTabosu(teklifler) {
 
 // Store Değişikliklerine Abone Ol
 subscribe('tekliflerChanged', (guncelTeklifler) => {
-    renderTekliflerTabosu(guncelTeklifler);
+    renderTekliflerTablosu(guncelTeklifler);
 });
 
 subscribe('urunlerChanged', (guncelUrunler) => {
@@ -778,4 +778,4 @@ function iscilikSatiriHesapla(satirId) {
 
 // --- İŞÇİLİK SATIRI FONKSİYONLARI SONU ---
 
-export { initTeklifYonetimi, renderTekliflerTabosu, formuTemizle as temizleTeklifFormu }; 
+export { initTeklifYonetimi, renderTekliflerTablosu, formuTemizle as temizleTeklifFormu }; 
