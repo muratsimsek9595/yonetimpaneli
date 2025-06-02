@@ -222,10 +222,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function teklifleriYukle() {
         try {
-            const apiTeklifler = await fetchTekliflerAPI();
-            setTeklifler(apiTeklifler && Array.isArray(apiTeklifler) ? apiTeklifler : []);
+            const apiTekliflerRaw = await fetchTekliflerAPI();
+            console.log('[script.js] teklifleriYukle - Ham API Yanıtı (fetchTekliflerAPI):', JSON.parse(JSON.stringify(apiTekliflerRaw)));
+
+            // API yanıtının doğrudan bir dizi olup olmadığını veya bir data özelliği içerip içermediğini kontrol et
+            // Örnek API yanıtınızda { success: true, data: [...] } şeklinde bir yapı vardı.
+            const tekliflerDizisi = apiTekliflerRaw && apiTekliflerRaw.data && Array.isArray(apiTekliflerRaw.data) 
+                                    ? apiTekliflerRaw.data 
+                                    : (apiTekliflerRaw && Array.isArray(apiTekliflerRaw) ? apiTekliflerRaw : []);
+
+            console.log('[script.js] teklifleriYukle - setTeklifler fonksiyonuna gönderilecek dizi:', JSON.parse(JSON.stringify(tekliflerDizisi)));
+            setTeklifler(tekliflerDizisi);
+
         } catch (error) {
             globalHataYakala(error, 'Teklifler yüklenirken bir sorun oluştu.');
+            console.error('[script.js] teklifleriYukle - Hata oluştu, setTeklifler boş dizi ile çağrılıyor:', error);
             setTeklifler([]);
         }
     }
