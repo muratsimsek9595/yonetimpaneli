@@ -504,9 +504,12 @@ function teklifFormunuDoldur(teklif) {
     teklifMusteriAdiInput.value = ''; // Önce temizle
     teklifMusteriIletisimInput.value = ''; // Önce temizle
     
-    if (teklifMusteriSecimi && teklif.musteriId) {
-        console.log(`[TeklifYonetimi] Müşteri atanıyor. teklif.musteriId: ${teklif.musteriId} (tip: ${typeof teklif.musteriId}), mevcut seçenekler HTML:`, teklifMusteriSecimi.innerHTML);
-        teklifMusteriSecimi.value = String(teklif.musteriId);
+    // API'dan gelen yanıtta musteri_id kullanılıyor olabilir.
+    const musteriIdFromTeklif = teklif.musteriId || teklif.musteri_id;
+
+    if (teklifMusteriSecimi && musteriIdFromTeklif) {
+        console.log(`[TeklifYonetimi] Müşteri atanıyor. musteriIdFromTeklif: ${musteriIdFromTeklif} (tip: ${typeof musteriIdFromTeklif}), mevcut seçenekler HTML:`, teklifMusteriSecimi.innerHTML);
+        teklifMusteriSecimi.value = String(musteriIdFromTeklif);
         console.log(`[TeklifYonetimi] Müşteri atandıktan sonra teklifMusteriSecimi.value: ${teklifMusteriSecimi.value}`);
         
         const event = new Event('change');
@@ -538,24 +541,18 @@ function teklifFormunuDoldur(teklif) {
         teklif.urunler.forEach(kalem => {
             if (kalem.kalemTipi === 'malzeme') {
                 yeniUrunSatiriEkle({ 
-                    // Backend'den gelen 'urun' objesindeki alan adları:
-                    // referans_id, aciklama (malzemeAdi), miktar, birim, 
-                    // kaydedilen_birim_satis_fiyati, satir_toplam_satis_fiyati_kdv_haric
-                    id: kalem.referans_id, // Malzeme ID'si
-                    urunId: kalem.referans_id, // Dropdown seçimi için
-                    malzemeAdi: kalem.aciklama, // Formda göstermek için
+                    id: kalem.malzeme_id || kalem.referans_id, // API'dan malzeme_id geliyor olabilir
+                    urunId: kalem.malzeme_id || kalem.referans_id, // Dropdown seçimi için
+                    malzemeAdi: kalem.aciklama, 
                     miktar: kalem.miktar,
-                    birim_adi: kalem.birim, // yeniUrunSatiriEkle bu şekilde bekliyor olabilir
+                    birim_adi: kalem.birim,
                     kaydedilen_birim_satis_fiyati: kalem.kaydedilen_birim_satis_fiyati, 
                     satir_toplam_satis_fiyati_kdv_haric: kalem.satir_toplam_satis_fiyati_kdv_haric 
                 });
             } else if (kalem.kalemTipi === 'iscilik') {
                 yeniIscilikSatiriEkle({
-                    // Backend'den gelen 'iscilik' objesindeki alan adları:
-                    // referans_id (isci_id), aciklama (isciAdi), birim, miktar, 
-                    // kaydedilen_birim_satis_fiyati (birimUcret), satir_toplam_satis_fiyati_kdv_haric (satirToplami)
-                    isciId: kalem.referans_id, // İşçi ID'si
-                    isciAdi: kalem.aciklama, // Formda göstermek için
+                    isciId: kalem.isci_id || kalem.referans_id, // API'dan isci_id geliyor olabilir
+                    isciAdi: kalem.aciklama, 
                     birim: kalem.birim,
                     miktar: kalem.miktar,
                     birimUcret: kalem.kaydedilen_birim_satis_fiyati,
