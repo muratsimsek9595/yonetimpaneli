@@ -77,7 +77,7 @@ function getTeklifler($conn) {
     if ($result) {
         while($row = $result->fetch_assoc()) {
             // Kalemleri (urunler/iscilikler) çek
-            $kalemler_sql = "SELECT * FROM teklif_urunleri WHERE teklif_id = ? ORDER BY siraNo ASC, id ASC";
+            $kalemler_sql = "SELECT * FROM teklif_kalemleri WHERE teklif_id = ? ORDER BY siraNo ASC, id ASC";
             $stmt_kalemler = $conn->prepare($kalemler_sql);
             if ($stmt_kalemler) {
                 $stmt_kalemler->bind_param("s", $row['id']);
@@ -117,7 +117,7 @@ function getTeklif($conn, $id) {
 
         if ($result->num_rows > 0) {
             $teklif = $result->fetch_assoc();
-            $kalemler_sql = "SELECT * FROM teklif_urunleri WHERE teklif_id = ? ORDER BY siraNo ASC, id ASC";
+            $kalemler_sql = "SELECT * FROM teklif_kalemleri WHERE teklif_id = ? ORDER BY siraNo ASC, id ASC";
             $stmt_kalemler = $conn->prepare($kalemler_sql);
             if ($stmt_kalemler) {
                 $stmt_kalemler->bind_param("s", $teklif['id']);
@@ -218,12 +218,11 @@ function addTeklif($conn) {
     $stmt_teklif->close();
 
     // Teklif Kalemlerini (urunler/iscilikler) Ekle
-    // teklif_urunleri tablosu: id, teklif_id, kalemTipi, referans_id, aciklama, miktar, birim, 
+    // teklif_kalemleri tablosu: id, teklif_id, kalemTipi, referans_id, aciklama, miktar, birim, 
     // kaydedilen_birim_maliyet, kaydedilen_birim_satis_fiyati, kdv_orani_kalem, 
     // satir_toplam_maliyet, satir_toplam_satis_fiyati_kdv_haric, satir_kdv_tutari, 
     // satir_toplam_satis_fiyati_kdv_dahil, siraNo, created_at, updated_at
-    $sql_kalem = "INSERT INTO teklif_urunleri (teklif_id, kalemTipi, referans_id, aciklama, miktar, birim, kaydedilen_birim_satis_fiyati, kdv_orani_kalem, satir_toplam_satis_fiyati_kdv_haric, satir_kdv_tutari, satir_toplam_satis_fiyati_kdv_dahil, siraNo, kaydedilen_birim_maliyet, satir_toplam_maliyet, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, NOW(), NOW())"; 
-    // Maliyet alanları için varsayılan 0.00 eklendi.
+    $sql_kalem = "INSERT INTO teklif_kalemleri (teklif_id, kalemTipi, malzeme_id, isci_id, aciklama, miktar, birim, kaydedilen_birim_satis_fiyati, kdv_orani_kalem, satir_toplam_satis_fiyati_kdv_haric, satir_kdv_tutari, satir_toplam_satis_fiyati_kdv_dahil, siraNo, kaydedilen_birim_maliyet, satir_toplam_maliyet, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
     $stmt_kalem = $conn->prepare($sql_kalem);
     if (!$stmt_kalem) {
         http_response_code(500);
@@ -233,7 +232,6 @@ function addTeklif($conn) {
     }
 
     foreach ($data->urunler as $key => $kalem) {
-        // Frontend'den gelen alan adları: kalemTipi, referans_id, aciklama, miktar, birim, kaydedilen_birim_satis_fiyati
         if (!isset($kalem->kalemTipi, $kalem->aciklama, $kalem->miktar, $kalem->birim, $kalem->kaydedilen_birim_satis_fiyati) || ($kalem->kalemTipi !== 'malzeme' && $kalem->kalemTipi !== 'iscilik')) {
              http_response_code(400);
              echo json_encode(array("success" => false, "message" => "Teklif kalemi için gerekli alanlar eksik veya kalemTipi geçersiz. Kalem: " . json_encode($kalem)));
@@ -242,27 +240,34 @@ function addTeklif($conn) {
              return;
         }
         $kalemTipi = $conn->real_escape_string(trim($kalem->kalemTipi));
-        // referans_id, malzeme için urun_id, işçilik için isci_id olacak
-        $referans_id = isset($kalem->referans_id) ? $conn->real_escape_string(trim($kalem->referans_id)) : null;
+        
+        $malzeme_id = null;
+        $isci_id = null;
+
+        if ($kalemTipi === 'malzeme' && isset($kalem->referans_id)) {
+            $malzeme_id = intval(trim($kalem->referans_id)); 
+        } elseif ($kalemTipi === 'iscilik' && isset($kalem->referans_id)) {
+            $isci_id = intval(trim($kalem->referans_id));
+        }
+
         $aciklama = $conn->real_escape_string(trim($kalem->aciklama));
         $miktar = floatval($kalem->miktar);
         $birim = $conn->real_escape_string(trim($kalem->birim));
         $kaydedilen_birim_satis_fiyati = floatval($kalem->kaydedilen_birim_satis_fiyati);
         
-        // kdv_orani_kalem ve diğer hesaplanan değerler
-        $kdv_orani_kalem_input = isset($kalem->kdv_orani_kalem) ? floatval($kalem->kdv_orani_kalem) : (isset($data->kdvOrani) ? floatval($data->kdvOrani) : 0); // Kaleme özel KDV veya ana KDV
+        $kdv_orani_kalem_input = isset($kalem->kdv_orani_kalem) ? floatval($kalem->kdv_orani_kalem) : (isset($data->kdvOrani) ? floatval($data->kdvOrani) : 0);
         $satir_toplam_satis_fiyati_kdv_haric = $miktar * $kaydedilen_birim_satis_fiyati;
         $satir_kdv_tutari = $satir_toplam_satis_fiyati_kdv_haric * ($kdv_orani_kalem_input / 100);
         $satir_toplam_satis_fiyati_kdv_dahil = $satir_toplam_satis_fiyati_kdv_haric + $satir_kdv_tutari;
         $siraNo = $key + 1;
+        $kaydedilen_birim_maliyet = isset($kalem->kaydedilen_birim_maliyet) ? floatval($kalem->kaydedilen_birim_maliyet) : 0.00;
+        $satir_toplam_maliyet = $miktar * $kaydedilen_birim_maliyet;
 
-        // Tipler: teklif_id(s), kalemTipi(s), referans_id(s), aciklama(s), miktar(d), birim(s), 
-        // kaydedilen_birim_satis_fiyati(d), kdv_orani_kalem(d), 
-        // satir_toplam_satis_fiyati_kdv_haric(d), satir_kdv_tutari(d), satir_toplam_satis_fiyati_kdv_dahil(d), siraNo(i)
-        $stmt_kalem->bind_param("ssssdsdddddi", 
+        $stmt_kalem->bind_param("ssiisdsdddddiid", 
             $id, 
             $kalemTipi, 
-            $referans_id, 
+            $malzeme_id, 
+            $isci_id, 
             $aciklama, 
             $miktar, 
             $birim, 
@@ -271,7 +276,9 @@ function addTeklif($conn) {
             $satir_toplam_satis_fiyati_kdv_haric, 
             $satir_kdv_tutari, 
             $satir_toplam_satis_fiyati_kdv_dahil, 
-            $siraNo
+            $siraNo,
+            $kaydedilen_birim_maliyet,
+            $satir_toplam_maliyet
         );
 
         if (!$stmt_kalem->execute()) {
@@ -399,7 +406,7 @@ function updateTeklif($conn, $teklif_id_param, $data) {
     $stmt_teklif_update->close();
 
     // Mevcut teklif kalemlerini sil
-    $sql_delete_kalemler = "DELETE FROM teklif_urunleri WHERE teklif_id = ?";
+    $sql_delete_kalemler = "DELETE FROM teklif_kalemleri WHERE teklif_id = ?";
     $stmt_delete_kalemler = $conn->prepare($sql_delete_kalemler);
     if (!$stmt_delete_kalemler) {
         http_response_code(500);
@@ -419,7 +426,7 @@ function updateTeklif($conn, $teklif_id_param, $data) {
 
     // Yeni teklif kalemlerini ekle (addTeklif'teki gibi)
     if (isset($data->urunler) && is_array($data->urunler) && count($data->urunler) > 0) {
-        $sql_kalem_insert = "INSERT INTO teklif_urunleri (teklif_id, kalemTipi, referans_id, aciklama, miktar, birim, kaydedilen_birim_satis_fiyati, kdv_orani_kalem, satir_toplam_satis_fiyati_kdv_haric, satir_kdv_tutari, satir_toplam_satis_fiyati_kdv_dahil, siraNo, kaydedilen_birim_maliyet, satir_toplam_maliyet, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, NOW(), NOW())";
+        $sql_kalem_insert = "INSERT INTO teklif_kalemleri (teklif_id, kalemTipi, malzeme_id, isci_id, aciklama, miktar, birim, kaydedilen_birim_satis_fiyati, kdv_orani_kalem, satir_toplam_satis_fiyati_kdv_haric, satir_kdv_tutari, satir_toplam_satis_fiyati_kdv_dahil, siraNo, kaydedilen_birim_maliyet, satir_toplam_maliyet, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
         $stmt_kalem_insert = $conn->prepare($sql_kalem_insert);
         if (!$stmt_kalem_insert) {
             http_response_code(500);
@@ -437,7 +444,15 @@ function updateTeklif($conn, $teklif_id_param, $data) {
                 return;
             }
             $kalemTipi = $conn->real_escape_string(trim($kalem->kalemTipi));
-            $referans_id = isset($kalem->referans_id) ? $conn->real_escape_string(trim($kalem->referans_id)) : null;
+            $malzeme_id = null;
+            $isci_id = null;
+
+            if ($kalemTipi === 'malzeme' && isset($kalem->referans_id)) {
+                $malzeme_id = intval(trim($kalem->referans_id)); 
+            } elseif ($kalemTipi === 'iscilik' && isset($kalem->referans_id)) {
+                $isci_id = intval(trim($kalem->referans_id));
+            }
+            
             $aciklama = $conn->real_escape_string(trim($kalem->aciklama));
             $miktar = floatval($kalem->miktar);
             $birim = $conn->real_escape_string(trim($kalem->birim));
@@ -448,11 +463,14 @@ function updateTeklif($conn, $teklif_id_param, $data) {
             $satir_kdv_tutari = $satir_toplam_satis_fiyati_kdv_haric * ($kdv_orani_kalem_input / 100);
             $satir_toplam_satis_fiyati_kdv_dahil = $satir_toplam_satis_fiyati_kdv_haric + $satir_kdv_tutari;
             $siraNo = $key + 1;
+            $kaydedilen_birim_maliyet = isset($kalem->kaydedilen_birim_maliyet) ? floatval($kalem->kaydedilen_birim_maliyet) : 0.00;
+            $satir_toplam_maliyet = $miktar * $kaydedilen_birim_maliyet;
 
-            $stmt_kalem_insert->bind_param("ssssdsdddddi", 
+            $stmt_kalem_insert->bind_param("ssiisdsdddddiid", 
                 $teklif_id, 
                 $kalemTipi, 
-                $referans_id, 
+                $malzeme_id, 
+                $isci_id, 
                 $aciklama, 
                 $miktar, 
                 $birim, 
@@ -461,7 +479,9 @@ function updateTeklif($conn, $teklif_id_param, $data) {
                 $satir_toplam_satis_fiyati_kdv_haric, 
                 $satir_kdv_tutari, 
                 $satir_toplam_satis_fiyati_kdv_dahil, 
-                $siraNo
+                $siraNo,
+                $kaydedilen_birim_maliyet,
+                $satir_toplam_maliyet
             );
 
             if (!$stmt_kalem_insert->execute()) {
@@ -510,7 +530,7 @@ function deleteTeklif($conn, $id_param) {
     $conn->begin_transaction();
 
     // Önce ilişkili kalemleri (urunler) sil
-    $sql_delete_urunler = "DELETE FROM teklif_urunleri WHERE teklif_id = ?";
+    $sql_delete_urunler = "DELETE FROM teklif_kalemleri WHERE teklif_id = ?";
     $stmt_delete_urunler = $conn->prepare($sql_delete_urunler);
     if (!$stmt_delete_urunler) {
         http_response_code(500);
