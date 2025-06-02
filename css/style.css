@@ -71,12 +71,14 @@ body {
     color: #2c3e50;
 }
 
+/*
 .sidebar nav ul li a.active {
-    background-color: #e6f7ff; /* Açık mavi aktif arka plan */
-    color: #1890ff; /* Vurgu rengi */
+    background-color: #e6f7ff; 
+    color: #1890ff; 
     border-left-color: #1890ff;
     font-weight: 600;
 }
+*/
 
 .sidebar nav ul li.has-submenu > a {
     /* justify-content: space-between; yerine submenu-arrow margin-left:auto kullanacağız */
