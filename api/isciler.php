@@ -8,9 +8,8 @@ header("Access-Control-Allow-Origin: *"); // Geliştirme için, canlıda daha k�
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-require_once '../config/database.php'; // Veritabanı bağlantı dosyanız
-require_once '../config/config.php';   // Gerekirse genel ayar dosyanız
-require_once '../includes/functions.php'; // Genel fonksiyonlarınız (örn: generate_uuid)
+// Sadece db_config.php dosyasını doğru yolla çağır
+require_once '/home/hsnplant/public_html/demo/config/db_config.php'; // Veritabanı bağlantı dosyanız
 
 $method = $_SERVER['REQUEST_METHOD'];
 
