@@ -8,14 +8,25 @@ const teklifDetayKartAlani = document.getElementById('teklifDetayKartAlani');
 const modalTeklifNoBaslik = document.getElementById('modalTeklifNo');
 
 function formatCurrency(amount, currency) {
-    if (currency === "0" || currency === 0) {
-        currency = 'TL';
+    let numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) {
+        numericAmount = 0; // amount sayı değilse veya NaN ise 0 olarak ayarla
     }
+
+    let safeCurrency = currency;
+    // Para birimi "0", 0, null, undefined veya boş bir string ise 'TL' olarak ayarla
+    if (safeCurrency === "0" || safeCurrency === 0 || !safeCurrency || String(safeCurrency).trim() === "") {
+        safeCurrency = 'TL'; 
+    } else {
+        safeCurrency = String(safeCurrency).trim();
+    }
+
     try {
-        return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: currency || 'TRY' }).format(amount || 0);
+        // Intl.NumberFormat, geçersiz para birimi kodu durumunda hata verebilir.
+        return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: safeCurrency }).format(numericAmount);
     } catch (e) {
-        // Desteklenmeyen para birimi durumunda fallback
-        return `${(amount || 0).toFixed(2)} ${currency || 'TRY'}`;
+        // Fallback, artık güvenli olmalı
+        return `${numericAmount.toFixed(2)} ${safeCurrency}`;
     }
 }
 
