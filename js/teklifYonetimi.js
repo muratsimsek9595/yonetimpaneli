@@ -203,10 +203,20 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
         const ad = (urun && urun.ad) ? String(urun.ad).trim() : 'Bilinmeyen Ürün';
         const birim = (urun && urun.birim_adi) ? String(urun.birim_adi) : 'adet';
         const id = (urun && urun.id) ? urun.id : '';
-        // Malzeme ID'si olmayan veya adı olmayan ürünleri seçeneklere ekleme (isteğe bağlı)
-        // if (!id || ad === 'Bilinmeyen Ürün') return ''; 
         return `<option value="${id}" data-birim="${birim}">${ad} (${birim})</option>`;
     }).join('');
+
+    const birimFiyatValue = (urunVerisi && urunVerisi.kaydedilen_birim_satis_fiyati !== undefined)
+        ? (parseFloat(urunVerisi.kaydedilen_birim_satis_fiyati) || 0).toFixed(2)
+        : (urunVerisi && typeof urunVerisi.birimFiyat === 'number') // Eski data yapısıyla uyumluluk için eklendi (birimFiyat)
+            ? (urunVerisi.birimFiyat || 0).toFixed(2)
+            : '0.00';
+
+    const satirToplamiValue = (urunVerisi && urunVerisi.satir_toplam_satis_fiyati_kdv_haric !== undefined)
+        ? (parseFloat(urunVerisi.satir_toplam_satis_fiyati_kdv_haric) || 0).toFixed(2)
+        : (urunVerisi && typeof urunVerisi.satirToplami === 'number') // Eski data yapısıyla uyumluluk için eklendi (satirToplami)
+            ? (urunVerisi.satirToplami || 0).toFixed(2)
+            : '0.00';
 
     const urunSatiriHTML = `
         <div class="teklif-urun-satiri" id="${satirId}">
@@ -223,11 +233,11 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
             </div>
             <div class="form-group birim-fiyat">
                 <label for="birimFiyat_${urunSatirSayaci}">Birim Fiyat:</label>
-                <input type="number" id="birimFiyat_${urunSatirSayaci}" name="birimFiyat" class="teklif-urun-birim-fiyat" min="0" step="0.01" required value="${(urunVerisi && typeof urunVerisi.kaydedilen_birim_satis_fiyati === 'number') ? urunVerisi.kaydedilen_birim_satis_fiyati.toFixed(2) : '0.00'}">
+                <input type="number" id="birimFiyat_${urunSatirSayaci}" name="birimFiyat" class="teklif-urun-birim-fiyat" min="0" step="0.01" required value="${birimFiyatValue}">
             </div>
             <div class="form-group satir-toplami">
                 <label>Satır Toplamı:</label>
-                <span id="satirToplami_${urunSatirSayaci}" class="teklif-urun-satir-toplami">${urunVerisi ? urunVerisi.satirToplami.toFixed(2) : '0.00'}</span>
+                <span id="satirToplami_${urunSatirSayaci}" class="teklif-urun-satir-toplami">${satirToplamiValue}</span>
             </div>
             <button type="button" class="btn-icon remove-urun-satiri-btn" data-satirid="${satirId}">✖</button>
         </div>
@@ -430,11 +440,9 @@ function teklifFormunuDoldur(teklif) {
             const sonSatirId = `urunSatir_${urunSatirSayaci}`;
             const malzemeSelect = document.querySelector(`#${sonSatirId} .teklif-urun-malzeme`);
             const miktarInput = document.querySelector(`#${sonSatirId} .teklif-urun-miktar`);
-            const birimFiyatInput = document.querySelector(`#${sonSatirId} .teklif-urun-birim-fiyat`);
             
-            if(malzemeSelect) malzemeSelect.value = urunDetay.urunId;
+            if(malzemeSelect) malzemeSelect.value = urunDetay.referans_id;
             if(miktarInput) miktarInput.value = urunDetay.miktar;
-            if(birimFiyatInput) birimFiyatInput.value = urunDetay.birimFiyat;
             urunSatiriHesapla(sonSatirId); 
         });
     } 
