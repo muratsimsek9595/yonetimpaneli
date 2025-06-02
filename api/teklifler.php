@@ -61,7 +61,7 @@ switch ($method) {
 }
 
 function getTeklifler($conn) {
-    $sql = "SELECT t.*, m.ad as musteri_adi_tablodan 
+    $sql = "SELECT t.*, m.ad as musteriAdi 
             FROM teklifler t 
             LEFT JOIN musteriler m ON t.musteri_id = m.id 
             ORDER BY t.teklifTarihi DESC, t.id DESC"; // id'ye göre sıralama daha tutarlı olabilir teklifNo yerine
@@ -96,7 +96,7 @@ function getTeklifler($conn) {
 
 function getTeklif($conn, $id) {
     $id_escaped = $conn->real_escape_string($id);
-    $sql = "SELECT t.*, m.ad as musteri_adi_tablodan 
+    $sql = "SELECT t.*, m.ad as musteriAdi 
             FROM teklifler t 
             LEFT JOIN musteriler m ON t.musteri_id = m.id 
             WHERE t.id = ?";
