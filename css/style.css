@@ -105,8 +105,17 @@ body {
 }
 
 .sidebar nav ul .submenu {
+    list-style: none;
+    padding-left: 0; /* Soldaki varsayılan padding'i kaldır */
+    max-height: 0 !important; /* Varsayılan olarak kapalı ve !important ile öncelikli */
+    overflow: hidden !important; /* Varsayılan olarak kapalı ve !important ile öncelikli */
+    transition: max-height 0.3s ease-out;
     background-color: #f8f9fa; 
-    /* max-height ve overflow transition zaten tanımlı */
+}
+
+.sidebar nav ul li.active-group > .submenu {
+    /* max-height değeri, alt menü içeriğinin maksimum yüksekliğine göre ayarlanmalı */
+    max-height: 500px !important; /* Açık olduğunda !important ile öncelikli */
 }
 
 .sidebar nav ul .submenu li a {
