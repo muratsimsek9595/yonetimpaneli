@@ -492,7 +492,7 @@ function teklifFormunuDoldur(teklif) {
     console.log("[TeklifYonetimi] teklifFormunuDoldur çağrıldı. Teklif verisi:", JSON.parse(JSON.stringify(teklif)));
     console.log("[TeklifYonetimi] teklifFormunuDoldur başında getMusteriler():", JSON.parse(JSON.stringify(getMusteriler())));
     if (teklifMusteriSecimi) {
-        console.log("[TeklifYonetimi] teklifFormunuDoldur, musteriId atamadan önce teklifMusteriSecimi.innerHTML:", teklifMusteriSecimi.innerHTML);
+        console.log(`[TeklifYonetimi] teklifFormunuDoldur, musteriId atamadan önce teklifMusteriSecimi.innerHTML:`, teklifMusteriSecimi.innerHTML);
     } else {
         console.log("[TeklifYonetimi] teklifFormunuDoldur, teklifMusteriSecimi elementi bulunamadı!");
     }
@@ -505,15 +505,16 @@ function teklifFormunuDoldur(teklif) {
     teklifMusteriIletisimInput.value = ''; // Önce temizle
     
     if (teklifMusteriSecimi && teklif.musteriId) {
-        console.log(`[TeklifYonetimi] Müşteri atanıyor. teklif.musteriId: ${teklif.musteriId} (tip: ${typeof teklif.musteriId})`);
+        console.log(`[TeklifYonetimi] Müşteri atanıyor. teklif.musteriId: ${teklif.musteriId} (tip: ${typeof teklif.musteriId}), mevcut seçenekler HTML:`, teklifMusteriSecimi.innerHTML);
         teklifMusteriSecimi.value = String(teklif.musteriId);
         console.log(`[TeklifYonetimi] Müşteri atandıktan sonra teklifMusteriSecimi.value: ${teklifMusteriSecimi.value}`);
-        // Müşteri seçildiğinde otomatik dolan alanlar için 'change' event'ini tetikle
-        // Bu, musteriAdi ve musteriIletisim'i dolduracaktır.
+        
         const event = new Event('change');
         teklifMusteriSecimi.dispatchEvent(event);
+        console.log(`[TeklifYonetimi] Müşteri için 'change' olayı tetiklendikten sonra teklifMusteriSecimi.value: ${teklifMusteriSecimi.value}`);
     } else {
          // musteriId yoksa ama musteriAdi varsa (eski data veya direkt isim girilmişse)
+        console.log(`[TeklifYonetimi] Müşteri ID bulunamadı veya teklifMusteriSecimi elementi yok. teklif.musteriAdi: ${teklif.musteriAdi}`);
         teklifMusteriAdiInput.value = teklif.musteriAdi || '';
         teklifMusteriIletisimInput.value = teklif.musteriIletisim || '';
     }
