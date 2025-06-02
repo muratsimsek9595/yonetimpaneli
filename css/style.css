@@ -65,8 +65,9 @@ body {
     font-size: 1.2rem;
 }
 
-.sidebar nav ul li a:hover {
-    background-color: #f0f2f5; /* Hover için hafif gri */
+.sidebar nav ul li a:hover,
+.sidebar nav ul li a.menu-toggle:hover {
+    background-color: #e9ecef; /* Hover için daha nötr bir gri */
     color: #2c3e50;
 }
 
@@ -78,9 +79,9 @@ body {
 }
 
 .sidebar nav ul li.has-submenu > a {
-    display: flex;
-    justify-content: space-between; /* İkon ve metin ile ok arasında boşluk bırakır */
-    align-items: center;
+    /* justify-content: space-between; yerine submenu-arrow margin-left:auto kullanacağız */
+    /* display: flex; zaten var */
+    /* align-items: center; zaten var */
 }
 
 .sidebar nav ul li a.menu-toggle {
@@ -89,63 +90,57 @@ body {
 }
 
 .sidebar nav ul .submenu-arrow {
-    font-size: 0.8em; /* Ok boyutunu ayarla */
-    transition: transform 0.3s ease;
-    margin-left: 8px; /* Metinden sonra biraz boşluk */
+    font-size: 0.9em; /* Biraz daha büyük */
+    transition: transform 0.3s ease, color 0.3s ease; /* Renk geçişi de eklendi */
+    color: #777; /* Normalde biraz soluk */
+    margin-left: auto; /* Oku tamamen sağa yaslamak için, text ile arasında boşluk bırakır */
+    padding-left: 10px; /* Metinle ok arasında minimum boşluk */
 }
 
 .sidebar nav ul li.active-group > a .submenu-arrow {
-    transform: rotate(90deg); /* Aktif grup (alt menü açık) olduğunda oku döndür */
+    transform: rotate(90deg); /* Zaten var */
+    color: #004085; /* Aktif grup başlığıyla aynı renk */
 }
 
 .sidebar nav ul .submenu {
-    list-style: none;
-    padding-left: 0; /* Soldaki varsayılan padding'i kaldır */
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-    background-color: #f8f9fa; /* Alt menü için hafif farklı bir arka plan */
-}
-
-.sidebar nav ul li.active-group > .submenu {
-    /* max-height değeri, alt menü içeriğinin maksimum yüksekliğine göre ayarlanmalı */
-    /* Dinamik olarak JS ile veya yeterince büyük bir sabit değerle ayarlanabilir */
-    /* Örneğin: */
-    max-height: 500px; /* İçeriğin sığacağı kadar büyük bir değer */ 
+    background-color: #f8f9fa; 
+    /* max-height ve overflow transition zaten tanımlı */
 }
 
 .sidebar nav ul .submenu li a {
-    padding-left: 40px; /* Alt menü öğelerini biraz içeri al */
-    font-size: 0.95rem; /* Alt menü fontunu biraz küçült */
-    color: #495057; /* Alt menü link rengi */
-    border-left: 3px solid transparent; /* Aktif border için yer */
+    padding-left: 45px; /* Biraz daha fazla girinti (önce 40px idi) */
+    font-size: 0.92rem; /* Biraz daha küçük (önce 0.95rem idi) */
+    color: #495057;
+    border-left: 3px solid transparent; /* Zaten var */
 }
 
 .sidebar nav ul .submenu li a:hover {
-    background-color: #e9ecef; /* Alt menü hover rengi */
-    color: #007bff; /* Vurgu rengi */
+    background-color: #e9ecef; /* Standart hover ile aynı olabilir */
+    color: #0056b3;
 }
 
 /* Aktif alt menü linki */
 .sidebar nav ul .submenu li a.active {
-    background-color: #e6f7ff; /* Açık mavi aktif arka plan (ana menüdeki gibi) */
-    color: #1890ff; /* Vurgu rengi */
-    border-left-color: #1890ff; /* Vurgu rengi ile sol border */
-    font-weight: 500; /* Biraz daha belirgin */
+    background-color: #e0efff; /* Aktif ana gruptan biraz daha açık bir mavi tonu */
+    color: #004085;
+    border-left-color: #004085;
+    font-weight: 500;
 }
 
-/* Aktif ana grup başlığı (alt menüsü açık ve/veya bir alt öğesi aktif) */
+/* Aktif ana grup başlığı (alt menüsü açık) */
 .sidebar nav ul li.active-group > a.menu-toggle {
-    background-color: #f0f2f5; /* Hafif vurgulu arka plan */
-    color: #1890ff; /* Vurgu rengi */
+    background-color: #d1e7ff; /* Daha belirgin açık mavi */
+    color: #004085; /* Daha koyu mavi yazı */
     font-weight: 600;
+    border-left-color: #004085; /* Sol border'ı da eşleştir (eğer .active genelinden gelmiyorsa) */
 }
 
 /* Genel aktif link için stil (Ana Sayfa, Proje Yönetimi gibi tekil linkler) */
+/* Bu stilin .active-group > a.menu-toggle'dan sonra gelmesi veya daha spesifik olması önemli */
 .sidebar nav ul > li > a.active:not(.menu-toggle) {
-    background-color: #e6f7ff;
+    background-color: #e6f7ff; /* Bu zaten vardı, tutarlı kalsın */
     color: #1890ff;
-    border-left: 3px solid #1890ff;
+    border-left-color: #1890ff;
     font-weight: 600;
 }
 
@@ -1343,4 +1338,12 @@ form button[type="button"]:hover {
 .musteri-bilgi-grid .detail-label {
     text-align: right;
     padding-top: 2px; /* Dikey hizalamayı iyileştirmek için */
+}
+
+/* Ana menü öğeleri arasına ayırıcı */
+.sidebar nav > ul > li {
+    border-bottom: 1px solid #e9ecef; /* Hafif bir ayırıcı */
+}
+.sidebar nav > ul > li:last-child {
+    border-bottom: none;
 } 
