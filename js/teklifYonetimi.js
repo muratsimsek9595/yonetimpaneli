@@ -53,7 +53,6 @@ const teklifGenelToplamSpan = document.getElementById('teklifGenelToplamSpan');
 let urunSatirSayaci = 0;
 
 function initTeklifYonetimi() {
-    console.log('Teklif Yönetimi Modülü Başlatıldı.');
     renderTekliflerTablosu(getTeklifler());
     ayarlamaFormVarsayilanlari();
 
@@ -192,12 +191,10 @@ function formuTemizle() {
 }
 
 function yeniUrunSatiriEkle(urunVerisi = null) {
-    console.log("[teklifYonetimi.js] yeniUrunSatiriEkle fonksiyonu çağrıldı.");
     urunSatirSayaci++;
     const satirId = `urunSatir_${urunSatirSayaci}`;
 
     const urunlerListesi = getUrunler() || []; 
-    console.log("[teklifYonetimi.js] getUrunler() sonucu:", urunlerListesi);
 
     const urunSecenekleri = urunlerListesi.map(urun => {
         const ad = (urun && urun.ad) ? String(urun.ad).trim() : 'Bilinmeyen Ürün';
@@ -242,9 +239,7 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
             <button type="button" class="btn-icon remove-urun-satiri-btn" data-satirid="${satirId}">✖</button>
         </div>
     `;
-    console.log("[teklifYonetimi.js] Oluşturulan HTML:", urunSatiriHTML);
     teklifUrunListesiContainer.insertAdjacentHTML('beforeend', urunSatiriHTML);
-    console.log("[teklifYonetimi.js] HTML DOM'a eklendi. Satır ID:", satirId);
 
     // Yeni eklenen satırdaki elementlere olay dinleyicileri ekle
     const yeniSelect = document.getElementById(`urun_${urunSatirSayaci}`);
@@ -294,7 +289,6 @@ function urunSatiriniSil(satirId) {
 }
 
 function urunSatiriHesapla(satirId) {
-    console.log(`[teklifYonetimi.js] urunSatiriHesapla çağrıldı. Satır ID: ${satirId}`);
     const miktarInput = document.querySelector(`#${satirId} .teklif-urun-miktar`);
     const birimFiyatInput = document.querySelector(`#${satirId} .teklif-urun-birim-fiyat`);
     const satirToplamiSpan = document.querySelector(`#${satirId} .teklif-urun-satir-toplami`);
@@ -303,18 +297,13 @@ function urunSatiriHesapla(satirId) {
     const birimFiyat = parseFloat(birimFiyatInput.value) || 0;
     const satirToplami = miktar * birimFiyat;
 
-    console.log(`[teklifYonetimi.js] Satır ${satirId} -> Miktar: ${miktar}, Birim Fiyat: ${birimFiyat}, Satır Toplamı: ${satirToplami}`);
-
     if (satirToplamiSpan) {
         satirToplamiSpan.textContent = satirToplami.toFixed(2);
-    } else {
-        console.error(`[teklifYonetimi.js] satirToplamiSpan bulunamadı! Satır ID: ${satirId}`);
     }
     genelToplamlariHesapla();
 }
 
 function genelToplamlariHesapla() {
-    console.log("[teklifYonetimi.js] genelToplamlariHesapla çağrıldı.");
     let araToplam = 0;
     document.querySelectorAll('#teklifUrunListesiContainer .teklif-urun-satiri').forEach(satir => {
         const satirId = satir.id;
@@ -322,29 +311,22 @@ function genelToplamlariHesapla() {
         let satirToplamiValue = 0;
         if (satirToplamiSpan) {
             satirToplamiValue = parseFloat(satirToplamiSpan.textContent) || 0;
-        } else {
-            console.warn(`[teklifYonetimi.js] Ara toplam hesaplanırken ${satirId} için .teklif-urun-satir-toplami span'i bulunamadı!`);
         }
-        console.log(`[teklifYonetimi.js] Ara toplam için satır ${satirId} toplami: ${satirToplamiValue}`);
         araToplam += satirToplamiValue;
     });
-    console.log(`[teklifYonetimi.js] Hesaplanan Ara Toplam: ${araToplam}`);
 
     const indirimOrani = parseFloat(teklifIndirimOraniInput.value) || 0;
     const kdvOrani = parseFloat(teklifKdvOraniInput.value) || 0;
-    console.log(`[teklifYonetimi.js] İndirim Oranı: ${indirimOrani}%, KDV Oranı: ${kdvOrani}%`);
 
     const indirimTutari = (araToplam * indirimOrani) / 100;
     const tutarIndirimSonrasi = araToplam - indirimTutari;
     const kdvTutari = (tutarIndirimSonrasi * kdvOrani) / 100;
     const genelToplam = tutarIndirimSonrasi + kdvTutari;
-    console.log(`[teklifYonetimi.js] İndirim Tutarı: ${indirimTutari}, KDV Tutarı: ${kdvTutari}, Genel Toplam: ${genelToplam}`);
 
     if (teklifAraToplamSpan) teklifAraToplamSpan.textContent = araToplam.toFixed(2);
     if (teklifIndirimTutariSpan) teklifIndirimTutariSpan.textContent = indirimTutari.toFixed(2);
     if (teklifKdvTutariSpan) teklifKdvTutariSpan.textContent = kdvTutari.toFixed(2);
     if (teklifGenelToplamSpan) teklifGenelToplamSpan.textContent = genelToplam.toFixed(2);
-    console.log("[teklifYonetimi.js] Toplam span'leri güncellendi.");
 }
 
 function teklifFormundanVeriAl() {
@@ -397,8 +379,12 @@ function teklifFormundanVeriAl() {
     const kdvTutari = parseFloat(teklifKdvTutariSpan.textContent) || 0;
     const genelToplam = parseFloat(teklifGenelToplamSpan.textContent) || 0;
 
+    // Müşteri ID'sini al
+    const musteriId = teklifMusteriSecimi.value;
+
     return {
         teklifNo: teklifNoInput.value.trim(),
+        musteri_id: musteriId ? parseInt(musteriId, 10) : null, // Müşteri ID'sini ekle, seçilmemişse null
         musteriAdi: teklifMusteriAdiInput.value.trim(),
         musteriIletisim: teklifMusteriIletisimInput.value.trim(),
         teklifTarihi: teklifTarihiInput.value,
@@ -435,14 +421,36 @@ function teklifFormunuDoldur(teklif) {
     teklifUrunListesiContainer.innerHTML = ''; 
     urunSatirSayaci = 0;
     if (teklif.urunler && teklif.urunler.length > 0) {
+        console.log('[teklifFormunuDoldur] Populating products for offer:', teklif);
         teklif.urunler.forEach(urunDetay => {
+            console.log('[teklifFormunuDoldur] Processing urunDetay:', urunDetay);
             yeniUrunSatiriEkle(urunDetay); 
             const sonSatirId = `urunSatir_${urunSatirSayaci}`;
             const malzemeSelect = document.querySelector(`#${sonSatirId} .teklif-urun-malzeme`);
             const miktarInput = document.querySelector(`#${sonSatirId} .teklif-urun-miktar`);
             
-            if(malzemeSelect) malzemeSelect.value = urunDetay.referans_id;
-            if(miktarInput) miktarInput.value = urunDetay.miktar;
+            if(malzemeSelect) {
+                console.log(`[teklifFormunuDoldur] Attempting to select material for satirId ${sonSatirId}. urunDetay.referans_id:`, urunDetay.referans_id, `(Type: ${typeof urunDetay.referans_id})`);
+                const options = Array.from(malzemeSelect.options).map(opt => ({ value: opt.value, text: opt.text, selected: opt.selected }));
+                console.log(`[teklifFormunuDoldur] Options for ${sonSatirId}:`, options);
+
+                malzemeSelect.value = urunDetay.referans_id; 
+                
+                if (String(malzemeSelect.value) === String(urunDetay.referans_id)) {
+                    console.log(`[teklifFormunuDoldur] Successfully selected material '${malzemeSelect.value}' for ${sonSatirId}. Option text: ${malzemeSelect.options[malzemeSelect.selectedIndex].text}`);
+                } else {
+                    console.warn(`[teklifFormunuDoldur] Failed to select material for ${sonSatirId}. Expected: '${urunDetay.referans_id}', Actual selected value in dropdown: '${malzemeSelect.value}'. This might happen if the referans_id is not among the option values or is null/undefined.`);
+                }
+            } else {
+                console.error(`[teklifFormunuDoldur] Malzeme select dropdown not found for ${sonSatirId}`);
+            }
+            
+            if(miktarInput) {
+                miktarInput.value = urunDetay.miktar;
+            } else {
+                console.error(`[teklifFormunuDoldur] Miktar input not found for ${sonSatirId}`);
+            }
+            
             urunSatiriHesapla(sonSatirId); 
         });
     } 
