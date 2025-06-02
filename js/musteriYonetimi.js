@@ -1,49 +1,146 @@
 import { showToast, clearForm } from './ui.js'; // Kullanıcı arayüzü etkileşimleri için
 import { saveMusteri, getMusteriler, deleteMusteri } from './api.js'; // API çağrıları için
 
-document.addEventListener('DOMContentLoaded', () => {
-    const musteriForm = document.getElementById('musteriForm');
-    const musteriListesiTablosuBody = document.getElementById('musteriListesiTablosu')?.querySelector('tbody');
-    const musteriFormTemizleButton = document.getElementById('musteriFormTemizleButton');
-    const musteriIdInput = document.getElementById('musteriIdInput'); // Güncelleme için
+// DOM Elementlerini global (modül kapsamında) tanımla, init içinde erişilebilir olmaları için
+let musteriForm;
+let musteriListesiTablosuBody;
+let musteriFormTemizleButton;
+let musteriIdInput;
+
+// Müşterileri yükle ve listele
+async function loadMusteriler() {
+    if (!musteriListesiTablosuBody) return;
+    try {
+        const response = await getMusteriler(); 
+        musteriListesiTablosuBody.innerHTML = ''; 
+
+        if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+            response.data.forEach(musteri => {
+                const row = musteriListesiTablosuBody.insertRow();
+                row.innerHTML = `
+                    <td>${musteri.ad || ''}</td>
+                    <td>${musteri.yetkili_kisi || ''}</td>
+                    <td>${musteri.telefon || ''}</td>
+                    <td>${musteri.email || ''}</td>
+                    <td>${musteri.adres || ''}</td>
+                    <td>${musteri.vergi_no || ''}</td>
+                    <td>${musteri.notlar || ''}</td>
+                    <td>
+                        <button class="btn-edit" data-id="${musteri.id}">Düzenle</button>
+                        <button class="btn-delete" data-id="${musteri.id}">Sil</button>
+                    </td>
+                `;
+            });
+        } else {
+            const mesaj = (response && response.message && response.success === false) ? response.message : 'Kayıtlı müşteri bulunamadı.';
+            musteriListesiTablosuBody.innerHTML = `<tr><td colspan="8">${mesaj}</td></tr>`;
+        }
+        addEventListenersToButtons(); 
+    } catch (error) {
+        console.error('Müşteriler yüklenirken hata:', error);
+        showToast(error.message || 'Müşteriler yüklenirken bir hata oluştu.', 'error');
+        if (musteriListesiTablosuBody) {
+             musteriListesiTablosuBody.innerHTML = '<tr><td colspan="8">Müşteriler yüklenemedi.</td></tr>';
+        }
+    }
+}
+
+// Düzenle ve Sil butonlarına event listener ekle
+function addEventListenersToButtons() {
+    document.querySelectorAll('#musteriListesiTablosu .btn-edit').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const musteriId = e.target.dataset.id;
+            try {
+                const apiResponse = await getMusteriler();
+                if (apiResponse && apiResponse.data && Array.isArray(apiResponse.data)) {
+                    const musteriListesi = apiResponse.data;
+                    const musteri = musteriListesi.find(m => String(m.id) === String(musteriId));
+                    if (musteri) {
+                        musteriIdInput.value = musteri.id;
+                        document.getElementById('musteriAdiInput').value = musteri.ad || '';
+                        document.getElementById('musteriYetkiliKisiInput').value = musteri.yetkili_kisi || '';
+                        document.getElementById('musteriTelefonInput').value = musteri.telefon || '';
+                        document.getElementById('musteriEmailInput').value = musteri.email || '';
+                        document.getElementById('musteriAdresInput').value = musteri.adres || '';
+                        document.getElementById('musteriVergiNoInput').value = musteri.vergi_no || '';
+                        document.getElementById('musteriNotlarInput').value = musteri.notlar || '';
+                        
+                        musteriForm.querySelector('button[type="submit"]').textContent = 'Müşteriyi Güncelle';
+                        musteriFormTemizleButton.style.display = 'inline-block';
+                        document.getElementById('musteri-yonetimi').scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        showToast('Düzenlenecek müşteri bulunamadı.', 'error');
+                    }
+                } else {
+                     showToast('Müşteri verileri alınamadı veya format hatalı.', 'error');
+                }
+            } catch (error) {
+                console.error('Müşteri bilgileri getirilirken hata:', error);
+                showToast('Müşteri bilgileri getirilirken bir hata oluştu.', 'error');
+            }
+        });
+    });
+
+    document.querySelectorAll('#musteriListesiTablosu .btn-delete').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const musteriId = e.target.dataset.id;
+            if (confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) {
+                try {
+                    const response = await deleteMusteri(musteriId);
+                    showToast(response.message || 'Müşteri başarıyla silindi!', 'success');
+                    await loadMusteriler(); 
+                } catch (error) {
+                    console.error('Müşteri silme hatası:', error);
+                    showToast(error.message || 'Müşteri silinirken bir hata oluştu.', 'error');
+                }
+            }
+        });
+    });
+}
+
+function initMusteriYonetimi() {
+    // DOM elementlerini burada bul
+    musteriForm = document.getElementById('musteriForm');
+    musteriListesiTablosuBody = document.getElementById('musteriListesiTablosu')?.querySelector('tbody');
+    musteriFormTemizleButton = document.getElementById('musteriFormTemizleButton');
+    musteriIdInput = document.getElementById('musteriIdInput'); 
+
+    if (!musteriForm || !musteriListesiTablosuBody || !musteriFormTemizleButton || !musteriIdInput) {
+        console.error("Müşteri Yönetimi için gerekli DOM elementlerinden biri veya birkaçı bulunamadı!");
+        return; // Gerekli elementler yoksa devam etme
+    }
 
     // Form gönderildiğinde
-    musteriForm?.addEventListener('submit', async (event) => {
+    musteriForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        console.log("Müşteri formu submit edildi."); // Test için eklendi
 
         const formData = new FormData(musteriForm);
         const musteriData = {
-            // id: formData.get('musteriIdInput') || null, // saveMusteri fonksiyonu ID'yi ayrı parametre olarak alıyor
             ad: formData.get('musteriAdiInput'),
-            yetkiliKisi: formData.get('musteriYetkiliKisiInput'),
+            yetkili_kisi: formData.get('musteriYetkiliKisiInput'),
             telefon: formData.get('musteriTelefonInput'),
             email: formData.get('musteriEmailInput'),
             adres: formData.get('musteriAdresInput'),
-            vergiNo: formData.get('musteriVergiNoInput'),
+            vergi_no: formData.get('musteriVergiNoInput'),
             notlar: formData.get('musteriNotlarInput')
         };
         const musteriId = formData.get('musteriIdInput');
 
-        console.log("Sunucuya gönderilen musteriData:", musteriData);
-
         try {
             let response;
             if (musteriId) {
-                // ID varsa güncelle
                 response = await saveMusteri(musteriData, musteriId);
                 showToast(response.message || 'Müşteri başarıyla güncellendi!', 'success');
             } else {
-                // ID yoksa yeni müşteri ekle
-                response = await saveMusteri(musteriData); // ID parametresi olmadan çağırıyoruz
+                response = await saveMusteri(musteriData);
                 showToast(response.message || 'Müşteri başarıyla eklendi!', 'success');
             }
             
             clearForm(musteriForm);
-            musteriIdInput.value = ''; // Gizli ID alanını temizle
-            musteriFormTemizleButton.style.display = 'none';
+            musteriIdInput.value = ''; 
+            if(musteriFormTemizleButton) musteriFormTemizleButton.style.display = 'none';
             musteriForm.querySelector('button[type="submit"]').textContent = 'Müşteriyi Kaydet';
-            await loadMusteriler(); // Listeyi yenile
+            await loadMusteriler(); 
         } catch (error) {
             console.error('Müşteri kaydetme hatası:', error);
             showToast(error.message || 'Müşteri kaydedilirken bir hata oluştu.', 'error');
@@ -51,120 +148,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Form temizleme butonu
-    musteriFormTemizleButton?.addEventListener('click', () => {
-        clearForm(musteriForm);
-        musteriIdInput.value = '';
-        musteriFormTemizleButton.style.display = 'none';
-        musteriForm.querySelector('button[type="submit"]').textContent = 'Müşteriyi Kaydet';
-    });
-
-    // Müşterileri yükle ve listele
-    async function loadMusteriler() {
-        if (!musteriListesiTablosuBody) return;
-        try {
-            const response = await getMusteriler(); // API yanıtının tamamını al
-            musteriListesiTablosuBody.innerHTML = ''; // Önceki kayıtları temizle
-
-            if (response && response.status === 'success' && response.data && response.data.length > 0) {
-                response.data.forEach(musteri => { // response.data dizisini kullan
-                    const row = musteriListesiTablosuBody.insertRow();
-                    row.innerHTML = `
-                        <td>${musteri.ad || ''}</td>
-                        <td>${musteri.yetkiliKisi || ''}</td>
-                        <td>${musteri.telefon || ''}</td>
-                        <td>${musteri.email || ''}</td>
-                        <td>${musteri.adres || ''}</td>
-                        <td>${musteri.vergiNo || ''}</td>
-                        <td>${musteri.notlar || ''}</td>
-                        <td>
-                            <button class="btn-edit" data-id="${musteri.id}">Düzenle</button>
-                            <button class="btn-delete" data-id="${musteri.id}">Sil</button>
-                        </td>
-                    `;
-                });
-            } else {
-                // Eğer status 'success' değilse veya data yoksa/boşsa
-                const mesaj = (response && response.message && response.status !== 'success') ? response.message : 'Kayıtlı müşteri bulunamadı.';
-                musteriListesiTablosuBody.innerHTML = `<tr><td colspan="8">${mesaj}</td></tr>`;
-            }
-            addEventListenersToButtons(); // Butonlara event listener'ları ata
-        } catch (error) {
-            console.error('Müşteriler yüklenirken hata:', error);
-            showToast(error.message || 'Müşteriler yüklenirken bir hata oluştu.', 'error');
-            if (musteriListesiTablosuBody) {
-                 musteriListesiTablosuBody.innerHTML = '<tr><td colspan="8">Müşteriler yüklenemedi.</td></tr>';
-            }
-        }
-    }
-    
-    // Düzenle ve Sil butonlarına event listener ekle
-    function addEventListenersToButtons() {
-        document.querySelectorAll('#musteriListesiTablosu .btn-edit').forEach(button => {
-            button.addEventListener('click', async (e) => {
-                const musteriId = e.target.dataset.id;
-                try {
-                    const apiResponse = await getMusteriler(); // API'dan güncel listeyi çek
-                    if (apiResponse && apiResponse.data && Array.isArray(apiResponse.data)) {
-                        const musteriListesi = apiResponse.data;
-                        const musteri = musteriListesi.find(m => String(m.id) === String(musteriId));
-                        if (musteri) {
-                            musteriIdInput.value = musteri.id;
-                            document.getElementById('musteriAdiInput').value = musteri.ad || '';
-                            document.getElementById('musteriYetkiliKisiInput').value = musteri.yetkiliKisi || '';
-                            document.getElementById('musteriTelefonInput').value = musteri.telefon || '';
-                            document.getElementById('musteriEmailInput').value = musteri.email || '';
-                            document.getElementById('musteriAdresInput').value = musteri.adres || '';
-                            document.getElementById('musteriVergiNoInput').value = musteri.vergiNo || '';
-                            document.getElementById('musteriNotlarInput').value = musteri.notlar || '';
-                            
-                            musteriForm.querySelector('button[type="submit"]').textContent = 'Müşteriyi Güncelle';
-                            musteriFormTemizleButton.style.display = 'inline-block';
-                            document.getElementById('musteri-yonetimi').scrollIntoView({ behavior: 'smooth' });
-                        } else {
-                            showToast('Düzenlenecek müşteri bulunamadı.', 'error');
-                        }
-                    } else {
-                         showToast('Müşteri verileri alınamadı veya format hatalı.', 'error');
-                         console.error("API'dan beklenen formatta müşteri listesi alınamadı:", apiResponse);
-                    }
-                } catch (error) {
-                    console.error('Müşteri bilgileri getirilirken hata:', error);
-                    showToast('Müşteri bilgileri getirilirken bir hata oluştu.', 'error');
-                }
-            });
-        });
-
-        document.querySelectorAll('#musteriListesiTablosu .btn-delete').forEach(button => {
-            button.addEventListener('click', async (e) => {
-                const musteriId = e.target.dataset.id;
-                if (confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) {
-                    try {
-                        const response = await deleteMusteri(musteriId); // deleteMusteriAPI -> deleteMusteri
-                        showToast(response.message || 'Müşteri başarıyla silindi!', 'success');
-                        await loadMusteriler(); // Listeyi yenile
-                    } catch (error) {
-                        console.error('Müşteri silme hatası:', error);
-                        showToast(error.message || 'Müşteri silinirken bir hata oluştu.', 'error');
-                    }
-                }
-            });
+    if(musteriFormTemizleButton) {
+        musteriFormTemizleButton.addEventListener('click', () => {
+            clearForm(musteriForm);
+            musteriIdInput.value = '';
+            musteriFormTemizleButton.style.display = 'none';
+            musteriForm.querySelector('button[type="submit"]').textContent = 'Müşteriyi Kaydet';
         });
     }
 
-    // Sayfa yüklendiğinde ve ilgili bölüm görünür olduğunda müşterileri listele
-    const musteriYonetimiSection = document.getElementById('musteri-yonetimi');
-    if (musteriYonetimiSection) {
-        // Eğer başlangıçta görünürse veya navigasyonla bu bölüme gelinirse yükle
-        if (window.getComputedStyle(musteriYonetimiSection).display !== 'none') {
-            loadMusteriler();
-        }
-        // Navigasyon linklerini dinleyerek bölüm görünür olduğunda yükle
-        // Bu kısım genel script.js veya app.js içinde daha merkezi bir yerden yönetiliyorsa
-        // burada tekrar ele almak gerekmeyebilir. Şimdilik basit bir kontrol ekliyorum.
-        const navLink = document.querySelector('a[href="#musteri-yonetimi"]');
-        navLink?.addEventListener('click', () => {
-            // Kısa bir gecikme ile section'ın display özelliğinin güncellenmesini bekle
-            setTimeout(loadMusteriler, 50);
-        });
-    }
-}); 
+    // Başlangıçta müşterileri yükle
+    loadMusteriler();
+}
+
+export { initMusteriYonetimi }; 
