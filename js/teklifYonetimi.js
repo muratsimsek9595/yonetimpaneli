@@ -151,7 +151,7 @@ function initTeklifYonetimi() {
             const teklif = getTeklifById(teklifId);
             if (teklif) {
                 // Şimdilik alert ile gösterelim, daha sonra modal veya detay sayfası eklenebilir.
-                let teklifDetaylari = `Teklif No: ${teklif.teklifNo}\nMüşteri: ${teklif.musteriAdi}\nTarih: ${new Date(teklif.teklifTarihi).toLocaleDateString('tr-TR')}\nToplam: ${teklif.genelToplamSatis.toFixed(2)} ${teklif.paraBirimi}\nDurum: ${teklif.durum}\n\nÜrünler:\n`;
+                let teklifDetaylari = `Teklif No: ${teklif.teklifNo}\nMüşteri: ${teklif.musteriAdi}\nTarih: ${new Date(teklif.teklifTarihi).toLocaleDateString('tr-TR')}\nToplam: ${(parseFloat(teklif.genelToplamSatis) || 0).toFixed(2)} ${teklif.paraBirimi}\nDurum: ${teklif.durum}\n\nÜrünler:\n`;
                 teklif.urunler.forEach(u => {
                     teklifDetaylari += `- ${u.malzemeAdi}: ${u.miktar} ${u.birim} x ${u.birimFiyat.toFixed(2)} = ${u.satirToplami.toFixed(2)}\n`;
                 });
@@ -462,7 +462,7 @@ function renderTekliflerTablosu(teklifler) {
             <td>${teklif.musteriAdi || '-'}</td>
             <td>${teklif.teklifTarihi ? new Date(teklif.teklifTarihi).toLocaleDateString('tr-TR') : '-'}</td>
             <td>${teklif.gecerlilikTarihi ? new Date(teklif.gecerlilikTarihi).toLocaleDateString('tr-TR') : '-'}</td>
-            <td>${(teklif.genelToplamSatis || 0).toFixed(2)}</td>
+            <td>${(parseFloat(teklif.genelToplamSatis) || 0).toFixed(2)}</td>
             <td>${teklif.paraBirimi || '-'}</td>
             <td><span class="durum-badge durum-${(teklif.durum || '').toLowerCase().replace(/\s+/g, '-')}">${teklif.durum || '-'}</span></td>
             <td>
