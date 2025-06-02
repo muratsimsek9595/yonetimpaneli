@@ -60,6 +60,18 @@ let urunSatirSayaci = 0;
 // Dinamik işçilik satırları için sayaç
 let iscilikSatirSayaci = 0;
 
+function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
+    const iscilerListesi = iscilerListesiParam || getIsciler() || [];
+    const aktifIsciler = iscilerListesi
+        .filter(isci => isci.aktif)
+        .sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
+
+    document.querySelectorAll('.teklif-isci-secim').forEach(selectElement => {
+        const currentSelectedId = selectElement.value;
+        populeEtIsciSecimDropdown(aktifIsciler, selectElement, "-- İşçi Seçiniz --", true, currentSelectedId);
+    });
+}
+
 function initTeklifYonetimi() {
     renderTekliflerTablosu(getTeklifler());
     ayarlamaFormVarsayilanlari();
@@ -182,8 +194,17 @@ function initTeklifYonetimi() {
     });
     
     // Başlangıçta birer adet boş ürün ve işçilik satırı ekle (EKLENDİ)
-    yeniUrunSatiriEkle();
-    yeniIscilikSatiriEkle();
+    // Bu çağrılar ayarlamaFormVarsayilanlari içinde yapılıyor, burada tekrar gerek yok.
+    // yeniUrunSatiriEkle();
+    // yeniIscilikSatiriEkle(); 
+    
+    // ayarlamaFormVarsayilanlari içinde ilk satırlar ekleniyor.
+    // O satırlardaki dropdown'ları mevcut işçi listesiyle doldurmayı dene.
+    guncelleTeklifIsciDropdownlarini();
+
+    // İşçi listesi store'da değiştiğinde tüm dropdown'ları güncelle.
+    subscribe('iscilerChanged', guncelleTeklifIsciDropdownlarini);
+
     genelToplamlariHesapla(); // Başlangıç toplamlarını hesapla
 }
 
@@ -200,6 +221,11 @@ function ayarlamaFormVarsayilanlari() {
     // sonrakiTeklifNumarasiniOner(); // Bu fonksiyon silindi, gerekirse tekrar eklenebilir
     if (teklifIscilikListesiContainer) teklifIscilikListesiContainer.innerHTML = ''; // İşçilikleri de temizle
     iscilikSatirSayaci = 0; // İşçilik sayacını sıfırla
+    
+    // Form sıfırlandığında veya ilk açıldığında boş satırları ekle
+    yeniUrunSatiriEkle();
+    yeniIscilikSatiriEkle();
+    genelToplamlariHesapla();
 }
 
 function formuTemizle() {
@@ -213,8 +239,9 @@ function formuTemizle() {
     ayarlamaFormVarsayilanlari(); 
     
     // Başlangıçta birer adet boş ürün ve işçilik satırı ekle (EKLENDİ)
-    yeniUrunSatiriEkle();
-    yeniIscilikSatiriEkle();
+    // Bu zaten ayarlamaFormVarsayilanlari içinde yapılıyor.
+    // yeniUrunSatiriEkle(); 
+    // yeniIscilikSatiriEkle();
     genelToplamlariHesapla(); // Temizlik sonrası toplamları hesapla
 
     if(teklifFormTemizleButton) teklifFormTemizleButton.style.display = 'none';
@@ -586,7 +613,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Şimdilik direkt başlatıyoruz, ileride optimize edilebilir.
     if (document.getElementById('teklif-yonetimi')) {
         initTeklifYonetimi();
-        yeniUrunSatiriEkle(); // Sayfa yüklendiğinde forma boş bir ürün satırı ekle
+        // aşağıdaki satır initTeklifYonetimi içindeki ayarlamaFormVarsayilanlari tarafından zaten çağrılıyor.
+        // yeniUrunSatiriEkle(); // Sayfa yüklendiğinde forma boş bir ürün satırı ekle
     }
 });
 
