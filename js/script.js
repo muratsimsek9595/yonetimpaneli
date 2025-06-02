@@ -62,6 +62,8 @@ import {
     cizVeyaGuncelleFiyatGrafigi
 } from './grafik.js';
 import { globalHataYakala } from './hataYonetimi.js';
+import { initTeklifYonetimi } from './teklifYonetimi.js';
+import { initTeklifListeleme } from './teklifListeleme.js';
 
 // Genel JavaScript fonksiyonları ve olay dinleyicileri buraya gelecek.
 // Chart.js DataLabels eklentisini global olarak kaydet
@@ -70,6 +72,11 @@ if (typeof ChartDataLabels !== 'undefined') {
 } else {
     console.error('ChartDataLabels eklentisi yüklenemedi!');
 }
+
+// Durum değişkenleri, hangi init fonksiyonlarının çağrıldığını takip etmek için
+let isTeklifYonetimiInitialized = false;
+let isTeklifListelemeInitialized = false;
+// Diğer modüller için de benzer flag'ler eklenebilir (örn: isMusteriYonetimiInitialized)
 
 document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('.sidebar nav a');
@@ -89,6 +96,17 @@ document.addEventListener('DOMContentLoaded', function() {
         navLinks.forEach(navLink => {
             navLink.getAttribute('href') === `#${targetId}` ? navLink.classList.add('active') : navLink.classList.remove('active');
         });
+
+        // İlgili bölüm için init fonksiyonunu çağır (sadece bir kere)
+        if (targetId === 'teklif-yonetimi' && !isTeklifYonetimiInitialized) {
+            initTeklifYonetimi();
+            isTeklifYonetimiInitialized = true;
+        } else if (targetId === 'teklifler' && !isTeklifListelemeInitialized) {
+            initTeklifListeleme();
+            isTeklifListelemeInitialized = true;
+        }
+        // Diğer bölümler için de benzer else if blokları eklenebilir
+        // Örn: else if (targetId === 'musteri-yonetimi' && !isMusteriYonetimiInitialized) { ... }
     }
 
     let initialTargetId = 'anasayfa';

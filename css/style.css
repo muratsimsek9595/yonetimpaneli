@@ -929,4 +929,220 @@ form button[type="button"]:hover {
 /* İşlemler sütunu için özel ayar */
 #musteriListesiTablosu td:last-child {
     text-align: left; /* Butonları sola yasla veya center için ortala */
+}
+
+/* Teklif Özetleri Grid */
+.teklif-ozetleri-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Duyarlı grid */
+    gap: 20px;
+    padding: 10px;
+}
+
+.teklif-ozet-karti {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+}
+
+.teklif-ozet-karti:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.teklif-ozet-karti h4 {
+    margin-top: 0;
+    color: var(--primary-color); /* Ana renginizi kullanın */
+}
+
+.teklif-ozet-karti p {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: #555;
+}
+.teklif-ozet-karti .ozet-label {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Modal Stilleri */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5); /* Yarı saydam arka plan */
+    display: flex; /* İçeriği ortalamak için */
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-dialog {
+    width: 80%;
+    max-width: 700px; /* Maksimum genişlik */
+    margin: auto; /* Otomatik ortalama */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 0; /* Header/footer kendi padding'ini yönetecek */
+    border: 1px solid #888;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    animation: fadeInModal 0.3s ease-out;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+}
+
+.modal-kapat-buton {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.modal-kapat-buton:hover,
+.modal-kapat-buton:focus {
+    color: black;
+    text-decoration: none;
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 60vh; /* İçeriğin çok uzamasını engelle */
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e0e0e0;
+    text-align: right;
+}
+
+.modal-footer .btn-secondary { /* Eğer genel buton stilleriniz varsa, bunlar zaten uygulanır */
+    margin-left: 10px;
+}
+
+@keyframes fadeInModal {
+    from {opacity: 0; transform: translateY(-20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* Teklif Detay Kartı İçin Ek Stiller (Modal İçi) */
+#teklifDetayKartAlani h4 {
+    color: #1890ff; /* Ana tema rengi */
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    font-size: 1.2em;
+}
+#teklifDetayKartAlani h4:first-child {
+    margin-top: 0;
+}
+
+.teklif-detay-bolum {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.teklif-detay-bolum:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+#teklifDetayKartAlani p {
+    margin-bottom: 8px;
+    line-height: 1.5;
+    font-size: 0.95em;
+}
+
+#teklifDetayKartAlani .detail-label {
+    font-weight: 600;
+    color: #333;
+    margin-right: 8px;
+}
+
+/* Modal içindeki kalemler tablosu */
+.table-responsive {
+    overflow-x: auto; /* Küçük ekranlarda tablo kaydırması için */
+}
+
+#teklifDetayKartAlani table.detay-tablosu {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+#teklifDetayKartAlani table.detay-tablosu th,
+#teklifDetayKartAlani table.detay-tablosu td {
+    border: 1px solid #ddd;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+#teklifDetayKartAlani table.detay-tablosu th {
+    background-color: #f7f7f7; /* Hafif gri başlık */
+    font-weight: 600;
+}
+
+/* Modal içindeki toplamlar bölümü */
+.toplamlar-grid {
+    display: grid;
+    grid-template-columns: auto 1fr; /* Etiket ve değer için iki sütun */
+    gap: 8px 15px; /* Satır ve sütun boşlukları */
+    align-items: center; /* Dikey hizalama */
+}
+
+.toplamlar-grid p {
+    margin-bottom: 0; /* Grid kendi boşluğunu yönetiyor */
+}
+
+.toplamlar-grid .detail-label {
+    text-align: right; /* Etiketleri sağa yasla */
+}
+
+.toplamlar-grid .tutar {
+    font-weight: 500;
+    text-align: left;
+}
+
+.toplamlar-grid .genel-toplam-modal strong {
+    font-size: 1.1em;
+    color: #1890ff;
+}
+
+.notlar-kutusu {
+    background-color: #f9f9f9;
+    border: 1px solid #e8e8e8;
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 50px;
+    white-space: pre-wrap; /* Boşlukları ve satır sonlarını koru */
+    font-size: 0.9em;
+    color: #444;
 } 
