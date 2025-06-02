@@ -72,6 +72,7 @@ function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
 }
 
 function initTeklifYonetimi() {
+    console.log(`[TeklifYonetimi] initTeklifYonetimi başlangıcı. Store'dan ilk teklifler:`, JSON.parse(JSON.stringify(getTeklifler())));
     renderTekliflerTablosu(getTeklifler());
     ayarlamaFormVarsayilanlari();
     // Müşteri dropdown'ını sayfa yüklendiğinde doldur (EKLENDİ)
@@ -551,22 +552,24 @@ function teklifFormunuDoldur(teklif) {
 }
 
 function renderTekliflerTablosu(teklifler) {
+    console.log(`[TeklifYonetimi] renderTekliflerTablosu çağrıldı. Alınan teklifler:`, JSON.parse(JSON.stringify(teklifler)));
     const tableBody = document.querySelector('#teklifListesiTablosu tbody');
+    console.log(`[TeklifYonetimi] renderTekliflerTablosu içinde tableBody bulundu mu? ${tableBody ? 'Evet' : 'Hayır'}`);
+
     if (!tableBody) {
-        console.warn('#teklifListesiTablosu tbody not found for rendering teklifler.');
+        console.warn('[TeklifYonetimi] #teklifListesiTablosu tbody not found for rendering teklifler. Fonksiyon sonlandırılıyor.');
         return;
     }
     tableBody.innerHTML = ''; // Tabloyu temizle
     if (!teklifler || teklifler.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Gösterilecek teklif bulunamadı.</td></tr>';
+        console.warn('[TeklifYonetimi] renderTekliflerTablosu: Gösterilecek teklif bulunamadı veya teklifler dizisi boş.');
         return;
     }
 
-    teklifler.forEach(teklif => {
-        // Para Birimi için loglama (tablo render edilirken)
-        if (teklif.teklifNo && teklif.teklifNo.includes('TEST')) { 
-             console.log(`[renderTekliflerTabosu] Test Teklifi (${teklif.teklifNo}) için teklif.paraBirimi: ${teklif.paraBirimi} (Type: ${typeof teklif.paraBirimi})`);
-        }
+    console.log(`[TeklifYonetimi] renderTekliflerTablosu: ${teklifler.length} adet teklif render edilecek.`);
+    teklifler.forEach((teklif, index) => {
+        console.log(`[TeklifYonetimi] renderTekliflerTablosu: Teklif ${index + 1} işleniyor:`, JSON.parse(JSON.stringify(teklif)));
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${teklif.teklifNo || '-'}</td>
@@ -588,6 +591,7 @@ function renderTekliflerTablosu(teklifler) {
 
 // Store Değişikliklerine Abone Ol
 subscribe('tekliflerChanged', (guncelTeklifler) => {
+    console.log(`[TeklifYonetimi] 'tekliflerChanged' olayı alındı. Güncel teklifler:`, JSON.parse(JSON.stringify(guncelTeklifler)));
     renderTekliflerTablosu(guncelTeklifler);
 });
 
