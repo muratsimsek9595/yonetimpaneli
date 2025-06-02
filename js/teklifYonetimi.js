@@ -72,7 +72,6 @@ function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
 }
 
 function initTeklifYonetimi() {
-    console.log(`[TeklifYonetimi] initTeklifYonetimi başlangıcı. Store'dan ilk teklifler:`, JSON.parse(JSON.stringify(getTeklifler())));
     renderTekliflerTablosu(getTeklifler());
     ayarlamaFormVarsayilanlari();
     // Müşteri dropdown'ını sayfa yüklendiğinde doldur (EKLENDİ)
@@ -490,6 +489,13 @@ function teklifFormundanVeriAl() {
 
 function teklifFormunuDoldur(teklif) {
     if (!teklif) return;
+    console.log("[TeklifYonetimi] teklifFormunuDoldur çağrıldı. Teklif verisi:", JSON.parse(JSON.stringify(teklif)));
+    console.log("[TeklifYonetimi] teklifFormunuDoldur başında getMusteriler():", JSON.parse(JSON.stringify(getMusteriler())));
+    if (teklifMusteriSecimi) {
+        console.log("[TeklifYonetimi] teklifFormunuDoldur, musteriId atamadan önce teklifMusteriSecimi.innerHTML:", teklifMusteriSecimi.innerHTML);
+    } else {
+        console.log("[TeklifYonetimi] teklifFormunuDoldur, teklifMusteriSecimi elementi bulunamadı!");
+    }
     
     // Formu temizlemeden önce müşteri dropdown'ı hariç diğer alanları sıfırla
     teklifIdInput.value = teklif.id || '';
@@ -499,7 +505,9 @@ function teklifFormunuDoldur(teklif) {
     teklifMusteriIletisimInput.value = ''; // Önce temizle
     
     if (teklifMusteriSecimi && teklif.musteriId) {
-        teklifMusteriSecimi.value = teklif.musteriId;
+        console.log(`[TeklifYonetimi] Müşteri atanıyor. teklif.musteriId: ${teklif.musteriId} (tip: ${typeof teklif.musteriId})`);
+        teklifMusteriSecimi.value = String(teklif.musteriId);
+        console.log(`[TeklifYonetimi] Müşteri atandıktan sonra teklifMusteriSecimi.value: ${teklifMusteriSecimi.value}`);
         // Müşteri seçildiğinde otomatik dolan alanlar için 'change' event'ini tetikle
         // Bu, musteriAdi ve musteriIletisim'i dolduracaktır.
         const event = new Event('change');
@@ -570,24 +578,18 @@ function teklifFormunuDoldur(teklif) {
 }
 
 function renderTekliflerTablosu(teklifler) {
-    console.log(`[TeklifYonetimi] renderTekliflerTablosu çağrıldı. Alınan teklifler:`, JSON.parse(JSON.stringify(teklifler)));
     const tableBody = document.querySelector('#teklifListesiTablosu tbody');
-    console.log(`[TeklifYonetimi] renderTekliflerTablosu içinde tableBody bulundu mu? ${tableBody ? 'Evet' : 'Hayır'}`);
 
     if (!tableBody) {
-        console.warn('[TeklifYonetimi] #teklifListesiTablosu tbody not found for rendering teklifler. Fonksiyon sonlandırılıyor.');
         return;
     }
     tableBody.innerHTML = ''; // Tabloyu temizle
     if (!teklifler || teklifler.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Gösterilecek teklif bulunamadı.</td></tr>';
-        console.warn('[TeklifYonetimi] renderTekliflerTablosu: Gösterilecek teklif bulunamadı veya teklifler dizisi boş.');
         return;
     }
 
-    console.log(`[TeklifYonetimi] renderTekliflerTablosu: ${teklifler.length} adet teklif render edilecek.`);
     teklifler.forEach((teklif, index) => {
-        console.log(`[TeklifYonetimi] renderTekliflerTablosu: Teklif ${index + 1} işleniyor:`, JSON.parse(JSON.stringify(teklif)));
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${teklif.teklifNo || '-'}</td>
@@ -609,7 +611,6 @@ function renderTekliflerTablosu(teklifler) {
 
 // Store Değişikliklerine Abone Ol
 subscribe('tekliflerChanged', (guncelTeklifler) => {
-    console.log(`[TeklifYonetimi] 'tekliflerChanged' olayı alındı. Güncel teklifler:`, JSON.parse(JSON.stringify(guncelTeklifler)));
     renderTekliflerTablosu(guncelTeklifler);
 });
 
