@@ -406,7 +406,24 @@ function teklifFormunuDoldur(teklif) {
     formuTemizle(); 
     teklifIdInput.value = teklif.id;
     teklifNoInput.value = teklif.teklifNo || '';
-    teklifMusteriAdiInput.value = teklif.musteriAdi || '';
+
+    // Müşteri ID ve Adı için loglama ve atama
+    console.log('[teklifFormunuDoldur] Gelen teklif objesi:', teklif);
+    console.log(`[teklifFormunuDoldur] Gelen teklif.musteri_id: ${teklif.musteri_id} (Type: ${typeof teklif.musteri_id})`);
+    console.log(`[teklifFormunuDoldur] Gelen teklif.musteriAdi (API'den gelen): ${teklif.musteriAdi} (Type: ${typeof teklif.musteriAdi})`);
+    
+    if (teklifMusteriSecimi && teklif.musteri_id !== undefined && teklif.musteri_id !== null) {
+        teklifMusteriSecimi.value = teklif.musteri_id; // API'den gelen musteri_id (INT) ile eşleşmeli
+        console.log(`[teklifFormunuDoldur] teklifMusteriSecimi.value AYARLANDI ŞU ŞEKİLDE: ${teklifMusteriSecimi.value}`);
+        if (String(teklifMusteriSecimi.value) !== String(teklif.musteri_id)) {
+            console.warn(`[teklifFormunuDoldur] Müşteri seçimi dropdown'da EŞLEŞMEDİ! Beklenen ID: ${teklif.musteri_id}, Dropdown'daki değer: ${teklifMusteriSecimi.value}`);
+        }
+    } else {
+        console.warn('[teklifFormunuDoldur] teklifMusteriSecimi elementi bulunamadı veya teklif.musteri_id tanımsız.');
+    }
+    teklifMusteriAdiInput.value = teklif.musteriAdi || ''; 
+    console.log(`[teklifFormunuDoldur] teklifMusteriAdiInput.value AYARLANDI ŞU ŞEKİLDE: ${teklifMusteriAdiInput.value}`);
+
     teklifMusteriIletisimInput.value = teklif.musteriIletisim || '';
     teklifTarihiInput.value = teklif.teklifTarihi ? teklif.teklifTarihi.split('T')[0] : '';
     teklifGecerlilikTarihiInput.value = teklif.gecerlilikTarihi ? teklif.gecerlilikTarihi.split('T')[0] : '';
@@ -414,7 +431,11 @@ function teklifFormunuDoldur(teklif) {
     if (teklifIndirimOraniInput) teklifIndirimOraniInput.value = teklif.indirimOrani !== undefined ? teklif.indirimOrani : 0;
     if (teklifKdvOraniInput) teklifKdvOraniInput.value = teklif.kdvOrani !== undefined ? teklif.kdvOrani : 20;
 
+    // Para Birimi için loglama ve atama
+    console.log(`[teklifFormunuDoldur] Gelen teklif.paraBirimi: ${teklif.paraBirimi} (Type: ${typeof teklif.paraBirimi})`);
     teklifParaBirimiInput.value = teklif.paraBirimi || 'TL';
+    console.log(`[teklifFormunuDoldur] teklifParaBirimiInput.value AYARLANDI ŞU ŞEKİLDE: ${teklifParaBirimiInput.value}`);
+
     teklifDurumInput.value = teklif.durum || 'Hazırlanıyor';
     teklifNotlarInput.value = teklif.notlar || '';
 
@@ -472,6 +493,10 @@ function renderTekliflerTablosu(teklifler) {
     }
 
     teklifler.forEach(teklif => {
+        // Para Birimi için loglama (tablo render edilirken)
+        if (teklif.teklifNo && teklif.teklifNo.includes('TEST')) { 
+             console.log(`[renderTekliflerTablosu] Test Teklifi (${teklif.teklifNo}) için teklif.paraBirimi: ${teklif.paraBirimi} (Type: ${typeof teklif.paraBirimi})`);
+        }
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${teklif.teklifNo || '-'}</td>
