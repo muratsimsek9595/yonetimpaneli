@@ -41,7 +41,6 @@ const teklifParaBirimiInput = document.getElementById('teklifParaBirimiInput');
 const teklifDurumInput = document.getElementById('teklifDurumInput');
 const teklifNotlarInput = document.getElementById('teklifNotlarInput');
 const teklifFormTemizleButton = document.getElementById('teklifFormTemizleButton');
-const teklifListesiTablosuBody = document.querySelector('#teklifListesiTablosu tbody');
 
 // İşçilikle ilgili DOM Elementleri (Yeni Eklendi)
 const teklifIscilikListesiContainer = document.getElementById('teklifIscilikListesiContainer');
@@ -73,7 +72,7 @@ function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
 }
 
 function initTeklifYonetimi() {
-    renderTekliflerTablosu(getTeklifler());
+    renderTekliflerTabosu(getTeklifler());
     ayarlamaFormVarsayilanlari();
     // Müşteri dropdown'ını sayfa yüklendiğinde doldur (EKLENDİ)
     if (teklifMusteriSecimi) {
@@ -151,47 +150,53 @@ function initTeklifYonetimi() {
         teklifKdvOraniInput.addEventListener('input', genelToplamlariHesapla);
     }
 
-    teklifListesiTablosuBody.addEventListener('click', async (event) => {
-        const target = event.target;
-        const teklifId = target.dataset.id;
+    const tableBodyForEvents = document.querySelector('#teklifListesiTablosu tbody');
+    if (tableBodyForEvents) {
+        tableBodyForEvents.addEventListener('click', async (event) => {
+            const target = event.target;
+            const teklifRow = target.closest('tr');
+            const teklifId = target.dataset.id || target.closest('[data-id]')?.dataset.id;
 
-        if (target.classList.contains('edit-teklif-btn')) {
-            if (!teklifId) return;
-            const teklif = getTeklifById(teklifId);
-            if (teklif) {
-                teklifFormunuDoldur(teklif);
-                showToast('Teklif bilgileri forma yüklendi.', 'info');
-            } else {
-                globalHataYakala(new Error('Düzenlenecek teklif bulunamadı.'), 'Teklif düzenleme');
-            }
-        } else if (target.classList.contains('delete-teklif-btn')) {
-            if (!teklifId) return;
-            const teklif = getTeklifById(teklifId);
-            if (confirm(`'${teklif?.teklifNo || teklifId}' numaralı teklifi silmek istediğinize emin misiniz?`)) {
-                try {
-                    await deleteTeklifAPI(teklifId);
-                    removeTeklifByIdFromStore(teklifId);
-                    showToast('Teklif başarıyla silindi.', 'success');
-                    formuTemizle(); // Eğer silinen teklif formda açıksa formu temizle
-                } catch (error) {
-                    globalHataYakala(error, 'Teklif silinirken bir sorun oluştu.');
+            if (target.classList.contains('edit-teklif-btn') || target.closest('.edit-teklif-btn')) {
+                if (!teklifId) return;
+                const teklif = getTeklifById(teklifId);
+                if (teklif) {
+                    teklifFormunuDoldur(teklif);
+                    showToast('Teklif bilgileri forma yüklendi.', 'info');
+                } else {
+                    globalHataYakala(new Error('Düzenlenecek teklif bulunamadı.'), 'Teklif düzenleme');
+                }
+            } else if (target.classList.contains('delete-teklif-btn')) {
+                if (!teklifId) return;
+                const teklif = getTeklifById(teklifId);
+                if (confirm(`'${teklif?.teklifNo || teklifId}' numaralı teklifi silmek istediğinize emin misiniz?`)) {
+                    try {
+                        await deleteTeklifAPI(teklifId);
+                        removeTeklifByIdFromStore(teklifId);
+                        showToast('Teklif başarıyla silindi.', 'success');
+                        formuTemizle(); // Eğer silinen teklif formda açıksa formu temizle
+                    } catch (error) {
+                        globalHataYakala(error, 'Teklif silinirken bir sorun oluştu.');
+                    }
+                }
+            } else if (target.classList.contains('view-teklif-btn')) {
+                if (!teklifId) return;
+                const teklif = getTeklifById(teklifId);
+                if (teklif) {
+                    // Şimdilik alert ile gösterelim, daha sonra modal veya detay sayfası eklenebilir.
+                    let teklifDetaylari = `Teklif No: ${teklif.teklifNo}\nMüşteri: ${teklif.musteriAdi}\nTarih: ${new Date(teklif.teklifTarihi).toLocaleDateString('tr-TR')}\nToplam: ${(parseFloat(teklif.genelToplamSatis) || 0).toFixed(2)} ${teklif.paraBirimi}\nDurum: ${teklif.durum}\n\nÜrünler:\n`;
+                    teklif.urunler.forEach(u => {
+                        teklifDetaylari += `- ${u.malzemeAdi}: ${u.miktar} ${u.birim} x ${u.birimFiyat.toFixed(2)} = ${u.satirToplami.toFixed(2)}\n`;
+                    });
+                    alert(teklifDetaylari);
+                } else {
+                    globalHataYakala(new Error('Görüntülenecek teklif bulunamadı.'), 'Teklif görüntüleme');
                 }
             }
-        } else if (target.classList.contains('view-teklif-btn')) {
-            if (!teklifId) return;
-            const teklif = getTeklifById(teklifId);
-            if (teklif) {
-                // Şimdilik alert ile gösterelim, daha sonra modal veya detay sayfası eklenebilir.
-                let teklifDetaylari = `Teklif No: ${teklif.teklifNo}\nMüşteri: ${teklif.musteriAdi}\nTarih: ${new Date(teklif.teklifTarihi).toLocaleDateString('tr-TR')}\nToplam: ${(parseFloat(teklif.genelToplamSatis) || 0).toFixed(2)} ${teklif.paraBirimi}\nDurum: ${teklif.durum}\n\nÜrünler:\n`;
-                teklif.urunler.forEach(u => {
-                    teklifDetaylari += `- ${u.malzemeAdi}: ${u.miktar} ${u.birim} x ${u.birimFiyat.toFixed(2)} = ${u.satirToplami.toFixed(2)}\n`;
-                });
-                alert(teklifDetaylari);
-            } else {
-                globalHataYakala(new Error('Görüntülenecek teklif bulunamadı.'), 'Teklif görüntüleme');
-            }
-        }
-    });
+        });
+    } else {
+        console.warn('#teklifListesiTablosu tbody element not found for attaching event listeners.');
+    }
     
     // Başlangıçta birer adet boş ürün ve işçilik satırı ekle (EKLENDİ)
     // Bu çağrılar ayarlamaFormVarsayilanlari içinde yapılıyor, burada tekrar gerek yok.
@@ -201,9 +206,6 @@ function initTeklifYonetimi() {
     // ayarlamaFormVarsayilanlari içinde ilk satırlar ekleniyor.
     // O satırlardaki dropdown'ları mevcut işçi listesiyle doldurmayı dene.
     guncelleTeklifIsciDropdownlarini();
-
-    // İşçi listesi store'da değiştiğinde tüm dropdown'ları güncelle.
-    subscribe('iscilerChanged', guncelleTeklifIsciDropdownlarini);
 
     genelToplamlariHesapla(); // Başlangıç toplamlarını hesapla
 }
@@ -548,17 +550,22 @@ function teklifFormunuDoldur(teklif) {
     if(teklifNoInput) teklifNoInput.focus();
 }
 
-function renderTekliflerTablosu(teklifler) {
-    teklifListesiTablosuBody.innerHTML = ''; // Tabloyu temizle
+function renderTekliflerTabosu(teklifler) {
+    const tableBody = document.querySelector('#teklifListesiTablosu tbody');
+    if (!tableBody) {
+        console.warn('#teklifListesiTablosu tbody not found for rendering teklifler.');
+        return;
+    }
+    tableBody.innerHTML = ''; // Tabloyu temizle
     if (!teklifler || teklifler.length === 0) {
-        teklifListesiTablosuBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Gösterilecek teklif bulunamadı.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Gösterilecek teklif bulunamadı.</td></tr>';
         return;
     }
 
     teklifler.forEach(teklif => {
         // Para Birimi için loglama (tablo render edilirken)
         if (teklif.teklifNo && teklif.teklifNo.includes('TEST')) { 
-             console.log(`[renderTekliflerTablosu] Test Teklifi (${teklif.teklifNo}) için teklif.paraBirimi: ${teklif.paraBirimi} (Type: ${typeof teklif.paraBirimi})`);
+             console.log(`[renderTekliflerTabosu] Test Teklifi (${teklif.teklifNo}) için teklif.paraBirimi: ${teklif.paraBirimi} (Type: ${typeof teklif.paraBirimi})`);
         }
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -575,13 +582,13 @@ function renderTekliflerTablosu(teklifler) {
                 <button class="btn-icon delete-teklif-btn" data-id="${teklif.id}" title="Sil">🗑️</button>
             </td>
         `;
-        teklifListesiTablosuBody.appendChild(tr);
+        tableBody.appendChild(tr);
     });
 }
 
 // Store Değişikliklerine Abone Ol
 subscribe('tekliflerChanged', (guncelTeklifler) => {
-    renderTekliflerTablosu(guncelTeklifler);
+    renderTekliflerTabosu(guncelTeklifler);
 });
 
 subscribe('urunlerChanged', (guncelUrunler) => {
@@ -601,8 +608,13 @@ subscribe('musterilerChanged', (guncelMusteriler) => {
     if (teklifMusteriSecimi) { // Elementin var olduğundan emin ol
         populeEtMusteriDropdown(guncelMusteriler, teklifMusteriSecimi, "-- Müşteri Seçiniz --", false);
     } else {
-        console.error("teklifMusteriSecimi dropdown elementi bulunamadı.");
+        // console.error("teklifMusteriSecimi dropdown elementi bulunamadı."); // Bu logu şimdilik kapatalım, çok sık gelebilir.
     }
+});
+
+// iscilerChanged aboneliği initTeklifYonetimi dışına, modül seviyesine taşındı.
+subscribe('iscilerChanged', (iscilerListesi) => {
+    guncelleTeklifIsciDropdownlarini(iscilerListesi);
 });
 
 // Modül başlangıç fonksiyonunu çağır
@@ -766,4 +778,4 @@ function iscilikSatiriHesapla(satirId) {
 
 // --- İŞÇİLİK SATIRI FONKSİYONLARI SONU ---
 
-export { initTeklifYonetimi, renderTekliflerTablosu, formuTemizle as temizleTeklifFormu }; 
+export { initTeklifYonetimi, renderTekliflerTabosu, formuTemizle as temizleTeklifFormu }; 
