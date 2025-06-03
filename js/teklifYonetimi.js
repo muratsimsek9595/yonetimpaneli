@@ -73,7 +73,7 @@ function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
 
 function initTeklifYonetimi() {
     renderTekliflerTablosu(getTeklifler());
-    ayarlamaFormVarsayilanlari();
+    formuTemizle();
     // Müşteri dropdown'ını sayfa yüklendiğinde doldur (EKLENDİ)
     if (teklifMusteriSecimi) {
         populeEtMusteriDropdown(getMusteriler(), teklifMusteriSecimi, "-- Müşteri Seçiniz --", false);
@@ -221,8 +221,6 @@ function ayarlamaFormVarsayilanlari() {
     teklifParaBirimiInput.value = 'TL';
     teklifDurumInput.value = 'Hazırlanıyor';
     // sonrakiTeklifNumarasiniOner(); // Bu fonksiyon silindi, gerekirse tekrar eklenebilir
-    if (teklifIscilikListesiContainer) teklifIscilikListesiContainer.innerHTML = ''; // İşçilikleri de temizle
-    iscilikSatirSayaci = 0; // İşçilik sayacını sıfırla
     
     // Form sıfırlandığında veya ilk açıldığında boş satırları ekle
     yeniUrunSatiriEkle();
