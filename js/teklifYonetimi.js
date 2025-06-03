@@ -783,6 +783,12 @@ function teklifFormundanVeriAl() {
         urunler: kalemler // Kalemler dizisi buraya eklendi
     };
     
+    // Backend'in beklediği alan adlarıyla eşleştirme yap
+    anaVeri.araToplam = anaVeri.anaTeklifTutari_KdvHaricIndirimsiz;
+    anaVeri.indirimTutari = anaVeri.hesaplanan_indirimTutari;
+    anaVeri.kdvTutari = anaVeri.hesaplanan_teklifSunulanKdvTutari; // Müşteriye sunulan teklifin KDV tutarı
+    anaVeri.genelToplamSatis = anaVeri.hesaplanan_genelToplamKdvDahilMusteriye; // Müşteriye sunulan KDV dahil genel toplam
+    
     console.log("[TeklifYonetimi] API'ye gönderilecek teklif verisi:", JSON.parse(JSON.stringify(anaVeri)));
     return anaVeri;
 }
