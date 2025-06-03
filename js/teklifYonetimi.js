@@ -77,6 +77,9 @@ let iscilikSatirSayaci = 0;
 // Flag to ensure event listeners are attached only once
 let teklifYonetimiListenersAttached = false;
 
+// Flag to ensure initial TeklifNo is set correctly after store loads
+let initialTeklifNoSetFromFullStore = false;
+
 // Helper function to format date as YYYYMMDD
 function formatDateForTeklifNo(date) {
     const year = date.getFullYear();
@@ -896,6 +899,21 @@ function renderTekliflerTablosu(teklifler) {
 // Store Değişikliklerine Abone Ol
 subscribe('tekliflerChanged', (guncelTeklifler) => {
     renderTekliflerTablosu(guncelTeklifler);
+
+    // Additional logic for initial TeklifNo generation/validation
+    // Only run if form is for a new teklif (no ID) and we haven't done this specific initial setting yet.
+    if (!initialTeklifNoSetFromFullStore && teklifIdInput && !teklifIdInput.value && teklifNoInput) {
+        console.log('Teklifler changed (store updated), re-evaluating initial Teklif No for new form.');
+        const yeniTeklifNo = generateNewTeklifNo(); // generateNewTeklifNo will use getTeklifler() which should now be fresh
+
+        if (teklifNoInput.value !== yeniTeklifNo) {
+            console.log(`Updating initial Teklif No from '${teklifNoInput.value}' to '${yeniTeklifNo}' based on loaded store data.`);
+            teklifNoInput.value = yeniTeklifNo;
+        } else {
+            console.log(`Initial Teklif No '${teklifNoInput.value}' is still valid after store update.`);
+        }
+        initialTeklifNoSetFromFullStore = true; 
+    }
 });
 
 subscribe('urunlerChanged', (guncelUrunler) => {
