@@ -564,7 +564,7 @@ function genelToplamlariHesapla() {
     // 0. Genel Ayarları Oku
     const kdvOraniAyarlar = parseFloat(teklifKdvOraniInputAyarlar?.value) || 0;
     const indirimOraniAyarlar = parseFloat(teklifIndirimOraniInputAyarlar?.value) || 0;
-    const teklifTutariAyarlarStr = teklifTutariInputAyarlar?.value.trim() || '0';
+    const teklifTutariAyarlarStr = teklifTutariInputAyarlar?.value.trim().replace(/,/g, '') || '0'; // Virgül temizleme eklendi
     const anaTeklifTutariKdvHaricIndirimsiz = parseFloat(teklifTutariAyarlarStr) || 0;
 
     // 1. Toplam Malzeme Maliyeti (KDV Hariç)
@@ -754,7 +754,7 @@ function teklifFormundanVeriAl() {
         notlar: teklifNotlarInput.value.trim(),
         
         // TEKLİF AYARLARI (INPUTLARDAN)
-        anaTeklifTutari_KdvHaricIndirimsiz: parseFloat(teklifTutariInputAyarlar.value) || 0,
+        anaTeklifTutari_KdvHaricIndirimsiz: parseFloat(teklifTutariInputAyarlar.value.replace(/,/g, '')) || 0, // Virgül temizleme eklendi
         indirimOrani: parseFloat(teklifIndirimOraniInputAyarlar.value) || 0,
         kdvOrani: parseFloat(teklifKdvOraniInputAyarlar.value) || 0,
 
