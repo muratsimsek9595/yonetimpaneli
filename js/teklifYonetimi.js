@@ -235,7 +235,6 @@ function initTeklifYonetimi() {
                     const teklif = getTeklifById(teklifId);
                     if (teklif) {
                         teklifFormunuDoldur(teklif);
-                        showToast('Teklif bilgileri forma yüklendi.', 'info');
                     } else {
                         globalHataYakala(new Error('Düzenlenecek teklif bulunamadı.'), 'Teklif düzenleme');
                     }
