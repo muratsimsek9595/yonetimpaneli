@@ -828,7 +828,10 @@ function teklifFormunuDoldur(teklif) {
     console.log(`  - kdvOrani: ${teklif.kdvOrani}`);
 
     if(teklifTutariInputAyarlar) {
-        teklifTutariInputAyarlar.value = typeof teklif.anaTeklifTutari_KdvHaricIndirimsiz !== 'undefined' ? parseFloat(teklif.anaTeklifTutari_KdvHaricIndirimsiz).toFixed(2) : '0.00';
+        const tutarDegeri = typeof teklif.anaTeklifTutari_KdvHaricIndirimsiz !== 'undefined' 
+                            ? teklif.anaTeklifTutari_KdvHaricIndirimsiz 
+                            : (typeof teklif.araToplamSatis !== 'undefined' ? teklif.araToplamSatis : '0.00');
+        teklifTutariInputAyarlar.value = parseFloat(tutarDegeri).toFixed(2);
     }
     if(teklifIndirimOraniInputAyarlar) {
         teklifIndirimOraniInputAyarlar.value = typeof teklif.indirimOrani !== 'undefined' ? teklif.indirimOrani : 0;
