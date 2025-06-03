@@ -561,7 +561,7 @@ function genelToplamlariHesapla() {
     const kdvOraniAyarlar = parseFloat(teklifKdvOraniInputAyarlar?.value) || 0;
     const indirimOraniAyarlar = parseFloat(teklifIndirimOraniInputAyarlar?.value) || 0;
     const teklifTutariAyarlarStr = teklifTutariInputAyarlar?.value.trim() || '0';
-    const anaTeklifTutariKdvHaricIndirimsiz = parseFloat(teklifTutariAyarlarStr.replace(/,/g, '')) || 0;
+    const anaTeklifTutariKdvHaricIndirimsiz = parseFloat(teklifTutariAyarlarStr) || 0;
 
     // 1. Toplam Malzeme Maliyeti (KDV Hariç)
     let toplamMalzemeMaliyetiKdvHaric = 0;
@@ -750,35 +750,35 @@ function teklifFormundanVeriAl() {
         notlar: teklifNotlarInput.value.trim(),
         
         // TEKLİF AYARLARI (INPUTLARDAN)
-        anaTeklifTutari_KdvHaricIndirimsiz: parseFloat(teklifTutariInputAyarlar.value.replace(/,/g, '')) || 0,
+        anaTeklifTutari_KdvHaricIndirimsiz: parseFloat(teklifTutariInputAyarlar.value) || 0,
         indirimOrani: parseFloat(teklifIndirimOraniInputAyarlar.value) || 0,
         kdvOrani: parseFloat(teklifKdvOraniInputAyarlar.value) || 0,
 
         // HESAPLANAN MALİYET TOPLAMLARI
-        hesaplanan_toplamMalzemeMaliyetiKdvHaric: parseFloat(teklifToplamMalzemeMaliyetiKdvHaricSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_toplamIscilikMaliyetiKdvHaric: parseFloat(teklifToplamIscilikMaliyetiKdvHaricSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_toplamProjeMaliyetiKdvHaric: parseFloat(teklifToplamProjeMaliyetiKdvHaricSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_projeMaliyetiKdvTutari: parseFloat(teklifProjeMaliyetiKdvTutariSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_toplamProjeMaliyetiKdvDahil: parseFloat(teklifToplamProjeMaliyetiKdvDahilSpan?.textContent.replace(/,/g, '')) || 0,
+        hesaplanan_toplamMalzemeMaliyetiKdvHaric: parseFloat(teklifToplamMalzemeMaliyetiKdvHaricSpan?.textContent) || 0,
+        hesaplanan_toplamIscilikMaliyetiKdvHaric: parseFloat(teklifToplamIscilikMaliyetiKdvHaricSpan?.textContent) || 0,
+        hesaplanan_toplamProjeMaliyetiKdvHaric: parseFloat(teklifToplamProjeMaliyetiKdvHaricSpan?.textContent) || 0,
+        hesaplanan_projeMaliyetiKdvTutari: parseFloat(teklifProjeMaliyetiKdvTutariSpan?.textContent) || 0,
+        hesaplanan_toplamProjeMaliyetiKdvDahil: parseFloat(teklifToplamProjeMaliyetiKdvDahilSpan?.textContent) || 0,
 
         // HESAPLANAN TEKLİF ve KÂR TUTARLARI
-        hesaplanan_indirimTutari: parseFloat(teklifIndirimTutariYeniSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_teklifTutariKdvHaricIndirimli: parseFloat(teklifTutariKdvHaricIndirimliSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_netKarVergisiz: parseFloat(teklifNetKarVergisizSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_gelirVergisi: parseFloat(teklifGelirVergisiSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_netKarVergilerSonrasi: parseFloat(teklifNetKarVergilerSonrasiSpan?.textContent.replace(/,/g, '')) || 0,
+        hesaplanan_indirimTutari: parseFloat(teklifIndirimTutariYeniSpan?.textContent) || 0,
+        hesaplanan_teklifTutariKdvHaricIndirimli: parseFloat(teklifTutariKdvHaricIndirimliSpan?.textContent) || 0,
+        hesaplanan_netKarVergisiz: parseFloat(teklifNetKarVergisizSpan?.textContent) || 0,
+        hesaplanan_gelirVergisi: parseFloat(teklifGelirVergisiSpan?.textContent) || 0,
+        hesaplanan_netKarVergilerSonrasi: parseFloat(teklifNetKarVergilerSonrasiSpan?.textContent) || 0,
 
         // HESAPLANAN MÜŞTERİYE SUNULAN TEKLİF TUTARLARI
-        hesaplanan_teklifSunulanKdvTutari: parseFloat(teklifSunulanKdvTutariSpan?.textContent.replace(/,/g, '')) || 0,
-        hesaplanan_genelToplamKdvDahilMusteriye: parseFloat(teklifGenelToplamKdvDahilMusteriyeSpan?.textContent.replace(/,/g, '')) || 0,
+        hesaplanan_teklifSunulanKdvTutari: parseFloat(teklifSunulanKdvTutariSpan?.textContent) || 0,
+        hesaplanan_genelToplamKdvDahilMusteriye: parseFloat(teklifGenelToplamKdvDahilMusteriyeSpan?.textContent) || 0,
 
         // Eski Toplamlar (Backend uyumluluğu için gerekirse veya temizlenecekse)
-        // araToplamSatis: parseFloat(teklifAraToplamSpan?.textContent.replace(/,/g, '')) || 0, 
-        // indirimTutari: parseFloat(teklifIndirimTutariSpan?.textContent.replace(/,/g, '')) || 0,
-        // kdvTutari: parseFloat(teklifKdvTutariSpan?.textContent.replace(/,/g, '')) || 0,
-        // genelToplamSatis: parseFloat(teklifGenelToplamSpan?.textContent.replace(/,/g, '')) || 0,
-        // toplamMaliyet: parseFloat(teklifToplamMaliyetSpan?.textContent.replace(/,/g, '')) || 0, 
-        // toplamKar: parseFloat(teklifToplamKarSpan?.textContent.replace(/,/g, '')) || 0,
+        // araToplamSatis: parseFloat(teklifAraToplamSpan?.textContent) || 0, 
+        // indirimTutari: parseFloat(teklifIndirimTutariSpan?.textContent) || 0,
+        // kdvTutari: parseFloat(teklifKdvTutariSpan?.textContent) || 0,
+        // genelToplamSatis: parseFloat(teklifGenelToplamSpan?.textContent) || 0,
+        // toplamMaliyet: parseFloat(teklifToplamMaliyetSpan?.textContent) || 0, 
+        // toplamKar: parseFloat(teklifToplamKarSpan?.textContent) || 0,
 
         urunler: kalemler // Kalemler dizisi buraya eklendi
     };
