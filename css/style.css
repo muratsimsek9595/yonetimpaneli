@@ -996,7 +996,9 @@ form button[type="button"]:hover {
 
 /* Buton Stilleri */
 #musteriListesiTablosu .btn-edit,
-#musteriListesiTablosu .btn-delete {
+#musteriListesiTablosu .btn-delete,
+#isciListesiTablosu .isci-edit-btn, 
+#isciListesiTablosu .isci-delete-btn {
     padding: 6px 12px;
     border: none;
     border-radius: 4px;
@@ -1006,26 +1008,32 @@ form button[type="button"]:hover {
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-#musteriListesiTablosu .btn-edit {
+#musteriListesiTablosu .btn-edit,
+#isciListesiTablosu .isci-edit-btn {
     background-color: #007bff; /* Mavi - Düzenle */
     color: white;
 }
 
-#musteriListesiTablosu .btn-edit:hover {
+#musteriListesiTablosu .btn-edit:hover,
+#isciListesiTablosu .isci-edit-btn:hover {
     background-color: #0056b3;
 }
 
-#musteriListesiTablosu .btn-delete {
+#musteriListesiTablosu .btn-delete,
+#isciListesiTablosu .isci-delete-btn {
     background-color: #dc3545; /* Kırmızı - Sil (Hedef tasarımdaki gibi) */
     color: white;
 }
 
-#musteriListesiTablosu .btn-delete:hover {
+#musteriListesiTablosu .btn-delete:hover,
+#isciListesiTablosu .isci-delete-btn:hover {
     background-color: #c82333;
 }
 
 #musteriListesiTablosu .btn-edit:active,
-#musteriListesiTablosu .btn-delete:active {
+#musteriListesiTablosu .btn-delete:active,
+#isciListesiTablosu .isci-edit-btn:active, 
+#isciListesiTablosu .isci-delete-btn:active {
     transform: scale(0.98);
 }
 
