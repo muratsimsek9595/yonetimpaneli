@@ -62,7 +62,7 @@ import {
     cizVeyaGuncelleFiyatGrafigi
 } from './grafik.js';
 import { globalHataYakala } from './hataYonetimi.js';
-import { initTeklifYonetimi } from './teklifYonetimi.js';
+import { initTeklifYonetimi } from './teklifYonetimi.js?v=1.0';
 import { initTeklifListeleme } from './teklifListeleme.js';
 import { initMusteriYonetimi } from './musteriYonetimi.js';
 import { initMusteriListeleme } from './musteriListeleme.js';
