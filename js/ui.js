@@ -332,46 +332,55 @@ export function guncelleIscilerTablosu(iscilerListesi, tabloBodyElementi) {
     } else {
         iscilerListesi.forEach(isci => {
             const tr = document.createElement('tr');
-            tr.dataset.isciId = isci.id; // Satıra da ID ekleyelim belki lazım olur
+            tr.dataset.isciId = isci.id;
 
-            // Aktiflik durumunu daha okunabilir yapalım
-            const aktifDurumu = isci.aktif ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-danger">Pasif</span>';
-            
-            // Tarih formatlama
-            let iseBaslamaFormatted = '-';
-            if (isci.iseBaslamaTarihi) {
-                try {
-                    const date = new Date(isci.iseBaslamaTarihi);
-                    // Tarih geçerli mi kontrolü
-                    if (!isNaN(date.getTime())) {
-                        iseBaslamaFormatted = date.toLocaleDateString('tr-TR');
-                    } else {
-                        // console.warn(\`Geçersiz tarih formatı: \${isci.iseBaslamaTarihi}\`);
-                        // Gelen format YYYY-MM-DD ise ve toLocaleDateString bunu yanlış parse ediyorsa
-                        // manuel parse etmeyi deneyebiliriz. Ancak API'den zaten doğru formatta gelmeli.
-                        // Şimdilik, eğer parse edilemezse orijinal string'i veya '-' gösterelim.
-                        iseBaslamaFormatted = isci.iseBaslamaTarihi || '-';
-                    }
-                } catch (e) {
-                    // console.warn(\`Tarih formatlama hatası: \${isci.iseBaslamaTarihi}\`, e);
-                    iseBaslamaFormatted = isci.iseBaslamaTarihi || '-';
-                }
-            }
+            // HTML'deki th sırasına göre td'leri oluşturuyoruz:
+            // API'den gelen camelCase alan adlarını kullanacağız.
 
-            tr.innerHTML = `
-                <td>${isci.adSoyad || '-'}</td>
-                <td>${isci.pozisyon || '-'}</td>
-                <td>${isci.gunlukUcret !== null && isci.gunlukUcret !== undefined ? parseFloat(isci.gunlukUcret).toFixed(2) : '-'} ${isci.paraBirimi || ''}</td>
-                <td>${isci.saatlikUcret !== null && isci.saatlikUcret !== undefined ? parseFloat(isci.saatlikUcret).toFixed(2) : '-'} ${isci.paraBirimi || ''}</td>
-                <td>${iseBaslamaFormatted}</td>
-                <td>${aktifDurumu}</td>
-                <td>${isci.telefon || '-'}</td>
-                <td>${isci.email || '-'}</td>
-                <td class="actions">
-                    <button class="btn btn-sm btn-info edit-isci-btn" data-id="${isci.id}" title="Düzenle"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-danger delete-isci-btn" data-id="${isci.id}" title="Sil"><i class="fas fa-trash"></i></button>
-                </td>
+            // 1. ID
+            const tdId = document.createElement('td');
+            tdId.textContent = isci.id || '-';
+            tr.appendChild(tdId);
+
+            // 2. Ad Soyad
+            const tdAdSoyad = document.createElement('td');
+            tdAdSoyad.textContent = isci.adSoyad || '-';
+            tr.appendChild(tdAdSoyad);
+
+            // 3. Pozisyon
+            const tdPozisyon = document.createElement('td');
+            tdPozisyon.textContent = isci.pozisyon || '-';
+            tr.appendChild(tdPozisyon);
+
+            // 4. Günlük Ücret
+            const tdGunlukUcret = document.createElement('td');
+            tdGunlukUcret.textContent = isci.gunlukUcret ? parseFloat(isci.gunlukUcret).toFixed(2) : '-';
+            tr.appendChild(tdGunlukUcret);
+
+            // 5. Para Birimi
+            const tdParaBirimi = document.createElement('td');
+            tdParaBirimi.textContent = isci.paraBirimi || '-';
+            tr.appendChild(tdParaBirimi);
+
+            // 6. Aktif
+            const tdAktif = document.createElement('td');
+            tdAktif.textContent = isci.aktif ? 'Aktif' : 'Pasif';
+            tr.appendChild(tdAktif);
+
+            // 7. İşe Başlama Tarihi
+            const tdIseBaslama = document.createElement('td');
+            tdIseBaslama.textContent = isci.iseBaslamaTarihi ? new Date(isci.iseBaslamaTarihi).toLocaleDateString('tr-TR') : '-';
+            tr.appendChild(tdIseBaslama);
+
+            // 8. İşlemler
+            const tdActions = document.createElement('td');
+            tdActions.classList.add('actions');
+            tdActions.innerHTML = `
+                <button class="btn-edit isci-edit-btn" data-id="${isci.id}">Düzenle</button>
+                <button class="btn-delete isci-delete-btn" data-id="${isci.id}">Sil</button>
             `;
+            tr.appendChild(tdActions);
+            
             tabloBodyElementi.appendChild(tr);
         });
     }
