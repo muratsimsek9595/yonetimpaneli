@@ -349,11 +349,22 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
     }).join('');
 
     // urunVerisi'nden gelen birimMaliyet ve fiyatTuruMaliyet'i kullan
-    const birimMaliyetValue = (urunVerisi && urunVerisi.kaydedilen_birim_maliyet_kdv_durumuna_gore !== undefined)
-        ? (parseFloat(urunVerisi.kaydedilen_birim_maliyet_kdv_durumuna_gore) || 0).toFixed(2)
-        : '0.00'; 
-    
-    const fiyatTuruMaliyetSelected = (urunVerisi && urunVerisi.fiyatTuruMaliyet === 'haric') ? 'haric' : 'dahil'; // Varsayılan 'dahil'
+    let birimMaliyetValue = '0.00';
+    let fiyatTuruMaliyetSelected = 'dahil'; // Default KDV Dahil
+
+    if (urunVerisi) {
+        // Use saved cost if available
+        if (urunVerisi.kaydedilen_birim_maliyet !== undefined) {
+            birimMaliyetValue = (parseFloat(urunVerisi.kaydedilen_birim_maliyet) || 0).toFixed(2);
+        }
+        // Set KDV type for cost based on saved data
+        // 'fiyatTuruSatis' from 'kalem' object in teklifFormunuDoldur was 'fiyatTuruMaliyet' when saved
+        if (urunVerisi.fiyatTuruSatis === 'haric') { 
+            fiyatTuruMaliyetSelected = 'haric';
+        } else if (urunVerisi.fiyatTuruSatis === 'dahil') { // Explicitly check for 'dahil' or default to 'dahil'
+            fiyatTuruMaliyetSelected = 'dahil';
+        }
+    }
 
     const miktarValue = (urunVerisi && urunVerisi.miktar) ? urunVerisi.miktar : '1';
     // Satır toplamı başlangıçta boş veya 0.00 olabilir, urunSatiriHesapla'da hesaplanacak
@@ -412,18 +423,21 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
     
     if (urunVerisi && (urunVerisi.id || urunVerisi.urunId)) {
         yeniSelect.value = String(urunVerisi.id || urunVerisi.urunId);
-        // Eğer urunVerisi varsa ve maliyet önerilmediyse (örn. form doldurma), birim maliyeti ve türü zaten yukarıda ayarlandı.
-        // Ancak, eğer yeni satır değil de form doldurma ise, maliyetFiyatiOner'in tekrar çağrılmaması gerekir.
-        // Şimdilik bu ayrımı yapmıyoruz, maliyetFiyatiOner sadece malzeme ID'si varsa çalışır.
+        // For existing data, birimMaliyetValue and fiyatTuruMaliyetSelected are already determined
+        // and used in HTML generation through birimMaliyetValue and fiyatTuruMaliyetSelected variables.
+        // So, directly calculate with loaded values.
+        urunSatiriHesapla(satirId);
     } else {
-        // Yeni boş satır eklendiğinde, eğer bir malzeme seçiliyse (ki normalde olmaz, kullanıcı seçer)
-        // maliyetFiyatiOner'i tetikle.
-        if (yeniSelect.value) {
-             maliyetFiyatiOner(yeniSelect.value, satirId);
+        // This is a new row (no urunVerisi).
+        if (yeniSelect.value && yeniSelect.value !== "") {
+            // If a material is somehow pre-selected in a new row (unlikely for default "-- Malzeme Seçiniz --")
+            maliyetFiyatiOner(yeniSelect.value, satirId); // This will fetch price and then call urunSatiriHesapla
+        } else {
+            // New row, no material selected (or value is empty string), just calculate (will be zeros)
+            urunSatiriHesapla(satirId);
         }
     }
-    
-    urunSatiriHesapla(satirId); 
+    // The urunSatiriHesapla(satirId) call that was here previously is now handled by the conditional logic above.
 }
 
 function maliyetFiyatiOner(urunId, satirId) {
