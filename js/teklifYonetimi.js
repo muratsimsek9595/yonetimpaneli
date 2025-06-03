@@ -213,6 +213,7 @@ function initTeklifYonetimi() {
                                 }
                                 // Diğer sunucu-otoritatif alanlar da benzer şekilde işlenebilir
                             }
+                            console.log('[teklifYonetimi.js] Store\'a GÜNCELLENECEK veri:', JSON.parse(JSON.stringify(dataForStore)));
                             updateTeklifInStore(dataForStore);
                             console.log('Mevcut teklif güncellendi, store güncellendi (form verisi temel alındı):', dataForStore);
                         } else { // Yeni bir teklif ekleniyorsa
@@ -230,6 +231,7 @@ function initTeklifYonetimi() {
                                         dataForStore.created_at = sonuc.data.created_at;
                                     }
                                 }
+                                console.log('[teklifYonetimi.js] Store\'a EKLENECEK veri:', JSON.parse(JSON.stringify(dataForStore)));
                                 addTeklifToStore(dataForStore);
                                 console.log('Yeni teklif store\'a eklendi:', dataForStore);
                             } else {
