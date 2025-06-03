@@ -199,37 +199,41 @@ function initTeklifYonetimi() {
                         const basariMesaji = sonuc.message || (id ? 'Teklif başarıyla güncellendi.' : 'Teklif başarıyla eklendi.');
                         showToast(basariMesaji, 'success');
 
+                        let dataForStore = { ...teklifData }; // Form verisini temel al
+
                         if (id) { // Mevcut bir teklif güncelleniyorsa
+                            // Sunucudan gelen ve öncelikli olması gereken alanları işle (varsa)
                             if (sonuc.data) {
-                                updateTeklifInStore(sonuc.data);
-                            } else {
-                                // API güncel veri dönmediyse, formdaki veri (ID'yi içermeli) ile store'u güncelleyebiliriz.
-                                updateTeklifInStore(teklifData); 
-                                console.warn('Mevcut teklif güncellendi (mesajla onaylandı) ancak API güncel tam veri dönmedi. Formdaki veri ile store güncellendi.');
-                            }
-                        } else { // Yeni bir teklif ekleniyorsa
-                            let eklenecekTeklifVerisiStoreIcin;
-                            if (sonuc.data && sonuc.data.id) {
-                                // İdeal durum: API, yeni teklifin tam verisini (ID dahil) döndürdü.
-                                eklenecekTeklifVerisiStoreIcin = sonuc.data;
-                            } else {
-                                // API tam veri döndürmedi, ancak başarılı bir ekleme mesajı var.
-                                // Sunucudan dönen ID'yi almamız gerekiyor. `teklifData` zaten formdan alınan ve API'ye gönderilen verileri içeriyor.
-                                // API yanıtınızda yeni ID'nin hangi alanda geldiğini kontrol edin (örn: sonuc.id, sonuc.inserted_id, sonuc.kaydedilen_id vb.)
-                                const sunucudanGelenYeniId = sonuc.id || sonuc.inserted_id || sonuc.kaydedilen_id || (sonuc.data ? sonuc.data.id : null); 
-
-                                if (sunucudanGelenYeniId) {
-                                    eklenecekTeklifVerisiStoreIcin = { ...teklifData, id: sunucudanGelenYeniId };
-                                    // Eğer API, kullanılan teklifNo'yu (örneğin sunucuda bir değişiklik olduysa) farklı bir alanda dönüyorsa,
-                                    // eklenecekTeklifVerisiStoreIcin.teklifNo = sonuc.teklifNo; gibi bir güncelleme de gerekebilir.
-                                } else {
-                                    console.warn('Yeni teklif eklendi (mesajla onaylandı) ancak sunucudan bir ID alınamadı. Store güncellenemedi, bu durum teklif no üretimini etkileyebilir.');
+                                if (sonuc.data.teklifNo && sonuc.data.teklifNo !== dataForStore.teklifNo) {
+                                    dataForStore.teklifNo = sonuc.data.teklifNo;
+                                    console.log('Sunucudan gelen teklifNo kullanıldı (güncelleme): ' + sonuc.data.teklifNo);
                                 }
+                                if (sonuc.data.updated_at) { // Örnek: sunucu taraflı zaman damgası
+                                    dataForStore.updated_at = sonuc.data.updated_at;
+                                }
+                                // Diğer sunucu-otoritatif alanlar da benzer şekilde işlenebilir
                             }
+                            updateTeklifInStore(dataForStore);
+                            console.log('Mevcut teklif güncellendi, store güncellendi (form verisi temel alındı):', dataForStore);
+                        } else { // Yeni bir teklif ekleniyorsa
+                            const sunucudanGelenYeniId = sonuc.data?.id || sonuc.id || sonuc.inserted_id || sonuc.kaydedilen_id;
 
-                            if (eklenecekTeklifVerisiStoreIcin) {
-                                addTeklifToStore(eklenecekTeklifVerisiStoreIcin);
-                                console.log('Yeni teklif store\'a eklendi:', eklenecekTeklifVerisiStoreIcin);
+                            if (sunucudanGelenYeniId) {
+                                dataForStore.id = sunucudanGelenYeniId;
+                                // Sunucudan gelen teklifNo ve created_at gibi alanları işle (varsa)
+                                if (sonuc.data) {
+                                    if (sonuc.data.teklifNo) {
+                                        dataForStore.teklifNo = sonuc.data.teklifNo;
+                                        console.log('Sunucudan gelen teklifNo kullanıldı (yeni): ' + sonuc.data.teklifNo);
+                                    }
+                                    if (sonuc.data.created_at) { // Örnek: sunucu taraflı zaman damgası
+                                        dataForStore.created_at = sonuc.data.created_at;
+                                    }
+                                }
+                                addTeklifToStore(dataForStore);
+                                console.log('Yeni teklif store\'a eklendi:', dataForStore);
+                            } else {
+                                console.warn('Yeni teklif eklendi (mesajla onaylandı) ancak sunucudan bir ID alınamadı. Store güncellenemedi, bu durum teklif no üretimini etkileyebilir.');
                             }
                         }
                         formuTemizle(); // Bu fonksiyon generateNewTeklifNo'yu çağırır.
