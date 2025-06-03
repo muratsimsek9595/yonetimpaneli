@@ -1391,4 +1391,118 @@ form button[type="button"]:hover {
 }
 .sidebar nav > ul > li:last-child {
     border-bottom: none;
+}
+
+/* Teklif Yönetimi - Toplamlar Bölümü Stilleri */
+.teklif-toplamlar-container.card {
+    display: flex;
+    flex-wrap: wrap; /* Küçük ekranlarda alt alta geçmesi için */
+    justify-content: space-between;
+    gap: 20px; /* Bölümler arası boşluk */
+    padding: 20px;
+    background-color: #f9f9f9; /* Hafif gri arka plan */
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.toplam-bolum {
+    flex: 1; /* Bölümlerin eşit genişlikte olmasını sağlar */
+    min-width: 280px; /* Minimum genişlik, küçük ekranlarda alt alta sıralanmayı kolaylaştırır */
+    padding: 15px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.toplam-bolum p strong {
+    font-size: 1.1em;
+    color: #333;
+    margin-bottom: 15px;
+    display: block;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.toplam-satir {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed #f0f0f0; /* Satır aralarına ince kesikli çizgi */
+}
+
+.toplam-satir:last-child {
+    border-bottom: none;
+}
+
+.toplam-satir label {
+    font-size: 0.9em;
+    color: #555;
+    margin-right: 10px;
+    flex-basis: 60%; /* Etiketlerin kaplayacağı alan */
+}
+
+.toplam-deger, .toplam-input {
+    font-size: 0.95em;
+    font-weight: 500;
+    color: #222;
+    text-align: right;
+    flex-basis: 35%; /* Değerlerin kaplayacağı alan */
+}
+
+.toplam-input {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-width: 100px; /* Input genişliği */
+}
+
+.para-birimi-gosterge {
+    margin-left: 5px;
+    font-size: 0.85em;
+    color: #777;
+}
+
+.kar-deger {
+    color: #28a745; /* Yeşil renk */
+    font-weight: bold;
+}
+
+.vurgulu-toplam {
+    font-weight: bold;
+    font-size: 1.05em;
+    color: #007bff; /* Mavi renk */
+}
+
+.genel-toplam-vurgu {
+    font-weight: bold;
+    font-size: 1.15em;
+    color: #dc3545; /* Kırmızımsı bir renk, dikkat çekici */
+}
+
+.toplam-bolum hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 15px 0;
+}
+
+/* Küçük ekranlar için düzenleme (isteğe bağlı) */
+@media (max-width: 992px) { /* Orta boy ekranlar için */
+    .toplam-bolum {
+        min-width: calc(50% - 10px); /* İki sütunlu görünüm */
+    }
+}
+
+@media (max-width: 680px) { /* Küçük ekranlar için */
+    .teklif-toplamlar-container.card {
+        flex-direction: column; /* Tek sütunlu görünüm */
+    }
+    .toplam-bolum {
+        min-width: 100%; /* Tam genişlik */
+        margin-bottom: 15px; /* Alt alta geldiğinde aralarında boşluk */
+    }
+    .toplam-bolum:last-child {
+        margin-bottom: 0;
+    }
 } 

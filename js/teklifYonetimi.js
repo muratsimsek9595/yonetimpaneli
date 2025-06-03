@@ -49,7 +49,6 @@ const teklifIscilikEkleButton = document.getElementById('teklifIscilikEkleButton
 // Güncellenmiş Toplam Alanları DOM Elementleri
 const teklifToplamMalzemeMaliyetiKdvHaricSpan = document.getElementById('teklifToplamMalzemeMaliyetiKdvHaricSpan');
 const teklifToplamIscilikMaliyetiKdvHaricSpan = document.getElementById('teklifToplamIscilikMaliyetiKdvHaricSpan');
-const teklifGenelGiderlerInput = document.getElementById('teklifGenelGiderlerInput');
 const teklifToplamProjeMaliyetiKdvHaricSpan = document.getElementById('teklifToplamProjeMaliyetiKdvHaricSpan');
 const teklifProjeMaliyetiKdvTutariSpan = document.getElementById('teklifProjeMaliyetiKdvTutariSpan');
 const teklifToplamProjeMaliyetiKdvDahilSpan = document.getElementById('teklifToplamProjeMaliyetiKdvDahilSpan');
@@ -230,9 +229,6 @@ function initTeklifYonetimi() {
         }
         if (teklifKdvOraniInputAyarlar) {
             teklifKdvOraniInputAyarlar.addEventListener('input', genelToplamlariHesapla);
-        }
-        if (teklifGenelGiderlerInput) { // Genel Giderler inputu için olay dinleyici
-            teklifGenelGiderlerInput.addEventListener('input', genelToplamlariHesapla);
         }
 
         const tableBodyForEvents = document.querySelector('#teklifListesiTablosu tbody');
@@ -537,7 +533,6 @@ function genelToplamlariHesapla() {
     const indirimOraniAyarlar = parseFloat(teklifIndirimOraniInputAyarlar?.value) || 0;
     const teklifTutariAyarlarStr = teklifTutariInputAyarlar?.value.trim() || '0';
     const anaTeklifTutariKdvHaricIndirimsiz = parseFloat(teklifTutariAyarlarStr.replace(/,/g, '')) || 0;
-    const genelGiderler = parseFloat(teklifGenelGiderlerInput?.value) || 0;
 
     // 1. Toplam Malzeme Maliyeti (KDV Hariç)
     let toplamMalzemeMaliyetiKdvHaric = 0;
@@ -560,7 +555,7 @@ function genelToplamlariHesapla() {
     }
 
     // 3. Toplam Proje Maliyeti (KDV Hariç)
-    const toplamProjeMaliyetiKdvHaric = toplamMalzemeMaliyetiKdvHaric + toplamIscilikMaliyetiKdvHaric + genelGiderler;
+    const toplamProjeMaliyetiKdvHaric = toplamMalzemeMaliyetiKdvHaric + toplamIscilikMaliyetiKdvHaric;
     if (teklifToplamProjeMaliyetiKdvHaricSpan) {
         teklifToplamProjeMaliyetiKdvHaricSpan.textContent = toplamProjeMaliyetiKdvHaric.toFixed(2);
     }
@@ -729,7 +724,6 @@ function teklifFormundanVeriAl() {
         anaTeklifTutari_KdvHaricIndirimsiz: parseFloat(teklifTutariInputAyarlar.value.replace(/,/g, '')) || 0,
         indirimOrani: parseFloat(teklifIndirimOraniInputAyarlar.value) || 0,
         kdvOrani: parseFloat(teklifKdvOraniInputAyarlar.value) || 0,
-        genelGiderlerManuel: parseFloat(teklifGenelGiderlerInput.value) || 0,
 
         // HESAPLANAN MALİYET TOPLAMLARI
         hesaplanan_toplamMalzemeMaliyetiKdvHaric: parseFloat(teklifToplamMalzemeMaliyetiKdvHaricSpan?.textContent.replace(/,/g, '')) || 0,
