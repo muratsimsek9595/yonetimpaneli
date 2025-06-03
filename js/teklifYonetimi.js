@@ -673,6 +673,23 @@ function genelToplamlariHesapla() {
         if(span) span.textContent = seciliParaBirimi;
     });
     console.log("[genelToplamlariHesapla] Tamamlandı.");
+
+    return {
+        toplamMalzemeMaliyetiKdvHaric,
+        toplamIscilikMaliyetiKdvHaric,
+        toplamProjeMaliyetiKdvHaric,
+        projeMaliyetiKdvTutari,
+        toplamProjeMaliyetiKdvDahil,
+        anaTeklifTutariKdvHaricIndirimsiz, // Bu zaten bir input değeri ama hesaplamanın temelini oluşturuyor
+        indirimTutari,
+        teklifTutariKdvHaricIndirimli,
+        netKarVergisiz,
+        gelirVergisi,
+        netKarVergilerSonrasi,
+        // teklifSunulanKdvHaricSpan'ın değeri teklifTutariKdvHaricIndirimli ile aynı
+        teklifKdvTutari, // Bu, teklifSunulanKdvTutariSpan'a yazılan değer
+        genelToplamKdvDahilMusteriye // Bu, teklifGenelToplamKdvDahilMusteriyeSpan'a yazılan değer
+    };
 }
 
 function teklifFormundanVeriAl() {
@@ -741,6 +758,9 @@ function teklifFormundanVeriAl() {
     });
 
     // Temel Teklif Bilgileri (kalemler toplandıktan SONRA)
+    // Önce genel toplamları hesapla ve değerlerini al
+    const hesaplanmisToplamlar = genelToplamlariHesapla();
+
     const anaVeri = {
         id: teklifIdInput.value || null,
         teklifNo: teklifNoInput.value.trim(),
@@ -753,45 +773,38 @@ function teklifFormundanVeriAl() {
         durum: teklifDurumInput.value,
         notlar: teklifNotlarInput.value.trim(),
         
-        // TEKLİF AYARLARI (INPUTLARDAN)
-        anaTeklifTutari_KdvHaricIndirimsiz: parseFloat(teklifTutariInputAyarlar.value.replace(/,/g, '')) || 0, // Virgül temizleme eklendi
-        indirimOrani: parseFloat(teklifIndirimOraniInputAyarlar.value) || 0,
-        kdvOrani: parseFloat(teklifKdvOraniInputAyarlar.value) || 0,
+        // TEKLİF AYARLARI (INPUTLARDAN ALINAN VE HESAPLAMADA KULLANILAN)
+        anaTeklifTutari_KdvHaricIndirimsiz: hesaplanmisToplamlar.anaTeklifTutariKdvHaricIndirimsiz,
+        indirimOrani: parseFloat(teklifIndirimOraniInputAyarlar.value) || 0, // Bu hala input'tan okunabilir
+        kdvOrani: parseFloat(teklifKdvOraniInputAyarlar.value) || 0,     // Bu hala input'tan okunabilir
 
-        // HESAPLANAN MALİYET TOPLAMLARI
-        hesaplanan_toplamMalzemeMaliyetiKdvHaric: parseFloat(teklifToplamMalzemeMaliyetiKdvHaricSpan?.textContent) || 0,
-        hesaplanan_toplamIscilikMaliyetiKdvHaric: parseFloat(teklifToplamIscilikMaliyetiKdvHaricSpan?.textContent) || 0,
-        hesaplanan_toplamProjeMaliyetiKdvHaric: parseFloat(teklifToplamProjeMaliyetiKdvHaricSpan?.textContent) || 0,
-        hesaplanan_projeMaliyetiKdvTutari: parseFloat(teklifProjeMaliyetiKdvTutariSpan?.textContent) || 0,
-        hesaplanan_toplamProjeMaliyetiKdvDahil: parseFloat(teklifToplamProjeMaliyetiKdvDahilSpan?.textContent) || 0,
+        // HESAPLANAN MALİYET TOPLAMLARI (genelToplamlariHesapla'dan)
+        hesaplanan_toplamMalzemeMaliyetiKdvHaric: hesaplanmisToplamlar.toplamMalzemeMaliyetiKdvHaric,
+        hesaplanan_toplamIscilikMaliyetiKdvHaric: hesaplanmisToplamlar.toplamIscilikMaliyetiKdvHaric,
+        hesaplanan_toplamProjeMaliyetiKdvHaric: hesaplanmisToplamlar.toplamProjeMaliyetiKdvHaric,
+        hesaplanan_projeMaliyetiKdvTutari: hesaplanmisToplamlar.projeMaliyetiKdvTutari,
+        hesaplanan_toplamProjeMaliyetiKdvDahil: hesaplanmisToplamlar.toplamProjeMaliyetiKdvDahil,
 
-        // HESAPLANAN TEKLİF ve KÂR TUTARLARI
-        hesaplanan_indirimTutari: parseFloat(teklifIndirimTutariYeniSpan?.textContent) || 0,
-        hesaplanan_teklifTutariKdvHaricIndirimli: parseFloat(teklifTutariKdvHaricIndirimliSpan?.textContent) || 0,
-        hesaplanan_netKarVergisiz: parseFloat(teklifNetKarVergisizSpan?.textContent) || 0,
-        hesaplanan_gelirVergisi: parseFloat(teklifGelirVergisiSpan?.textContent) || 0,
-        hesaplanan_netKarVergilerSonrasi: parseFloat(teklifNetKarVergilerSonrasiSpan?.textContent) || 0,
+        // HESAPLANAN TEKLİF ve KÂR TUTARLARI (genelToplamlariHesapla'dan)
+        hesaplanan_indirimTutari: hesaplanmisToplamlar.indirimTutari,
+        hesaplanan_teklifTutariKdvHaricIndirimli: hesaplanmisToplamlar.teklifTutariKdvHaricIndirimli,
+        hesaplanan_netKarVergisiz: hesaplanmisToplamlar.netKarVergisiz,
+        hesaplanan_gelirVergisi: hesaplanmisToplamlar.gelirVergisi,
+        hesaplanan_netKarVergilerSonrasi: hesaplanmisToplamlar.netKarVergilerSonrasi,
 
-        // HESAPLANAN MÜŞTERİYE SUNULAN TEKLİF TUTARLARI
-        hesaplanan_teklifSunulanKdvTutari: parseFloat(teklifSunulanKdvTutariSpan?.textContent) || 0,
-        hesaplanan_genelToplamKdvDahilMusteriye: parseFloat(teklifGenelToplamKdvDahilMusteriyeSpan?.textContent) || 0,
-
-        // Eski Toplamlar (Backend uyumluluğu için gerekirse veya temizlenecekse)
-        // araToplamSatis: parseFloat(teklifAraToplamSpan?.textContent) || 0, 
-        // indirimTutari: parseFloat(teklifIndirimTutariSpan?.textContent) || 0,
-        // kdvTutari: parseFloat(teklifKdvTutariSpan?.textContent) || 0,
-        // genelToplamSatis: parseFloat(teklifGenelToplamSpan?.textContent) || 0,
-        // toplamMaliyet: parseFloat(teklifToplamMaliyetSpan?.textContent) || 0, 
-        // toplamKar: parseFloat(teklifToplamKarSpan?.textContent) || 0,
+        // HESAPLANAN MÜŞTERİYE SUNULAN TEKLİF TUTARLARI (genelToplamlariHesapla'dan)
+        // teklifSunulanKdvHaric zaten hesaplanmisToplamlar.teklifTutariKdvHaricIndirimli'ye eşit olacak
+        hesaplanan_teklifSunulanKdvTutari: hesaplanmisToplamlar.teklifKdvTutari,
+        hesaplanan_genelToplamKdvDahilMusteriye: hesaplanmisToplamlar.genelToplamKdvDahilMusteriye,
 
         urunler: kalemler // Kalemler dizisi buraya eklendi
     };
-    
-    // Backend'in beklediği alan adlarıyla eşleştirme yap
-    anaVeri.araToplam = anaVeri.anaTeklifTutari_KdvHaricIndirimsiz;
-    anaVeri.indirimTutari = anaVeri.hesaplanan_indirimTutari;
-    anaVeri.kdvTutari = anaVeri.hesaplanan_teklifSunulanKdvTutari; // Müşteriye sunulan teklifin KDV tutarı
-    anaVeri.genelToplamSatis = anaVeri.hesaplanan_genelToplamKdvDahilMusteriye; // Müşteriye sunulan KDV dahil genel toplam
+
+    // Backend'in beklediği ana toplam alanlarıyla eşleştirme yap (genelToplamlariHesapla'dan gelen değerleri kullanarak)
+    anaVeri.araToplam = hesaplanmisToplamlar.anaTeklifTutariKdvHaricIndirimsiz; // anaTeklifTutariKdvHaricIndirimsiz zaten KDV hariç indirimsiz tutar
+    anaVeri.indirimTutari = hesaplanmisToplamlar.indirimTutari; // Bu, hesaplanan_indirimTutari ile aynı
+    anaVeri.kdvTutari = hesaplanmisToplamlar.teklifKdvTutari; // Bu, hesaplanan_teklifSunulanKdvTutari ile aynı
+    anaVeri.genelToplamSatis = hesaplanmisToplamlar.genelToplamKdvDahilMusteriye; // Bu, hesaplanan_genelToplamKdvDahilMusteriye ile aynı
     
     console.log("[TeklifYonetimi] API'ye gönderilecek teklif verisi:", JSON.parse(JSON.stringify(anaVeri)));
     return anaVeri;
