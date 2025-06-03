@@ -126,7 +126,7 @@ async function teklifDetayiniGoster(teklifId) {
         <div class="teklif-detay-bolum">
             <h4>Toplamlar</h4>
             <div class="toplamlar-grid">
-                 <p><span class="detail-label">Proje Maliyeti (KDV Dahil):</span></p><p class="tutar">${formatCurrency(teklif.hesaplanan_toplamProjeMaliyetiKdvDahil, teklif.paraBirimi)}</p>
+                 <p><span class="detail-label">Proje Maliyeti (KDV Dahil):</span></p><p class="tutar">${formatCurrency(teklif.araToplamMaliyet, teklif.paraBirimi)}</p>
                  <p><span class="detail-label">Ara Toplam:</span></p><p class="tutar">${formatCurrency(teklif.araToplamSatis, teklif.paraBirimi)}</p>
                  <p><span class="detail-label">İndirim (${teklif.indirimOrani || 0}%):</span></p><p class="tutar">-${formatCurrency(teklif.indirimTutari, teklif.paraBirimi)}</p>
                  <p><span class="detail-label">KDV (${teklif.kdvOrani || 0}%):</span></p><p class="tutar">+${formatCurrency(teklif.kdvTutari, teklif.paraBirimi)}</p>

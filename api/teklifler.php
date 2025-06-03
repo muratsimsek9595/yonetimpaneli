@@ -174,7 +174,9 @@ function addTeklif($conn) {
     $kdvOrani = isset($data->kdvOrani) ? floatval($data->kdvOrani) : (isset($data->kdv_orani) ? floatval($data->kdv_orani) : 0.00);
     $kdvTutari = isset($data->kdvTutari) ? floatval($data->kdvTutari) : 0.00;
     $genelToplamSatis = isset($data->genelToplamSatis) ? floatval($data->genelToplamSatis) : 0.00;
-    $araToplamMaliyet = 0.00; // Şimdilik maliyet hesaplaması yok
+    
+    // KDV Dahil Toplam Proje Maliyetini al (frontend'den hesaplanan_toplamProjeMaliyetiKdvDahil olarak gelir)
+    $araToplamMaliyet = isset($data->hesaplanan_toplamProjeMaliyetiKdvDahil) ? floatval($data->hesaplanan_toplamProjeMaliyetiKdvDahil) : 0.00;
 
     $durum = isset($data->durum) ? $conn->real_escape_string(trim($data->durum)) : 'Hazırlanıyor';
     $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
@@ -362,8 +364,10 @@ function updateTeklif($conn, $teklif_id_param, $data) {
     $kdvOrani = isset($data->kdvOrani) ? floatval($data->kdvOrani) : (isset($data->kdv_orani) ? floatval($data->kdv_orani) : 0.00);
     $kdvTutari = isset($data->kdvTutari) ? floatval($data->kdvTutari) : 0.00;
     $genelToplamSatis = isset($data->genelToplamSatis) ? floatval($data->genelToplamSatis) : 0.00;
-    $araToplamMaliyet = 0.00; // Şimdilik maliyet hesaplaması yok
     
+    // KDV Dahil Toplam Proje Maliyetini al (frontend'den hesaplanan_toplamProjeMaliyetiKdvDahil olarak gelir)
+    $araToplamMaliyet = isset($data->hesaplanan_toplamProjeMaliyetiKdvDahil) ? floatval($data->hesaplanan_toplamProjeMaliyetiKdvDahil) : 0.00;
+
     $durum = isset($data->durum) ? $conn->real_escape_string(trim($data->durum)) : 'Hazırlanıyor';
     $notlar = isset($data->notlar) ? $conn->real_escape_string(trim($data->notlar)) : null;
 
