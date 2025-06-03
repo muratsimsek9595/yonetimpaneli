@@ -857,15 +857,15 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
                 <input type="number" id="iscilikMiktar_${iscilikSatirSayaci}" name="iscilikMiktar" class="teklif-iscilik-miktar" min="0" step="any" required value="${(iscilikVerisi && iscilikVerisi.miktar) ? iscilikVerisi.miktar : '1'}">
             </div>
             <div class="form-group birim-maliyet">
-                <label for="iscilikBirimMaliyet_${iscilikSatirSayaci}">Birim Maliyet (KDV Hariç):</label>
+                <label for="iscilikBirimMaliyet_${iscilikSatirSayaci}">Birim Maliyet:</label>
                 <input type="number" id="iscilikBirimMaliyet_${iscilikSatirSayaci}" name="iscilikBirimMaliyet" class="teklif-iscilik-birim-maliyet" min="0" step="0.01" value="${(iscilikVerisi && iscilikVerisi.birimMaliyet !== undefined) ? (parseFloat(iscilikVerisi.birimMaliyet) || 0).toFixed(2) : '0.00'}">
             </div>
             <div class="form-group birim-fiyat">
-                <label for="iscilikBirimSatisUcreti_${iscilikSatirSayaci}">Birim Satış Ücreti (KDV Hariç):</label>
+                <label for="iscilikBirimSatisUcreti_${iscilikSatirSayaci}">Birim Satış Ücreti:</label>
                 <input type="number" id="iscilikBirimSatisUcreti_${iscilikSatirSayaci}" name="iscilikBirimSatisUcreti" class="teklif-iscilik-birim-satis-ucreti" min="0" step="0.01" required value="${birimSatisFiyatiValue}">
             </div>
             <div class="form-group satir-toplami">
-                <label>Satır Toplam Satış Ücreti (KDV Hariç):</label>
+                <label>Satır Toplam Satış Ücreti:</label>
                 <span id="iscilikSatirToplami_${iscilikSatirSayaci}" class="teklif-iscilik-satir-toplami">${satirToplamiValue}</span>
             </div>
             <button type="button" class="btn-icon remove-iscilik-satiri-btn" data-satirid="${satirId}">✖</button>
