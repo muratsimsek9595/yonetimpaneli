@@ -200,10 +200,18 @@ export function populeEtTedarikciSecimDropdown(tedarikcilerListesi, selectElemen
  * @param {number} duration Bildirimin ekranda kalma süresi (milisaniye cinsinden). Varsayılan 3000ms.
  */
 export function showToast(message, type = 'info', duration = 3000) {
+    let toastContainer = document.getElementById('toast-container-id'); // Benzersiz bir ID kullanalım
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container-id'; // ID ataması
+        toastContainer.className = 'toast-container'; // CSS sınıfını ata
+        document.body.appendChild(toastContainer);
+    }
+
     const toast = document.createElement('div');
     toast.className = `toast-notification ${type}`;
     toast.textContent = message;
-    document.body.appendChild(toast);
+    toastContainer.appendChild(toast); // Yeni: Container içine ekle
 
     // Göstermek için .show sınıfını ekle
     setTimeout(() => {
