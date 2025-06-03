@@ -488,8 +488,8 @@ function urunSatiriHesapla(satirId) {
 
     const miktarValue = miktarInput?.value;
     const girilenBirimMaliyetValue = birimMaliyetInput?.value;
-    const fiyatTuruMaliyet = fiyatTuruMaliyetSelect?.value || 'dahil';
-    console.log(`[urunSatiriHesapla] ${satirId} - Okunan HAM değerler: miktar='${miktarValue}', girilenBirimMaliyet='${girilenBirimMaliyetValue}', fiyatTuruMaliyet='${fiyatTuruMaliyet}'`);
+    const fiyatTuruMaliyetDegeri = fiyatTuruMaliyetSelect?.value || 'dahil';
+    console.log(`[urunSatiriHesapla] ${satirId} - Okunan HAM değerler: miktar='${miktarValue}', girilenBirimMaliyet='${girilenBirimMaliyetValue}', fiyatTuruMaliyet='${fiyatTuruMaliyetDegeri}'`);
 
     const miktar = parseFloat(miktarValue) || 0;
     const girilenBirimMaliyet = parseFloat(girilenBirimMaliyetValue) || 0;
@@ -497,7 +497,7 @@ function urunSatiriHesapla(satirId) {
     console.log(`[urunSatiriHesapla] ${satirId} - PARSED değerler: miktar=${miktar}, girilenBirimMaliyet=${girilenBirimMaliyet}, genelKdvOrani=${genelKdvOrani}`);
 
     let kdvHaricBirimMaliyet = 0;
-    if (fiyatTuruMaliyet === 'dahil') {
+    if (fiyatTuruMaliyetDegeri === 'dahil') {
         if (genelKdvOrani > 0) {
             kdvHaricBirimMaliyet = girilenBirimMaliyet / (1 + (genelKdvOrani / 100));
         } else {
@@ -615,9 +615,7 @@ function teklifFormundanVeriAl() {
         const miktar = parseFloat(satir.querySelector('.teklif-urun-miktar')?.value) || 0;
         
         const birimMaliyet = parseFloat(satir.querySelector('.teklif-urun-birim-maliyet')?.value) || 0;
-        // const birimSatisFiyati = parseFloat(satir.querySelector('.teklif-urun-birim-satis-fiyati')?.value) || 0; // Bu alan artık yok
-        const fiyatTuruMaliyet = satir.querySelector('.teklif-urun-fiyat-turu-maliyet')?.value || 'dahil'; // Maliyetin KDV türü
-        // const kalemSatisKdvTutari = parseFloat(satir.dataset.kdvTutari) || 0; // Bu genel KDV'den hesaplanacak
+        const fiyatTuruMaliyet = satir.querySelector('.teklif-urun-fiyat-turu-maliyet')?.value || 'dahil'; 
         const kalemToplamMaliyetKdvHaric = parseFloat(satir.dataset.maliyetTutari) || 0; 
         
         if (urunMalzemeElement.value && miktar > 0) { 
@@ -627,13 +625,13 @@ function teklifFormundanVeriAl() {
                 aciklama: malzemeAdi, 
                 miktar: miktar,
                 birim: birim,
-                kaydedilen_birim_maliyet: birimMaliyet, // Kullanıcının girdiği maliyet
-                fiyatTuruMaliyet: fiyatTuruMaliyet, // Maliyetin KDV türü
+                kaydedilen_birim_maliyet: birimMaliyet, 
+                fiyatTuruMaliyet: fiyatTuruMaliyet,
                 satir_toplam_maliyet_kdv_haric: kalemToplamMaliyetKdvHaric,
-                // Satışla ilgili alanlar artık bu seviyede değil, genel ayarlardan geliyor.
-                // kaydedilen_birim_satis_fiyati: 0, 
-                // satir_toplam_satis_fiyati_kdv_haric: 0,
-                // kalem_satis_kdv_tutari: 0
+                // Backend'in hala bekleyebileceği satışla ilgili alanlar (0 olarak eklendi)
+                kaydedilen_birim_satis_fiyati: 0, 
+                satir_toplam_satis_fiyati_kdv_haric: 0,
+                kalem_satis_kdv_tutari: 0 
             });
         }
     });
@@ -647,7 +645,6 @@ function teklifFormundanVeriAl() {
         const birim = satir.querySelector('.teklif-iscilik-birim')?.value || '';
         const miktar = parseFloat(satir.querySelector('.teklif-iscilik-miktar')?.value) || 0;
         const birimMaliyet = parseFloat(satir.querySelector('.teklif-iscilik-birim-maliyet')?.value) || 0;
-        const fiyatTuruMaliyet = 'dahil'; // İşçilik maliyetinin KDV dahil olduğu varsayılıyor veya ayrıca belirtilmeli
         const satirToplamMaliyetKdvHaric = parseFloat(satir.dataset.maliyetTutariIscilik) || 0;
 
         if (isciIdSelect.value && miktar > 0) {
@@ -658,8 +655,12 @@ function teklifFormundanVeriAl() {
                 birim: birim,
                 miktar: miktar,
                 kaydedilen_birim_maliyet: birimMaliyet,
-                fiyatTuruMaliyet: fiyatTuruMaliyet, // İşçilik maliyetinin KDV türü
-                satir_toplam_maliyet_kdv_haric: satirToplamMaliyetKdvHaric
+                fiyatTuruMaliyet: 'dahil',
+                satir_toplam_maliyet_kdv_haric: satirToplamMaliyetKdvHaric,
+                // İşçilik için de satış alanları 0 olarak eklendi
+                kaydedilen_birim_satis_fiyati: 0,
+                satir_toplam_satis_fiyati_kdv_haric: 0,
+                kalem_satis_kdv_tutari: 0
             });
         }
     });
