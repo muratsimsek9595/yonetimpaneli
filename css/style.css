@@ -950,27 +950,32 @@ form button[type="button"]:hover {
 }
 
 /* === Müşteri Listesi Tablo Stilleri === */
-#musteriListesiTablosu {
+#musteriListesiTablosu,
+#isciListesiTablosu {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    font-size: 0.9em;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-    background-color: #fff;
 }
 
-#musteriListesiTablosu thead tr {
-    background-color: #f8f9fa; /* Açık gri başlık arkaplanı */
-    color: #333; /* Koyu gri başlık yazı rengi */
-    text-align: left;
-    font-weight: bold;
-    border-bottom: 2px solid #dee2e6; /* Başlık altı çizgi */
+#musteriListesiTablosu thead tr,
+#isciListesiTablosu thead tr {
+    background-color: #f8f9fa; /* Açık gri arka plan */
+    border-bottom: 2px solid #dee2e6; /* Daha belirgin alt çizgi */
 }
 
 #musteriListesiTablosu th,
-#musteriListesiTablosu td {
-    padding: 12px 15px;
-    border: 1px solid #eee; /* İnce hücre çizgileri */
+#musteriListesiTablosu td,
+#isciListesiTablosu th,
+#isciListesiTablosu td {
+    padding: 12px 15px; /* Daha fazla padding */
+    text-align: left;
+    border: 1px solid #e9ecef; /* Hücreler arası ince çizgiler */
+}
+
+#musteriListesiTablosu th,
+#isciListesiTablosu th {
+    font-weight: 600; /* Kalın başlık yazısı */
+    color: #495057; /* Koyu gri başlık rengi */
 }
 
 #musteriListesiTablosu tbody tr {
