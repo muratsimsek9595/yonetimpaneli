@@ -91,10 +91,10 @@ async function teklifDetayiniGoster(teklifId) {
 
     let kalemlerHTML = '';
     if (teklif.urunler && teklif.urunler.length > 0) {
-        kalemlerHTML += '<h4>Kalemler</h4><div class="table-responsive"><table class="detay-tablosu"><thead><tr><th>Açıklama</th><th>Miktar</th><th>Birim</th><th>Birim Fiyat</th><th>Toplam</th></tr></thead><tbody>';
+        kalemlerHTML += '<h4>Kalemler</h4><div class="table-responsive"><table class="detay-tablosu"><thead><tr><th>Açıklama</th><th>Miktar</th><th>Birim</th><th>Birim Fiyat (Maliyet)</th><th>Toplam (Maliyet)</th></tr></thead><tbody>';
         teklif.urunler.forEach(kalem => {
-            const birimFiyat = kalem.kaydedilen_birim_satis_fiyati || 0;
-            const satirToplami = kalem.satir_toplam_satis_fiyati_kdv_haric || (kalem.miktar * birimFiyat);
+            const birimFiyat = kalem.kaydedilen_birim_maliyet || 0;
+            const satirToplami = kalem.satir_toplam_maliyet_kdv_haric || (kalem.miktar * birimFiyat);
             kalemlerHTML += `
                 <tr>
                     <td>${kalem.aciklama || (kalem.kalemTipi === 'malzeme' ? 'Malzeme' : 'İşçilik')}</td>
