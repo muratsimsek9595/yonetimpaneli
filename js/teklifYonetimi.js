@@ -447,15 +447,21 @@ function urunSatiriniSil(satirId) {
 }
 
 function urunSatiriHesapla(satirId) {
+    console.log(`[urunSatiriHesapla] ${satirId} için çağrıldı.`); // Eklendi
     const satirElementi = document.getElementById(satirId);
-    if (!satirElementi) return;
+    if (!satirElementi) {
+        console.error(`[urunSatiriHesapla] ${satirId} bulunamadı.`); // Eklendi
+        return;
+    }
 
-    const miktarInput = satirElementi.querySelector(`.teklif-urun-miktar`);
-    const birimMaliyetInput = satirElementi.querySelector(`.teklif-urun-birim-maliyet`); // Maliyet inputu
-    const birimSatisFiyatInput = satirElementi.querySelector(`.teklif-urun-birim-satis-fiyati`); // Satış fiyatı inputu
-    const fiyatTuruSelect = satirElementi.querySelector(`.teklif-urun-fiyat-turu`);
-    const satirToplamiSpan = satirElementi.querySelector(`.teklif-urun-satir-toplami`);
-    const satirKdvTutariGosterge = satirElementi.querySelector(`.satir-kdv-tutari-gosterge`);
+    const miktarInput = satirElementi.querySelector('.teklif-urun-miktar');
+    const birimMaliyetInput = satirElementi.querySelector('.teklif-urun-birim-maliyet');
+    const birimSatisFiyatInput = satirElementi.querySelector('.teklif-urun-birim-satis-fiyati');
+    const fiyatTuruSelect = satirElementi.querySelector('.teklif-urun-fiyat-turu');
+    const satirToplamiSpan = satirElementi.querySelector('.teklif-urun-satir-toplami');
+    const satirKdvTutariGosterge = satirElementi.querySelector('.satir-kdv-tutari-gosterge');
+
+    console.log('[urunSatiriHesapla] Elementler:', { miktarInput, birimMaliyetInput, birimSatisFiyatInput, satirToplamiSpan }); // Eklendi
 
     const miktar = parseFloat(miktarInput?.value) || 0;
     const girilenBirimMaliyet = parseFloat(birimMaliyetInput?.value) || 0; // Okunan maliyet
@@ -487,6 +493,7 @@ function urunSatiriHesapla(satirId) {
 
     if (satirToplamiSpan) {
         satirToplamiSpan.textContent = satirToplamiSatisKdvHaric.toFixed(2);
+        console.log(`[urunSatiriHesapla] ${satirId} için satirToplamiSpan.textContent güncellendi:`, satirToplamiSpan.textContent); // Eklendi
     }
     if (satirKdvTutariGosterge) {
         satirKdvTutariGosterge.textContent = `KDV: ${satirSatisKdvTutari.toFixed(2)}`;
@@ -967,29 +974,40 @@ function iscilikSatiriniSil(satirId) {
 }
 
 function iscilikSatiriHesapla(satirId) {
+    console.log(`[iscilikSatiriHesapla] ${satirId} için çağrıldı.`); // Eklendi
     const satirElementi = document.getElementById(satirId);
-    if (!satirElementi) return;
+    if (!satirElementi) {
+        console.error(`[iscilikSatiriHesapla] ${satirId} bulunamadı.`); // Eklendi
+        return;
+    }
 
     const miktarInput = satirElementi.querySelector('.teklif-iscilik-miktar');
     const birimMaliyetInput = satirElementi.querySelector('.teklif-iscilik-birim-maliyet');
-    const birimSatisUcretiInput = satirElementi.querySelector('.teklif-iscilik-birim-satis-ucreti'); // Güncellenmiş seçici
+    const birimSatisUcretiInput = satirElementi.querySelector('.teklif-iscilik-birim-satis-ucreti');
     const satirToplamiSpan = satirElementi.querySelector('.teklif-iscilik-satir-toplami');
+
+    console.log('[iscilikSatiriHesapla] Elementler:', { miktarInput, birimMaliyetInput, birimSatisUcretiInput, satirToplamiSpan }); // Eklendi
 
     const miktar = parseFloat(miktarInput?.value) || 0;
     const birimMaliyet = parseFloat(birimMaliyetInput?.value) || 0;
     const birimSatisUcreti = parseFloat(birimSatisUcretiInput?.value) || 0;
 
-    // Maliyet Hesaplaması (KDV Hariç)
+    console.log('[iscilikSatiriHesapla] Değerler:', { miktar, birimMaliyet, birimSatisUcreti }); // Eklendi
+
+    // Maliyet Hesaplaması
     const satirToplamMaliyetKdvHaric = miktar * birimMaliyet;
     satirElementi.dataset.maliyetTutariIscilik = satirToplamMaliyetKdvHaric.toFixed(2);
 
-    // Satış Ücreti Hesaplaması (KDV Hariç)
+    // Satış Ücreti Hesaplaması
     const satirToplamSatisUcretiKdvHaric = miktar * birimSatisUcreti;
+    console.log('[iscilikSatiriHesapla] Hesaplanan Satış Toplamı:', satirToplamSatisUcretiKdvHaric); // Eklendi
+
     if (satirToplamiSpan) {
         satirToplamiSpan.textContent = satirToplamSatisUcretiKdvHaric.toFixed(2);
+        console.log(`[iscilikSatiriHesapla] ${satirId} için satirToplamiSpan.textContent güncellendi:`, satirToplamiSpan.textContent); // Eklendi
+    } else {
+        console.error(`[iscilikSatiriHesapla] ${satirId} için satirToplamiSpan bulunamadı!`); // Eklendi
     }
-    // İşçilik için KDV ayrı hesaplanmadığından data-kdv-tutari-iscilik gibi bir şeye şimdilik gerek yok.
-    // Genel KDV, bu KDV hariç satış tutarı üzerinden hesaplanacak.
 
     genelToplamlariHesapla();
 }
