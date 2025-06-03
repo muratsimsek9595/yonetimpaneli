@@ -398,6 +398,30 @@
                         </div>
                         <button type="button" id="teklifIscilikEkleButton" class="btn-secondary">İşçilik Ekle</button>
                         
+                        <h4>Teklif Fiyat Ayarları</h4>
+                        <div class="teklif-fiyat-ayarlari-container" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="manuelTeklifFiyatiInput">Belirlenen Teklif Fiyatı (Opsiyonel):</label>
+                                    <input type="number" id="manuelTeklifFiyatiInput" name="manuelTeklifFiyati" placeholder="Müşteriye sunulacak fiyat" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="teklifIndirimOraniInputAyarlar">İndirim Oranı (%):</label>
+                                    <input type="number" id="teklifIndirimOraniInputAyarlar" name="indirimOraniAyarlar" min="0" max="100" value="0" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="display: flex; align-items: center;">
+                                    <input type="checkbox" id="teklifKdvDahilCheckbox" name="kdvDahil" style="margin-right: 8px; width: auto;">
+                                    <label for="teklifKdvDahilCheckbox" style="margin-bottom: 0;">KDV Dahil</label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="teklifKdvOraniInputAyarlar">KDV Oranı (%):</label>
+                                    <input type="number" id="teklifKdvOraniInputAyarlar" name="kdvOraniAyarlar" min="0" value="20" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        
                         <h4>Toplamlar</h4>
                         <div class="teklif-toplamlar-container">
                             <div class="form-row">
@@ -405,20 +429,14 @@
                                     <label>Ara Toplam:</label>
                                     <span id="teklifAraToplamSpan" class="toplam-deger">0.00</span>
                                 </div>
-                                <div class="form-group">
-                                    <label for="teklifIndirimOraniInput">İndirim Oranı (%):</label>
-                                    <input type="number" id="teklifIndirimOraniInput" name="indirimOrani" min="0" max="100" value="0">
-                                </div>
+                                <!-- İndirim Oranı girişi yeni bölüme taşındığı için kaldırıldı -->
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>İndirim Tutarı:</label>
                                     <span id="teklifIndirimTutariSpan" class="toplam-deger">0.00</span>
                                 </div>
-                                 <div class="form-group">
-                                    <label for="teklifKdvOraniInput">KDV Oranı (%):</label>
-                                    <input type="number" id="teklifKdvOraniInput" name="kdvOrani" min="0" value="20"> 
-                                </div>
+                                 <!-- KDV Oranı girişi yeni bölüme taşındığı için kaldırıldı -->
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
