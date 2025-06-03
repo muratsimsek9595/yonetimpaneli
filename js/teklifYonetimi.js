@@ -62,6 +62,37 @@ let iscilikSatirSayaci = 0;
 // Flag to ensure event listeners are attached only once
 let teklifYonetimiListenersAttached = false;
 
+// Helper function to format date as YYYYMMDD
+function formatDateForTeklifNo(date) {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}${month}${day}`;
+}
+
+// Function to generate a new Teklif No
+function generateNewTeklifNo() {
+    const today = new Date();
+    const formattedToday = formatDateForTeklifNo(today);
+    const prefix = `TEK-${formattedToday}-`;
+
+    const existingTeklifler = getTeklifler() || [];
+    let maxSeq = 0;
+
+    existingTeklifler.forEach(teklif => {
+        if (teklif.teklifNo && teklif.teklifNo.startsWith(prefix)) {
+            const seqPart = teklif.teklifNo.substring(prefix.length);
+            const seq = parseInt(seqPart, 10);
+            if (!isNaN(seq) && seq > maxSeq) {
+                maxSeq = seq;
+            }
+        }
+    });
+
+    const newSeq = (maxSeq + 1).toString().padStart(3, '0');
+    return `${prefix}${newSeq}`;
+}
+
 function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
     const iscilerListesi = iscilerListesiParam || getIsciler() || [];
     const aktifIsciler = iscilerListesi
@@ -117,6 +148,27 @@ function initTeklifYonetimi() {
             teklifForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 const submitButton = teklifForm.querySelector('button[type="submit"]');
+                
+                // Teklif Numarası Benzersizlik Kontrolü
+                const girilenTeklifNo = teklifNoInput.value.trim();
+                const mevcutId = teklifIdInput.value;
+                const tumTeklifler = getTeklifler() || [];
+
+                const ayniNumaraliBaskaTeklifVar = tumTeklifler.some(teklif => {
+                    // Mevcut düzenlenmekte olan teklifi kontrol dışı bırak
+                    if (mevcutId && String(teklif.id) === String(mevcutId)) {
+                        return false;
+                    }
+                    return teklif.teklifNo === girilenTeklifNo;
+                });
+
+                if (ayniNumaraliBaskaTeklifVar) {
+                    showToast(`Hata: '${girilenTeklifNo}' numaralı bir teklif zaten mevcut. Lütfen farklı bir numara girin.`, 'error');
+                    teklifNoInput.focus();
+                    return; // Form gönderimini durdur
+                }
+                // --- Kontrol Sonu ---
+
                 setButtonLoading(submitButton, 'Kaydediliyor...');
 
                 try {
@@ -226,11 +278,15 @@ function ayarlamaFormVarsayilanlari() {
     const birAySonrasi = new Date();
     birAySonrasi.setMonth(birAySonrasi.getMonth() + 1);
     teklifGecerlilikTarihiInput.value = birAySonrasi.toISOString().split('T')[0];
-    if (teklifIndirimOraniInput) teklifIndirimOraniInput.value = 0; 
-    if (teklifKdvOraniInput) teklifKdvOraniInput.value = 20; 
+    if (teklifIndirimOraniInput) teklifIndirimOraniInput.value = 0;
+    if (teklifKdvOraniInput) teklifKdvOraniInput.value = 20;
     teklifParaBirimiInput.value = 'TL';
     teklifDurumInput.value = 'Hazırlanıyor';
-    // sonrakiTeklifNumarasiniOner(); // Bu fonksiyon silindi, gerekirse tekrar eklenebilir
+    
+    // Generate and set the new Teklif No
+    if (teklifNoInput) { // Check if the input exists
+        teklifNoInput.value = generateNewTeklifNo();
+    }
     
     // Form sıfırlandığında veya ilk açıldığında boş satırları ekle
     yeniUrunSatiriEkle();
