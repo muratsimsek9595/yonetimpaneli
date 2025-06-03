@@ -653,7 +653,7 @@ function teklifFormundanVeriAl() {
         notlar: teklifNotlarInput.value.trim(),
         
         // Teklif Fiyat Ayarlarından ve Hesaplamalardan Gelen Değerler
-        araToplamSatis: parseFloat(teklifTutariAyarlar.value.replace(/,/g, '')) || 0,
+        araToplamSatis: parseFloat(teklifTutariInputAyarlar.value.replace(/,/g, '')) || 0,
         indirimOrani: parseFloat(teklifIndirimOraniInputAyarlar.value) || 0,
         kdvOrani: parseFloat(teklifKdvOraniInputAyarlar.value) || 0,
         
