@@ -341,7 +341,7 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
         const ad = (urun && urun.ad) ? String(urun.ad).trim() : 'Bilinmeyen Ürün';
         const birim = (urun && urun.birim_adi) ? String(urun.birim_adi) : 'adet';
         const id = (urun && urun.id) ? urun.id : '';
-        const selectedAttr = (urunVerisi && (String(urunVerisi.id) === String(id) || String(urunVerisi.urunId) === String(id))) ? 'selected' : '';
+        const selectedAttr = (urunVerisi && urunVerisi.id_form_yukleme_icin && String(urunVerisi.id_form_yukleme_icin) === String(id)) ? 'selected' : '';
         return `<option value="${id}" data-birim="${birim}" ${selectedAttr}>${ad} (${birim})</option>`;
     }).join('');
 
@@ -418,8 +418,8 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
     });
     silmeButonu.addEventListener('click', () => urunSatiriniSil(satirId));
     
-    if (urunVerisi && (urunVerisi.id || urunVerisi.urunId)) {
-        yeniSelect.value = String(urunVerisi.id || urunVerisi.urunId);
+    if (urunVerisi && urunVerisi.id_form_yukleme_icin) {
+        yeniSelect.value = String(urunVerisi.id_form_yukleme_icin);
         // For existing data, birimMaliyetValue and fiyatTuruMaliyetSelected are already determined
         // and used in HTML generation through birimMaliyetValue and fiyatTuruMaliyetSelected variables.
         // So, directly calculate with loaded values.
@@ -750,10 +750,18 @@ function teklifFormunuDoldur(teklif) {
 
     if (teklif.urunler && Array.isArray(teklif.urunler)) {
         teklif.urunler.forEach(kalem => {
+            // API'dan gelen kalemde ID için hangi alanın kullanıldığını netleştirin
+            // Olasılıklar: kalem.id, kalem.malzeme_id, kalem.isci_id, kalem.referans_id
+            // Önceliklendirme yapılabilir: örn. malzeme için kalem.malzeme_id varsa onu kullan, yoksa kalem.referans_id vs.
+            const kalemVerisi = {
+                ...kalem, // Diğer tüm kalem özelliklerini kopyala
+                id_form_yukleme_icin: kalem.malzeme_id || kalem.isci_id || kalem.referans_id || kalem.id // Seçim için kullanılacak ID
+            };
+
             if (kalem.kalemTipi === 'malzeme') {
-                yeniUrunSatiriEkle(kalem);
+                yeniUrunSatiriEkle(kalemVerisi);
             } else if (kalem.kalemTipi === 'iscilik') {
-                yeniIscilikSatiriEkle(kalem);
+                yeniIscilikSatiriEkle(kalemVerisi);
             }
         });
     }
@@ -848,21 +856,21 @@ console.log('Teklif Yönetimi modülü (teklifYonetimi.js) yüklendi.');
 
 function yeniIscilikSatiriEkle(iscilikVerisi = null) {
     if (!teklifIscilikListesiContainer) return;
+    console.log('[TeklifYonetimi] yeniIscilikSatiriEkle çağrıldı. iscilikVerisi:', JSON.parse(JSON.stringify(iscilikVerisi || {})));
     iscilikSatirSayaci++;
     const satirId = `iscilikSatir_${iscilikSatirSayaci}`;
     const iscilerListesi = getIsciler() || [];
 
-    // Aktif işçileri alıp isme göre sırala
     const aktifIsciler = iscilerListesi
-        .filter(isci => isci.aktif) // Varsayılan olarak aktif işçiler
+        .filter(isci => isci.aktif) 
         .sort((a, b) => (a.adSoyad || '').localeCompare(b.adSoyad || ''));
 
-    const birimSatisFiyatiValue = (iscilikVerisi && iscilikVerisi.birimUcret !== undefined)
-        ? (parseFloat(iscilikVerisi.birimUcret) || 0).toFixed(2)
+    const birimMaliyetValue = (iscilikVerisi && iscilikVerisi.kaydedilen_birim_maliyet !== undefined)
+        ? (parseFloat(iscilikVerisi.kaydedilen_birim_maliyet) || 0).toFixed(2)
         : '0.00';
-    
-    const satirToplamiValue = (iscilikVerisi && iscilikVerisi.satirToplami !== undefined)
-        ? (parseFloat(iscilikVerisi.satirToplami) || 0).toFixed(2)
+
+    const satirToplamiValue = (iscilikVerisi && iscilikVerisi.satir_toplam_maliyet_kdv_haric !== undefined)
+        ? (parseFloat(iscilikVerisi.satir_toplam_maliyet_kdv_haric) || 0).toFixed(2)
         : '0.00';
 
     const iscilikSatiriHTML = `
@@ -871,7 +879,11 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
                 <label for="isci_${iscilikSatirSayaci}">İşçi:</label>
                 <select id="isci_${iscilikSatirSayaci}" name="isciId" class="teklif-isci-secim" required>
                     <option value="">-- İşçi Seçiniz --</option>
-                    ${aktifIsciler.map(isci => `<option value="${isci.id}">${isci.adSoyad}</option>`).join('')}
+                    ${aktifIsciler.map(isci => {
+                        // iscilikVerisi.id_form_yukleme_icin kullanılır
+                        const selected = (iscilikVerisi && iscilikVerisi.id_form_yukleme_icin && String(iscilikVerisi.id_form_yukleme_icin) === String(isci.id)) ? 'selected' : '';
+                        return `<option value="${isci.id}" ${selected}>${isci.adSoyad}</option>`;
+                    }).join('')}
                 </select>
             </div>
             <div class="form-group iscilik-birim">
@@ -889,7 +901,7 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
             </div>
             <div class="form-group birim-maliyet">
                 <label for="iscilikBirimMaliyet_${iscilikSatirSayaci}">Birim Maliyet:</label>
-                <input type="number" id="iscilikBirimMaliyet_${iscilikSatirSayaci}" name="iscilikBirimMaliyet" class="teklif-iscilik-birim-maliyet" min="0" step="0.01" value="${(iscilikVerisi && iscilikVerisi.birimMaliyet !== undefined) ? (parseFloat(iscilikVerisi.birimMaliyet) || 0).toFixed(2) : '0.00'}">
+                <input type="number" id="iscilikBirimMaliyet_${iscilikSatirSayaci}" name="iscilikBirimMaliyet" class="teklif-iscilik-birim-maliyet" min="0" step="0.01" value="${birimMaliyetValue}">
             </div>
             
             <div class="form-group satir-toplami">
@@ -905,38 +917,18 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
     const yeniBirimSelect = document.getElementById(`iscilikBirim_${iscilikSatirSayaci}`);
     const yeniMiktarInput = document.getElementById(`iscilikMiktar_${iscilikSatirSayaci}`);
     const yeniBirimMaliyetInput = document.getElementById(`iscilikBirimMaliyet_${iscilikSatirSayaci}`);
-    // const yeniBirimSatisUcretiInput = document.getElementById(`iscilikBirimSatisUcreti_${iscilikSatirSayaci}`); // Kaldırıldı
     const silmeButonu = document.querySelector(`#${satirId} .remove-iscilik-satiri-btn`);
 
-    // İşçi dropdown'ını doldur
-    if (yeniIsciSelect) {
-        populeEtIsciSecimDropdown(aktifIsciler, yeniIsciSelect, "-- İşçi Seçiniz --", !(iscilikVerisi && iscilikVerisi.isciId), iscilikVerisi ? iscilikVerisi.isciId : null);
+    // İşçi dropdown'ının seçili değeri HTML oluşturulurken ayarlandı.
+    // populeEtIsciSecimDropdown çağrısı burada gereksiz olabilir, ancak store güncellemeleri için kalabilir.
+    // if (yeniIsciSelect) {
+    //     populeEtIsciSecimDropdown(aktifIsciler, yeniIsciSelect, "-- İşçi Seçiniz --", !(iscilikVerisi && (iscilikVerisi.referans_id || iscilikVerisi.isci_id)), iscilikVerisi ? (iscilikVerisi.referans_id || iscilikVerisi.isci_id) : null);
+    // }
         
-        yeniIsciSelect.addEventListener('change', (e) => {
-            const secilenIsciId = e.target.value;
-            const secilenBirim = yeniBirimSelect.value;
-            if (secilenIsciId) {
-                const isci = getIsciler().find(i => i.id === parseInt(secilenIsciId));
-                if (isci) {
-                    if (yeniBirimMaliyetInput) {
-                        if (secilenBirim === 'gun' && isci.gunlukUcret) {
-                            yeniBirimMaliyetInput.value = (parseFloat(isci.gunlukUcret) || 0).toFixed(2);
-                        } else if (secilenBirim === 'saat' && isci.saatlikUcret) {
-                            yeniBirimMaliyetInput.value = (parseFloat(isci.saatlikUcret) || 0).toFixed(2);
-                        } else {
-                            yeniBirimMaliyetInput.value = '0.00';
-                        }
-                    }
-                }
-            }
-            iscilikSatiriHesapla(satirId);
-        });
-    }
-    
-    yeniBirimSelect.addEventListener('change', (e) => {
-        const secilenIsciId = yeniIsciSelect.value;
-        const secilenBirim = e.target.value;
-         if (secilenIsciId) {
+    yeniIsciSelect?.addEventListener('change', (e) => {
+        const secilenIsciId = e.target.value;
+        const secilenBirim = yeniBirimSelect.value;
+        if (secilenIsciId) {
             const isci = getIsciler().find(i => i.id === parseInt(secilenIsciId));
             if (isci) {
                 if (yeniBirimMaliyetInput) {
@@ -960,16 +952,12 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
 
     silmeButonu.addEventListener('click', () => iscilikSatiriniSil(satirId));
 
-    if (iscilikVerisi) {
-        if (iscilikVerisi.isciId && yeniIsciSelect) {
-            yeniIsciSelect.value = String(iscilikVerisi.isciId);
-        }
-        if (iscilikVerisi.birim && yeniBirimSelect) {
-            yeniBirimSelect.value = iscilikVerisi.birim;
-        }
+    if (iscilikVerisi && iscilikVerisi.id_form_yukleme_icin) {
+        // İlgili alanlar HTML oluşturulurken zaten ayarlandı.
+        // yeniIsciSelect.value = String(iscilikVerisi.id_form_yukleme_icin);
         iscilikSatiriHesapla(satirId); 
     } else {
-         iscilikSatiriHesapla(satirId);
+        iscilikSatiriHesapla(satirId);
     }
 }
 
