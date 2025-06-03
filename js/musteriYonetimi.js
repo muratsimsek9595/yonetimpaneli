@@ -173,17 +173,21 @@ function initMusteriYonetimi() {
                 showToast(response.message || 'Müşteri başarıyla güncellendi!', 'success');
             } else {
                 response = await saveMusteri(musteriData); // API'ye kaydet
-                // API yanıtı yeni eklenen müşteriyi ve ID'sini 'data' altında dönmeli
-                if (response && response.data && response.data.id) {
+                
+                if (response && response.id) { // Doğrudan response.id kontrolü
+                    const yeniMusteriDetayi = { ...musteriData, id: response.id };
+                    addMusteriToStore(yeniMusteriDetayi);
+                    showToast(response.message || 'Müşteri başarıyla eklendi!', 'success');
+                } else if (response && response.data && response.data.id) { // Önceki data yapısını da kontrol et
                     addMusteriToStore(response.data);
+                    showToast(response.message || 'Müşteri başarıyla eklendi!', 'success');
                 } else {
                     console.error('Yeni müşteri API yanıtı beklenen formatta değil veya ID eksik.', response);
-                    showToast('Müşteri eklendi ancak yanıt alınamadı, liste güncel olmayabilir.', 'warning');
+                    showToast('Müşteri eklendi ancak yanıt alınamadı veya ID dönmedi, liste güncel olmayabilir.', 'warning');
                     // Fallback: tüm listeyi yeniden çekip store'u güncelle (çok ideal değil)
                     // const allMusteriler = await getMusterilerFromAPI();
                     // if(allMusteriler && allMusteriler.data) setMusteriler(allMusteriler.data);
                 }
-                showToast(response.message || 'Müşteri başarıyla eklendi!', 'success');
             }
             
             clearForm(musteriForm);
