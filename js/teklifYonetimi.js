@@ -324,22 +324,22 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
         const ad = (urun && urun.ad) ? String(urun.ad).trim() : 'Bilinmeyen Ürün';
         const birim = (urun && urun.birim_adi) ? String(urun.birim_adi) : 'adet';
         const id = (urun && urun.id) ? urun.id : '';
-        // urunVerisi varsa ve ID eşleşiyorsa 'selected' attribute'ünü ekle
         const selectedAttr = (urunVerisi && (String(urunVerisi.id) === String(id) || String(urunVerisi.urunId) === String(id))) ? 'selected' : '';
         return `<option value="${id}" data-birim="${birim}" ${selectedAttr}>${ad} (${birim})</option>`;
     }).join('');
 
-    const birimFiyatValue = (urunVerisi && urunVerisi.kaydedilen_birim_satis_fiyati !== undefined)
+    const birimSatisFiyatiValue = (urunVerisi && urunVerisi.kaydedilen_birim_satis_fiyati !== undefined)
         ? (parseFloat(urunVerisi.kaydedilen_birim_satis_fiyati) || 0).toFixed(2)
-        : (urunVerisi && typeof urunVerisi.birimFiyat === 'number') // Eski data yapısıyla uyumluluk için eklendi (birimFiyat)
+        : (urunVerisi && typeof urunVerisi.birimFiyat === 'number') 
             ? (urunVerisi.birimFiyat || 0).toFixed(2)
             : '0.00';
 
-    const satirToplamiValue = (urunVerisi && urunVerisi.satir_toplam_satis_fiyati_kdv_haric !== undefined)
-        ? (parseFloat(urunVerisi.satir_toplam_satis_fiyati_kdv_haric) || 0).toFixed(2)
-        : (urunVerisi && typeof urunVerisi.satirToplami === 'number') // Eski data yapısıyla uyumluluk için eklendi (satirToplami)
-            ? (urunVerisi.satirToplami || 0).toFixed(2)
-            : '0.00';
+    // satirToplamiValue artık ilk maliyeti gösterecek, eğer urunVerisi.kaydedilen_birim_maliyet varsa onu kullan
+    const birimMaliyetValue = (urunVerisi && urunVerisi.kaydedilen_birim_maliyet !== undefined)
+        ? (parseFloat(urunVerisi.kaydedilen_birim_maliyet) || 0).toFixed(2)
+        : '0.00';
+    const miktarValue = (urunVerisi && urunVerisi.miktar) ? urunVerisi.miktar : '1';
+    const satirToplamiValue = (parseFloat(birimMaliyetValue) * parseFloat(miktarValue)).toFixed(2);
 
     const urunSatiriHTML = `
         <div class="teklif-urun-satiri" id="${satirId}">
@@ -352,34 +352,34 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
             </div>
             <div class="form-group miktar">
                 <label for="miktar_${urunSatirSayaci}">Miktar:</label>
-                <input type="number" id="miktar_${urunSatirSayaci}" name="miktar" class="teklif-urun-miktar" min="0" step="any" required value="${(urunVerisi && urunVerisi.miktar) ? urunVerisi.miktar : '1'}">
+                <input type="number" id="miktar_${urunSatirSayaci}" name="miktar" class="teklif-urun-miktar" min="0" step="any" required value="${miktarValue}">
             </div>
             <div class="form-group birim-maliyet">
                 <label for="birimMaliyet_${urunSatirSayaci}">Birim Maliyet (KDV Hariç):</label>
-                <input type="number" id="birimMaliyet_${urunSatirSayaci}" name="birimMaliyet" class="teklif-urun-birim-maliyet" min="0" step="0.01" value="${(urunVerisi && urunVerisi.kaydedilen_birim_maliyet !== undefined) ? (parseFloat(urunVerisi.kaydedilen_birim_maliyet) || 0).toFixed(2) : '0.00'}">
+                <input type="number" id="birimMaliyet_${urunSatirSayaci}" name="birimMaliyet" class="teklif-urun-birim-maliyet" min="0" step="0.01" value="${birimMaliyetValue}">
             </div>
             <div class="form-group birim-fiyat">
                 <label for="birimFiyat_${urunSatirSayaci}">Birim Satış Fiyatı:</label>
-                <input type="number" id="birimFiyat_${urunSatirSayaci}" name="birimSatisFiyati" class="teklif-urun-birim-satis-fiyati" min="0" step="0.01" required value="${birimFiyatValue}">
+                <input type="number" id="birimFiyat_${urunSatirSayaci}" name="birimSatisFiyati" class="teklif-urun-birim-satis-fiyati" min="0" step="0.01" required value="${birimSatisFiyatiValue}">
             </div>
             <div class="form-group birim-fiyat-turu">
-                <label for="fiyatTuru_${urunSatirSayaci}">Fiyat Türü:</label>
+                <label for="fiyatTuru_${urunSatirSayaci}">Satış Fiyatı Türü:</label>
                 <select id="fiyatTuru_${urunSatirSayaci}" name="fiyatTuru" class="teklif-urun-fiyat-turu">
-                    <option value="haric" ${ (urunVerisi && urunVerisi.fiyatTuru === 'haric') ? 'selected' : '' }>KDV Hariç</option>
-                    <option value="dahil" ${ (urunVerisi && urunVerisi.fiyatTuru === 'dahil') ? 'selected' : '' }>KDV Dahil</option>
+                    <option value="haric" ${ (urunVerisi && urunVerisi.fiyatTuruSatis === 'haric') ? 'selected' : '' }>KDV Hariç</option>
+                    <option value="dahil" ${ (urunVerisi && urunVerisi.fiyatTuruSatis === 'dahil') ? 'selected' : '' }>KDV Dahil</option>
                 </select>
             </div>
             <div class="form-group satir-toplami">
-                <label>Satır Toplamı (KDV Hariç):</label>
+                <label>Satır Toplam Maliyeti (KDV Hariç):</label>
                 <span id="satirToplami_${urunSatirSayaci}" class="teklif-urun-satir-toplami">${satirToplamiValue}</span>
-                 <small class="satir-kdv-tutari-gosterge" style="display: block; font-size: 0.8em; color: #555;">KDV: 0.00</small>
+                 <small class="satir-kdv-tutari-gosterge" style="display: block; font-size: 0.8em; color: #555;">Satış KDV: 0.00</small>
             </div>
             <button type="button" class="btn-icon remove-urun-satiri-btn" data-satirid="${satirId}">✖</button>
         </div>
     `;
     teklifUrunListesiContainer.insertAdjacentHTML('beforeend', urunSatiriHTML);
 
-    // Yeni eklenen satırdaki elementlere olay dinleyicileri ekle
+    // Olay dinleyicileri aynı kalacak, urunSatiriHesapla içindeki mantık değişecek
     const yeniSelect = document.getElementById(`urun_${urunSatirSayaci}`);
     const yeniMiktarInput = document.getElementById(`miktar_${urunSatirSayaci}`);
     const yeniBirimMaliyetInput = document.getElementById(`birimMaliyet_${urunSatirSayaci}`);
@@ -388,32 +388,29 @@ function yeniUrunSatiriEkle(urunVerisi = null) {
     const silmeButonu = document.querySelector(`#${satirId} .remove-urun-satiri-btn`);
 
     yeniSelect.addEventListener('change', (e) => {
-        birimFiyatOner(e.target.value, satirId);
+        birimFiyatOner(e.target.value, satirId); // Bu satış fiyatını önerir, maliyeti değil.
+        // Maliyet için ayrı bir öneri mekanizması eklenebilir veya manuel girilir.
         urunSatiriHesapla(satirId); 
     });
-    yeniMiktarInput.addEventListener('input', (e) => urunSatiriHesapla(satirId));
-    yeniBirimMaliyetInput.addEventListener('input', (e) => urunSatiriHesapla(satirId));
-    yeniBirimSatisFiyatInput.addEventListener('input', (e) => urunSatiriHesapla(satirId));
-    yeniFiyatTuruSelect.addEventListener('change', (e) => urunSatiriHesapla(satirId));
+    [yeniMiktarInput, yeniBirimMaliyetInput, yeniBirimSatisFiyatInput, yeniFiyatTuruSelect].forEach(input => {
+        input.addEventListener('input', () => urunSatiriHesapla(satirId));
+        if (input.tagName === 'SELECT') { // Select için change de dinleyelim
+            input.addEventListener('change', () => urunSatiriHesapla(satirId));
+        }
+    });
     silmeButonu.addEventListener('click', () => urunSatiriniSil(satirId));
     
-    // Eğer urunVerisi varsa ve dropdown'da seçili değer yoksa (dinamik eklemeden sonra olabilir)
-    // ve map içinde selectedAttr doğru çalıştıysa bu satıra gerek kalmayabilir.
-    // Ancak garanti olması adına, dropdown DOM'a eklendikten sonra value'sunu set edebiliriz.
     if (urunVerisi && (urunVerisi.id || urunVerisi.urunId)) {
         yeniSelect.value = String(urunVerisi.id || urunVerisi.urunId); 
     }
 
-    // Seçili ürün değiştiğinde birim fiyatı otomatik önerme (eğer düzenleme modunda değilse veya birim fiyat sıfırsa)
-    if (yeniSelect.value) { // Eğer bir ürün seçiliyse (ya yeni eklendi ya da veriyle geldi)
-        // Eğer urunVerisi var ve birim fiyatı zaten doluysa, birimFiyatOner'i tetikleme.
-        // Sadece yeni eklenen boş satırlarda veya kullanıcı değiştirdiğinde tetiklensin.
-        if (!urunVerisi || !birimFiyatValue || parseFloat(birimFiyatValue) === 0) {
+    if (yeniSelect.value) {
+        if (!urunVerisi || !birimSatisFiyatiValue || parseFloat(birimSatisFiyatiValue) === 0) {
              birimFiyatOner(yeniSelect.value, satirId);
         }
     }
     
-    urunSatiriHesapla(satirId); // İlk hesaplamayı yap
+    urunSatiriHesapla(satirId); 
 }
 
 function birimFiyatOner(urunId, satirId) {
@@ -447,59 +444,51 @@ function urunSatiriniSil(satirId) {
 }
 
 function urunSatiriHesapla(satirId) {
-    console.log(`[urunSatiriHesapla] ${satirId} için çağrıldı.`); // Eklendi
     const satirElementi = document.getElementById(satirId);
-    if (!satirElementi) {
-        console.error(`[urunSatiriHesapla] ${satirId} bulunamadı.`); // Eklendi
-        return;
-    }
+    if (!satirElementi) return;
 
     const miktarInput = satirElementi.querySelector('.teklif-urun-miktar');
     const birimMaliyetInput = satirElementi.querySelector('.teklif-urun-birim-maliyet');
     const birimSatisFiyatInput = satirElementi.querySelector('.teklif-urun-birim-satis-fiyati');
     const fiyatTuruSelect = satirElementi.querySelector('.teklif-urun-fiyat-turu');
-    const satirToplamiSpan = satirElementi.querySelector('.teklif-urun-satir-toplami');
+    const satirToplamiMaliyetSpan = satirElementi.querySelector('.teklif-urun-satir-toplami'); // Artık maliyet span'i
     const satirKdvTutariGosterge = satirElementi.querySelector('.satir-kdv-tutari-gosterge');
 
-    console.log('[urunSatiriHesapla] Elementler:', { miktarInput, birimMaliyetInput, birimSatisFiyatInput, satirToplamiSpan }); // Eklendi
-
     const miktar = parseFloat(miktarInput?.value) || 0;
-    const girilenBirimMaliyet = parseFloat(birimMaliyetInput?.value) || 0; // Okunan maliyet
+    const girilenBirimMaliyet = parseFloat(birimMaliyetInput?.value) || 0;
     const girilenBirimSatisFiyati = parseFloat(birimSatisFiyatInput?.value) || 0;
-    const fiyatTuru = fiyatTuruSelect?.value || 'haric';
+    const fiyatTuruSatis = fiyatTuruSelect?.value || 'haric'; // Satış fiyatının türü
     const genelKdvOrani = parseFloat(teklifKdvOraniInput?.value) || 0;
 
     // Maliyet Hesaplaması (KDV Hariç varsayılıyor)
     const satirToplamMaliyetKdvHaric = miktar * girilenBirimMaliyet;
-    if (satirElementi) {
-        satirElementi.dataset.maliyetTutari = satirToplamMaliyetKdvHaric.toFixed(2);
+    satirElementi.dataset.maliyetTutari = satirToplamMaliyetKdvHaric.toFixed(2);
+    if (satirToplamiMaliyetSpan) {
+        satirToplamiMaliyetSpan.textContent = satirToplamMaliyetKdvHaric.toFixed(2); // Satırda maliyeti göster
     }
 
-    // Satış Fiyatı ve KDV Hesaplaması (Mevcut mantık devam ediyor)
+    // Satış Fiyatı ve Satış KDV Hesaplaması (Müşteriye yansıtılacak fiyat üzerinden)
     let kdvHaricBirimSatisFiyati = 0;
     let satirSatisKdvTutari = 0;
     let satirToplamiSatisKdvHaric = 0;
 
-    if (fiyatTuru === 'dahil') {
+    if (fiyatTuruSatis === 'dahil') {
         kdvHaricBirimSatisFiyati = girilenBirimSatisFiyati / (1 + (genelKdvOrani / 100));
         satirToplamiSatisKdvHaric = miktar * kdvHaricBirimSatisFiyati;
         const satirToplamiSatisKdvDahil = miktar * girilenBirimSatisFiyati;
         satirSatisKdvTutari = satirToplamiSatisKdvDahil - satirToplamiSatisKdvHaric;
-    } else { // fiyatTuru === 'haric'
+    } else { // fiyatTuruSatis === 'haric'
         kdvHaricBirimSatisFiyati = girilenBirimSatisFiyati;
         satirToplamiSatisKdvHaric = miktar * kdvHaricBirimSatisFiyati;
         satirSatisKdvTutari = satirToplamiSatisKdvHaric * (genelKdvOrani / 100);
     }
+    
+    // Hesaplanan satış KDV'sini ve KDV hariç satış toplamını dataset'e yaz
+    satirElementi.dataset.kdvTutari = satirSatisKdvTutari.toFixed(2); // Bu satışa ait KDV
+    satirElementi.dataset.satisToplamiKdvHaricUrun = satirToplamiSatisKdvHaric.toFixed(2); // Bu satışa ait KDV hariç toplam
 
-    if (satirToplamiSpan) {
-        satirToplamiSpan.textContent = satirToplamiSatisKdvHaric.toFixed(2);
-        console.log(`[urunSatiriHesapla] ${satirId} için satirToplamiSpan.textContent güncellendi:`, satirToplamiSpan.textContent); // Eklendi
-    }
     if (satirKdvTutariGosterge) {
-        satirKdvTutariGosterge.textContent = `KDV: ${satirSatisKdvTutari.toFixed(2)}`;
-    }
-    if (satirElementi) {
-        satirElementi.dataset.kdvTutari = satirSatisKdvTutari.toFixed(2); // Bu satış KDV'si
+        satirKdvTutariGosterge.textContent = `Satış KDV: ${satirSatisKdvTutari.toFixed(2)}`;
     }
 
     genelToplamlariHesapla();
@@ -510,31 +499,36 @@ function genelToplamlariHesapla() {
     let toplamMaliyetKdvHaric = 0;
     let toplamSatisKdv = 0;
 
-    // Malzeme satır toplamları ve KDV'leri
+    // Malzeme satır toplamları, maliyetleri ve KDV'leri
     document.querySelectorAll('#teklifUrunListesiContainer .teklif-urun-satiri').forEach(satir => {
-        const satirSatisToplamiKdvHaricSpan = satir.querySelector('.teklif-urun-satir-toplami');
-        araToplamSatisKdvHaric += parseFloat(satirSatisToplamiKdvHaricSpan?.textContent) || 0;
+        // Maliyet
         toplamMaliyetKdvHaric += parseFloat(satir.dataset.maliyetTutari) || 0;
+        // Satış (KDV Hariç) - Yeni dataset'ten oku
+        araToplamSatisKdvHaric += parseFloat(satir.dataset.satisToplamiKdvHaricUrun) || 0;
+        // Satış KDV'si
         toplamSatisKdv += parseFloat(satir.dataset.kdvTutari) || 0; 
     });
 
-    // İşçilik satır toplamları ve maliyetleri
-    const genelKdvOraniInput = teklifKdvOraniInput?.value ? parseFloat(teklifKdvOraniInput.value) : 0;
+    // İşçilik satır maliyetleri ve KDV'leri
+    const genelKdvOraniInputVal = teklifKdvOraniInput?.value ? parseFloat(teklifKdvOraniInput.value) : 0;
     document.querySelectorAll('#teklifIscilikListesiContainer .teklif-iscilik-satiri').forEach(satir => {
-        const satirSatisToplamiKdvHaricSpan = satir.querySelector('.teklif-iscilik-satir-toplami');
-        const kdvHaricSatisTutar = parseFloat(satirSatisToplamiKdvHaricSpan?.textContent) || 0;
-        araToplamSatisKdvHaric += kdvHaricSatisTutar;
+        // Maliyet
         toplamMaliyetKdvHaric += parseFloat(satir.dataset.maliyetTutariIscilik) || 0;
-        toplamSatisKdv += kdvHaricSatisTutar * (genelKdvOraniInput / 100); // İşçilik KDV'si genel orandan
+        
+        // İşçilik için satış fiyatı artık girilmiyor, bu yüzden işçilikten satış geliri ve KDV'si olmayacak.
+        // Eğer işçilik maliyeti aynı zamanda satış fiyatı gibi düşünülüyorsa ve KDV uygulanacaksa, bu mantık değişmeli.
+        // Şimdiki durumda, işçilik ara satış toplamına ve KDV'ye katkıda bulunmayacak.
+        // const kdvHaricSatisTutarIscilik = parseFloat(satir.querySelector('.teklif-iscilik-satir-toplami')?.textContent) || 0;
+        // araToplamSatisKdvHaric += kdvHaricSatisTutarIscilik; // İşçilikten satış geliri yok
+        // toplamSatisKdv += kdvHaricSatisTutarIscilik * (genelKdvOraniInputVal / 100); // İşçilikten KDV yok
     });
 
-    // Arayüzde Toplam Maliyeti Göster (HTML'de span#teklifToplamMaliyetSpan olmalı)
     const teklifToplamMaliyetSpan = document.getElementById('teklifToplamMaliyetSpan');
     if (teklifToplamMaliyetSpan) {
         teklifToplamMaliyetSpan.textContent = toplamMaliyetKdvHaric.toFixed(2);
     }
 
-    if (teklifAraToplamSpan) teklifAraToplamSpan.textContent = araToplamSatisKdvHaric.toFixed(2); // Bu, KDV Hariç Satış Ara Toplamı
+    if (teklifAraToplamSpan) teklifAraToplamSpan.textContent = araToplamSatisKdvHaric.toFixed(2);
 
     const indirimOrani = parseFloat(teklifIndirimOraniInput?.value) || 0;
     const indirimTutari = (araToplamSatisKdvHaric * indirimOrani) / 100; 
@@ -547,7 +541,6 @@ function genelToplamlariHesapla() {
     const genelToplamSatisKdvDahil = toplamSatisIndirimSonrasiKdvHaric + toplamSatisKdv;
     if (teklifGenelToplamSpan) teklifGenelToplamSpan.textContent = genelToplamSatisKdvDahil.toFixed(2);
 
-    // Arayüzde Toplam Kârı Göster (HTML'de span#teklifToplamKarSpan olmalı)
     const teklifToplamKarSpan = document.getElementById('teklifToplamKarSpan');
     if (teklifToplamKarSpan) {
         const toplamKar = toplamSatisIndirimSonrasiKdvHaric - toplamMaliyetKdvHaric;
@@ -571,8 +564,10 @@ function teklifFormundanVeriAl() {
         const birimMaliyet = parseFloat(satir.querySelector('.teklif-urun-birim-maliyet')?.value) || 0;
         const birimSatisFiyati = parseFloat(satir.querySelector('.teklif-urun-birim-satis-fiyati')?.value) || 0;
         const fiyatTuru = satir.querySelector('.teklif-urun-fiyat-turu')?.value || 'haric';
-        const kalemSatisKdvTutari = parseFloat(satir.dataset.kdvTutari) || 0; // Satış KDV tutarı
-        const kalemToplamMaliyetKdvHaric = parseFloat(satir.dataset.maliyetTutari) || 0; // Maliyet tutarı
+        const kalemSatisKdvTutari = parseFloat(satir.dataset.kdvTutari) || 0; 
+        const kalemToplamMaliyetKdvHaric = parseFloat(satir.dataset.maliyetTutari) || 0; 
+        // Satırın KDV hariç satış toplamını dataset'ten oku
+        const kalemToplamSatisKdvHaric = parseFloat(satir.dataset.satisToplamiKdvHaricUrun) || 0;
         
         if (urunMalzemeElement.value && miktar > 0) { 
             kalemler.push({
@@ -585,7 +580,7 @@ function teklifFormundanVeriAl() {
                 satir_toplam_maliyet_kdv_haric: kalemToplamMaliyetKdvHaric,
                 kaydedilen_birim_satis_fiyati: birimSatisFiyati,
                 fiyatTuruSatis: fiyatTuru,
-                satir_toplam_satis_fiyati_kdv_haric: parseFloat(satir.querySelector('.teklif-urun-satir-toplami')?.textContent) || 0,
+                satir_toplam_satis_fiyati_kdv_haric: kalemToplamSatisKdvHaric, // Güncellendi
                 kalem_satis_kdv_tutari: kalemSatisKdvTutari
             });
         }
@@ -600,9 +595,9 @@ function teklifFormundanVeriAl() {
         const birim = satir.querySelector('.teklif-iscilik-birim')?.value || '';
         const miktar = parseFloat(satir.querySelector('.teklif-iscilik-miktar')?.value) || 0;
         const birimMaliyet = parseFloat(satir.querySelector('.teklif-iscilik-birim-maliyet')?.value) || 0;
-        const birimSatisUcreti = parseFloat(satir.querySelector('.teklif-iscilik-birim-satis-ucreti')?.value) || 0;
+        // const birimSatisUcreti = parseFloat(satir.querySelector('.teklif-iscilik-birim-satis-ucreti')?.value) || 0; // Bu alan kaldırıldı
         const satirToplamMaliyetKdvHaric = parseFloat(satir.dataset.maliyetTutariIscilik) || 0;
-        const satirToplamSatisKdvHaric = parseFloat(satir.querySelector('.teklif-iscilik-satir-toplami')?.textContent) || 0;
+        // const satirToplamSatisKdvHaric = parseFloat(satir.querySelector('.teklif-iscilik-satir-toplami')?.textContent) || 0; // Bu span artık maliyeti gösteriyor
 
         if (isciIdSelect.value && miktar > 0) {
             kalemler.push({
@@ -613,10 +608,10 @@ function teklifFormundanVeriAl() {
                 miktar: miktar,
                 kaydedilen_birim_maliyet: birimMaliyet,
                 satir_toplam_maliyet_kdv_haric: satirToplamMaliyetKdvHaric,
-                kaydedilen_birim_satis_fiyati: birimSatisUcreti, 
-                satir_toplam_satis_fiyati_kdv_haric: satirToplamSatisKdvHaric
+                kaydedilen_birim_satis_fiyati: 0, // İşçilik için satış fiyatı yok
+                satir_toplam_satis_fiyati_kdv_haric: 0 // İşçilik için KDV hariç satış toplamı yok
                 // İşçilik için KDV detayları (fiyatTuruSatis, kalem_satis_kdv_tutari) burada yok,
-                // çünkü KDV'nin genel olarak hesaplanacağını varsaydık.
+                // çünkü KDV'nin genel olarak hesaplanacağını varsaydık ve işçilikte KDV yok.
             });
         }
     });
@@ -648,21 +643,13 @@ function teklifFormundanVeriAl() {
 function teklifFormunuDoldur(teklif) {
     if (!teklif) return;
     console.log("[TeklifYonetimi] teklifFormunuDoldur çağrıldı. Teklif verisi:", JSON.parse(JSON.stringify(teklif)));
-    console.log("[TeklifYonetimi] teklifFormunuDoldur başında getMusteriler():", JSON.parse(JSON.stringify(getMusteriler())));
-    if (teklifMusteriSecimi) {
-        console.log(`[TeklifYonetimi] teklifFormunuDoldur, musteriId atamadan önce teklifMusteriSecimi.innerHTML:`, teklifMusteriSecimi.innerHTML);
-    } else {
-        console.log("[TeklifYonetimi] teklifFormunuDoldur, teklifMusteriSecimi elementi bulunamadı!");
-    }
     
-    // Formu temizlemeden önce müşteri dropdown'ı hariç diğer alanları sıfırla
     teklifIdInput.value = teklif.id || '';
     teklifNoInput.value = teklif.teklifNo || '';
     
-    teklifMusteriAdiInput.value = ''; // Önce temizle
-    teklifMusteriIletisimInput.value = ''; // Önce temizle
+    teklifMusteriAdiInput.value = ''; 
+    teklifMusteriIletisimInput.value = ''; 
     
-    // API'dan gelen yanıtta musteri_id kullanılıyor olabilir.
     const musteriIdFromTeklif = teklif.musteriId || teklif.musteri_id;
 
     if (teklifMusteriSecimi && musteriIdFromTeklif) {
@@ -674,7 +661,6 @@ function teklifFormunuDoldur(teklif) {
         teklifMusteriSecimi.dispatchEvent(event);
         console.log(`[TeklifYonetimi] Müşteri için 'change' olayı tetiklendikten sonra teklifMusteriSecimi.value: ${teklifMusteriSecimi.value}`);
     } else {
-         // musteriId yoksa ama musteriAdi varsa (eski data veya direkt isim girilmişse)
         console.log(`[TeklifYonetimi] Müşteri ID bulunamadı veya teklifMusteriSecimi elementi yok. teklif.musteriAdi: ${teklif.musteriAdi}`);
         teklifMusteriAdiInput.value = teklif.musteriAdi || '';
         teklifMusteriIletisimInput.value = teklif.musteriIletisim || '';
@@ -685,25 +671,22 @@ function teklifFormunuDoldur(teklif) {
     if(teklifIndirimOraniInput) teklifIndirimOraniInput.value = teklif.indirimOrani || 0;
     if(teklifKdvOraniInput) teklifKdvOraniInput.value = teklif.kdvOrani === undefined ? 20 : teklif.kdvOrani;
     
-    // Para birimini ayarla: API'dan "0" geliyorsa "TL" olarak göster
     if (teklifParaBirimiInput) {
         if (teklif.paraBirimi === "0" || teklif.paraBirimi === 0) {
             teklifParaBirimiInput.value = 'TL';
         } else {
-            teklifParaBirimiInput.value = teklif.paraBirimi || 'TL'; // Diğer durumlar veya null/undefined için varsayılan TL
+            teklifParaBirimiInput.value = teklif.paraBirimi || 'TL';
         }
     }
 
     teklifDurumInput.value = teklif.durum || 'Hazırlanıyor';
     teklifNotlarInput.value = teklif.notlar || '';
 
-    // Mevcut ürün ve işçilik satırlarını temizle
     if (teklifUrunListesiContainer) teklifUrunListesiContainer.innerHTML = '';
     urunSatirSayaci = 0;
     if (teklifIscilikListesiContainer) teklifIscilikListesiContainer.innerHTML = '';
     iscilikSatirSayaci = 0;
 
-    // Kayıtlı kalemleri (ürünler ve işçilikler) forma yükle
     if (teklif.urunler && Array.isArray(teklif.urunler)) {
         teklif.urunler.forEach(kalem => {
             if (kalem.kalemTipi === 'malzeme') {
@@ -712,9 +695,11 @@ function teklifFormunuDoldur(teklif) {
                     urunId: kalem.malzeme_id || kalem.referans_id, // Dropdown seçimi için
                     malzemeAdi: kalem.aciklama, 
                     miktar: kalem.miktar,
-                    birim_adi: kalem.birim,
+                    birim_adi: kalem.birim, // yeniUrunSatiriEkle bunu doğrudan kullanmıyor, option oluşturmada kullanılıyor
+                    kaydedilen_birim_maliyet: kalem.kaydedilen_birim_maliyet, // Güncellendi: Maliyet bilgisini aktar
                     kaydedilen_birim_satis_fiyati: kalem.kaydedilen_birim_satis_fiyati, 
-                    satir_toplam_satis_fiyati_kdv_haric: kalem.satir_toplam_satis_fiyati_kdv_haric 
+                    fiyatTuruSatis: kalem.fiyatTuruSatis, // Güncellendi: Satış fiyat türünü aktar
+                    // satir_toplam_satis_fiyati_kdv_haric: kalem.satir_toplam_satis_fiyati_kdv_haric // Bu bilgi artık yeniUrunSatiriEkle tarafından başlangıçta kullanılmıyor, urunSatiriHesapla tarafından hesaplanacak.
                 });
             } else if (kalem.kalemTipi === 'iscilik') {
                 yeniIscilikSatiriEkle({
@@ -722,14 +707,14 @@ function teklifFormunuDoldur(teklif) {
                     isciAdi: kalem.aciklama, 
                     birim: kalem.birim,
                     miktar: kalem.miktar,
-                    birimUcret: kalem.kaydedilen_birim_satis_fiyati,
-                    satirToplami: kalem.satir_toplam_satis_fiyati_kdv_haric
+                    birimMaliyet: kalem.kaydedilen_birim_maliyet, // Güncellendi: Sadece maliyet bilgisini aktar
+                    // birimUcret: kalem.kaydedilen_birim_satis_fiyati, // Bu alan artık yeniIscilikSatiriEkle tarafından beklenmiyor/kullanılmıyor
+                    // satirToplami: kalem.satir_toplam_satis_fiyati_kdv_haric // Bu alan artık yeniIscilikSatiriEkle tarafından beklenmiyor/kullanılmıyor
                 });
             }
         });
     }
     
-    // Eğer hiç ürün/işçilik satırı eklenmediyse (yeni teklif veya boş teklif), birer tane boş ekle
     if (teklifUrunListesiContainer && teklifUrunListesiContainer.childElementCount === 0) {
         yeniUrunSatiriEkle();
     }
@@ -737,7 +722,7 @@ function teklifFormunuDoldur(teklif) {
         yeniIscilikSatiriEkle();
     }
 
-    genelToplamlariHesapla(); // Tüm satırlar eklendikten sonra toplamları güncelle
+    genelToplamlariHesapla();
     if(teklifFormTemizleButton) teklifFormTemizleButton.style.display = 'inline-block';
     if(teklifNoInput) teklifNoInput.focus();
 }
@@ -867,12 +852,9 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
                 <label for="iscilikBirimMaliyet_${iscilikSatirSayaci}">Birim Maliyet:</label>
                 <input type="number" id="iscilikBirimMaliyet_${iscilikSatirSayaci}" name="iscilikBirimMaliyet" class="teklif-iscilik-birim-maliyet" min="0" step="0.01" value="${(iscilikVerisi && iscilikVerisi.birimMaliyet !== undefined) ? (parseFloat(iscilikVerisi.birimMaliyet) || 0).toFixed(2) : '0.00'}">
             </div>
-            <div class="form-group birim-fiyat">
-                <label for="iscilikBirimSatisUcreti_${iscilikSatirSayaci}">Birim Satış Ücreti:</label>
-                <input type="number" id="iscilikBirimSatisUcreti_${iscilikSatirSayaci}" name="iscilikBirimSatisUcreti" class="teklif-iscilik-birim-satis-ucreti" min="0" step="0.01" required value="${birimSatisFiyatiValue}">
-            </div>
+            
             <div class="form-group satir-toplami">
-                <label>Satır Toplam Satış Ücreti:</label>
+                <label>Satır Toplam Maliyeti:</label>
                 <span id="iscilikSatirToplami_${iscilikSatirSayaci}" class="teklif-iscilik-satir-toplami">${satirToplamiValue}</span>
             </div>
             <button type="button" class="btn-icon remove-iscilik-satiri-btn" data-satirid="${satirId}">✖</button>
@@ -884,7 +866,7 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
     const yeniBirimSelect = document.getElementById(`iscilikBirim_${iscilikSatirSayaci}`);
     const yeniMiktarInput = document.getElementById(`iscilikMiktar_${iscilikSatirSayaci}`);
     const yeniBirimMaliyetInput = document.getElementById(`iscilikBirimMaliyet_${iscilikSatirSayaci}`);
-    const yeniBirimSatisUcretiInput = document.getElementById(`iscilikBirimSatisUcreti_${iscilikSatirSayaci}`);
+    // const yeniBirimSatisUcretiInput = document.getElementById(`iscilikBirimSatisUcreti_${iscilikSatirSayaci}`); // Kaldırıldı
     const silmeButonu = document.querySelector(`#${satirId} .remove-iscilik-satiri-btn`);
 
     // İşçi dropdown'ını doldur
@@ -897,19 +879,15 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
             if (secilenIsciId) {
                 const isci = getIsciler().find(i => i.id === parseInt(secilenIsciId));
                 if (isci) {
-                    // Maliyet Önerisi (işçinin kendi maliyetini yansıt)
                     if (yeniBirimMaliyetInput) {
                         if (secilenBirim === 'gun' && isci.gunlukUcret) {
                             yeniBirimMaliyetInput.value = (parseFloat(isci.gunlukUcret) || 0).toFixed(2);
                         } else if (secilenBirim === 'saat' && isci.saatlikUcret) {
                             yeniBirimMaliyetInput.value = (parseFloat(isci.saatlikUcret) || 0).toFixed(2);
                         } else {
-                            yeniBirimMaliyetInput.value = '0.00'; // Diğer durumlar için varsayılan maliyet
+                            yeniBirimMaliyetInput.value = '0.00';
                         }
                     }
-                    // Satış Ücreti Önerisi (Maliyete bir miktar kar marjı eklenebilir veya boş bırakılabilir)
-                    // Şimdilik satış ücretini otomatik önermiyoruz, kullanıcı girecek.
-                    // if (yeniBirimSatisUcretiInput) { ... }
                 }
             }
             iscilikSatiriHesapla(satirId);
@@ -922,45 +900,36 @@ function yeniIscilikSatiriEkle(iscilikVerisi = null) {
          if (secilenIsciId) {
             const isci = getIsciler().find(i => i.id === parseInt(secilenIsciId));
             if (isci) {
-                // Maliyet Önerisi (işçinin kendi maliyetini yansıt)
                 if (yeniBirimMaliyetInput) {
                     if (secilenBirim === 'gun' && isci.gunlukUcret) {
                         yeniBirimMaliyetInput.value = (parseFloat(isci.gunlukUcret) || 0).toFixed(2);
                     } else if (secilenBirim === 'saat' && isci.saatlikUcret) {
                         yeniBirimMaliyetInput.value = (parseFloat(isci.saatlikUcret) || 0).toFixed(2);
                     } else {
-                        yeniBirimMaliyetInput.value = '0.00'; // Diğer durumlar için varsayılan maliyet
+                        yeniBirimMaliyetInput.value = '0.00';
                     }
                 }
-                // Satış Ücreti Önerisi (Maliyete bir miktar kar marjı eklenebilir veya boş bırakılabilir)
-                // Şimdilik satış ücretini otomatik önermiyoruz, kullanıcı girecek.
-                // if (yeniBirimSatisUcretiInput) { ... }
             }
         }
         iscilikSatiriHesapla(satirId);
     });
 
-    [yeniMiktarInput, yeniBirimMaliyetInput, yeniBirimSatisUcretiInput].forEach(input => {
-        input.addEventListener('input', () => iscilikSatiriHesapla(satirId));
+    // Sadece miktar ve birim maliyet input'ları dinlenecek
+    [yeniMiktarInput, yeniBirimMaliyetInput].forEach(input => {
+        input?.addEventListener('input', () => iscilikSatiriHesapla(satirId));
     });
 
     silmeButonu.addEventListener('click', () => iscilikSatiriniSil(satirId));
 
-    // Eğer veriyle dolduruluyorsa, seçili işçiye ve birime göre ayarla
     if (iscilikVerisi) {
         if (iscilikVerisi.isciId && yeniIsciSelect) {
-            // populeEtIsciSecimDropdown, seciliIsciId parametresiyle seçimi yapmalı.
-            // Ek güvence olarak ve populeEtIsciSecimDropdown'ın iç yapısını bilmediğimizden, değeri ayrıca set ediyoruz.
             yeniIsciSelect.value = String(iscilikVerisi.isciId);
         }
         if (iscilikVerisi.birim && yeniBirimSelect) {
             yeniBirimSelect.value = iscilikVerisi.birim;
         }
-        // Programatik atamalardan sonra change event'i tetiklenmez.
-        // birimUcret zaten iscilikVerisi'nden geliyor, change handler'ın bunu değiştirmesini istemeyiz.
-        iscilikSatiriHesapla(satirId); // Yüklenen değerlerle satır toplamını hesapla.
+        iscilikSatiriHesapla(satirId); 
     } else {
-         // Yeni, boş satır için başlangıç hesaplaması
          iscilikSatiriHesapla(satirId);
     }
 }
@@ -974,39 +943,30 @@ function iscilikSatiriniSil(satirId) {
 }
 
 function iscilikSatiriHesapla(satirId) {
-    console.log(`[iscilikSatiriHesapla] ${satirId} için çağrıldı.`); // Eklendi
     const satirElementi = document.getElementById(satirId);
     if (!satirElementi) {
-        console.error(`[iscilikSatiriHesapla] ${satirId} bulunamadı.`); // Eklendi
+        console.error(`[iscilikSatiriHesapla] ${satirId} bulunamadı.`);
         return;
     }
 
     const miktarInput = satirElementi.querySelector('.teklif-iscilik-miktar');
     const birimMaliyetInput = satirElementi.querySelector('.teklif-iscilik-birim-maliyet');
-    const birimSatisUcretiInput = satirElementi.querySelector('.teklif-iscilik-birim-satis-ucreti');
+    // const birimSatisUcretiInput = satirElementi.querySelector('.teklif-iscilik-birim-satis-ucreti'); // Kaldırıldı
     const satirToplamiSpan = satirElementi.querySelector('.teklif-iscilik-satir-toplami');
-
-    console.log('[iscilikSatiriHesapla] Elementler:', { miktarInput, birimMaliyetInput, birimSatisUcretiInput, satirToplamiSpan }); // Eklendi
 
     const miktar = parseFloat(miktarInput?.value) || 0;
     const birimMaliyet = parseFloat(birimMaliyetInput?.value) || 0;
-    const birimSatisUcreti = parseFloat(birimSatisUcretiInput?.value) || 0;
-
-    console.log('[iscilikSatiriHesapla] Değerler:', { miktar, birimMaliyet, birimSatisUcreti }); // Eklendi
+    // const birimSatisUcreti = parseFloat(birimSatisUcretiInput?.value) || 0; // Kaldırıldı
 
     // Maliyet Hesaplaması
     const satirToplamMaliyetKdvHaric = miktar * birimMaliyet;
     satirElementi.dataset.maliyetTutariIscilik = satirToplamMaliyetKdvHaric.toFixed(2);
 
-    // Satış Ücreti Hesaplaması
-    const satirToplamSatisUcretiKdvHaric = miktar * birimSatisUcreti;
-    console.log('[iscilikSatiriHesapla] Hesaplanan Satış Toplamı:', satirToplamSatisUcretiKdvHaric); // Eklendi
-
+    // Satır Toplamı olarak Maliyeti Göster
     if (satirToplamiSpan) {
-        satirToplamiSpan.textContent = satirToplamSatisUcretiKdvHaric.toFixed(2);
-        console.log(`[iscilikSatiriHesapla] ${satirId} için satirToplamiSpan.textContent güncellendi:`, satirToplamiSpan.textContent); // Eklendi
+        satirToplamiSpan.textContent = satirToplamMaliyetKdvHaric.toFixed(2);
     } else {
-        console.error(`[iscilikSatiriHesapla] ${satirId} için satirToplamiSpan bulunamadı!`); // Eklendi
+        console.error(`[iscilikSatiriHesapla] ${satirId} için satirToplamiSpan bulunamadı!`);
     }
 
     genelToplamlariHesapla();
