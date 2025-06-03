@@ -444,27 +444,38 @@ function urunSatiriniSil(satirId) {
 }
 
 function urunSatiriHesapla(satirId) {
+    console.log(`[urunSatiriHesapla] ${satirId} için çağrıldı.`);
     const satirElementi = document.getElementById(satirId);
-    if (!satirElementi) return;
+    if (!satirElementi) {
+        console.error(`[urunSatiriHesapla] ${satirId} bulunamadı.`);
+        return;
+    }
 
     const miktarInput = satirElementi.querySelector('.teklif-urun-miktar');
     const birimMaliyetInput = satirElementi.querySelector('.teklif-urun-birim-maliyet');
     const birimSatisFiyatInput = satirElementi.querySelector('.teklif-urun-birim-satis-fiyati');
     const fiyatTuruSelect = satirElementi.querySelector('.teklif-urun-fiyat-turu');
-    const satirToplamiMaliyetSpan = satirElementi.querySelector('.teklif-urun-satir-toplami'); // Artık maliyet span'i
+    const satirToplamiMaliyetSpan = satirElementi.querySelector('.teklif-urun-satir-toplami'); 
     const satirKdvTutariGosterge = satirElementi.querySelector('.satir-kdv-tutari-gosterge');
 
-    const miktar = parseFloat(miktarInput?.value) || 0;
-    const girilenBirimMaliyet = parseFloat(birimMaliyetInput?.value) || 0;
-    const girilenBirimSatisFiyati = parseFloat(birimSatisFiyatInput?.value) || 0;
-    const fiyatTuruSatis = fiyatTuruSelect?.value || 'haric'; // Satış fiyatının türü
-    const genelKdvOrani = parseFloat(teklifKdvOraniInput?.value) || 0;
+    const miktarValue = miktarInput?.value;
+    const birimMaliyetValue = birimMaliyetInput?.value;
+    console.log(`[urunSatiriHesapla] ${satirId} - Okunan HAM değerler: miktar='${miktarValue}', birimMaliyet='${birimMaliyetValue}'`);
+
+    const miktar = parseFloat(miktarValue) || 0;
+    const girilenBirimMaliyet = parseFloat(birimMaliyetValue) || 0;
+    console.log(`[urunSatiriHesapla] ${satirId} - PARSED değerler: miktar=${miktar}, girilenBirimMaliyet=${girilenBirimMaliyet}`);
 
     // Maliyet Hesaplaması (KDV Hariç varsayılıyor)
     const satirToplamMaliyetKdvHaric = miktar * girilenBirimMaliyet;
+    console.log(`[urunSatiriHesapla] ${satirId} - Hesaplanan satirToplamMaliyetKdvHaric: ${satirToplamMaliyetKdvHaric}`);
+
     satirElementi.dataset.maliyetTutari = satirToplamMaliyetKdvHaric.toFixed(2);
     if (satirToplamiMaliyetSpan) {
-        satirToplamiMaliyetSpan.textContent = satirToplamMaliyetKdvHaric.toFixed(2); // Satırda maliyeti göster
+        satirToplamiMaliyetSpan.textContent = satirToplamMaliyetKdvHaric.toFixed(2); 
+        console.log(`[urunSatiriHesapla] ${satirId} - satirToplamiMaliyetSpan.textContent AYARLANDI: '${satirToplamiMaliyetSpan.textContent}'`);
+    } else {
+        console.error(`[urunSatiriHesapla] ${satirId} için satirToplamiMaliyetSpan bulunamadı!`);
     }
 
     // Satış Fiyatı ve Satış KDV Hesaplaması (Müşteriye yansıtılacak fiyat üzerinden)
@@ -472,20 +483,23 @@ function urunSatiriHesapla(satirId) {
     let satirSatisKdvTutari = 0;
     let satirToplamiSatisKdvHaric = 0;
 
+    const girilenBirimSatisFiyati = parseFloat(birimSatisFiyatInput?.value) || 0;
+    const fiyatTuruSatis = fiyatTuruSelect?.value || 'haric'; 
+    const genelKdvOrani = parseFloat(teklifKdvOraniInput?.value) || 0;
+
     if (fiyatTuruSatis === 'dahil') {
         kdvHaricBirimSatisFiyati = girilenBirimSatisFiyati / (1 + (genelKdvOrani / 100));
         satirToplamiSatisKdvHaric = miktar * kdvHaricBirimSatisFiyati;
         const satirToplamiSatisKdvDahil = miktar * girilenBirimSatisFiyati;
         satirSatisKdvTutari = satirToplamiSatisKdvDahil - satirToplamiSatisKdvHaric;
-    } else { // fiyatTuruSatis === 'haric'
+    } else { 
         kdvHaricBirimSatisFiyati = girilenBirimSatisFiyati;
         satirToplamiSatisKdvHaric = miktar * kdvHaricBirimSatisFiyati;
         satirSatisKdvTutari = satirToplamiSatisKdvHaric * (genelKdvOrani / 100);
     }
     
-    // Hesaplanan satış KDV'sini ve KDV hariç satış toplamını dataset'e yaz
-    satirElementi.dataset.kdvTutari = satirSatisKdvTutari.toFixed(2); // Bu satışa ait KDV
-    satirElementi.dataset.satisToplamiKdvHaricUrun = satirToplamiSatisKdvHaric.toFixed(2); // Bu satışa ait KDV hariç toplam
+    satirElementi.dataset.kdvTutari = satirSatisKdvTutari.toFixed(2); 
+    satirElementi.dataset.satisToplamiKdvHaricUrun = satirToplamiSatisKdvHaric.toFixed(2); 
 
     if (satirKdvTutariGosterge) {
         satirKdvTutariGosterge.textContent = `Satış KDV: ${satirSatisKdvTutari.toFixed(2)}`;
