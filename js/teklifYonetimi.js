@@ -335,6 +335,7 @@ function formuTemizle() {
 }
 
 function yeniUrunSatiriEkle(urunVerisi = null) {
+    console.log('[TeklifYonetimi] yeniUrunSatiriEkle çağrıldı. urunVerisi:', JSON.parse(JSON.stringify(urunVerisi || {})));
     urunSatirSayaci++;
     const satirId = `urunSatir_${urunSatirSayaci}`;
 
@@ -758,6 +759,12 @@ function teklifFormunuDoldur(teklif) {
     // if(teklifIndirimOraniInput) teklifIndirimOraniInput.value = teklif.indirimOrani || 0; 
     // if(teklifKdvOraniInput) teklifKdvOraniInput.value = teklif.kdvOrani === undefined ? 20 : teklif.kdvOrani;
     
+    console.log('[TeklifYonetimi] Teklif Ayarları Yükleniyor:');
+    console.log(`  - manuelTeklifFiyati API'den gelen: ${teklif.manuelTeklifFiyati}`);
+    console.log(`  - kdvDahil API'den gelen: ${teklif.kdvDahil}`);
+    console.log(`  - indirimOrani API'den gelen: ${teklif.indirimOrani}`);
+    console.log(`  - kdvOrani API'den gelen: ${teklif.kdvOrani}`);
+
     if(manuelTeklifFiyatiInput) manuelTeklifFiyatiInput.value = teklif.manuelTeklifFiyati || ''; // API'den geliyorsa
     if(teklifIndirimOraniInputAyarlar) teklifIndirimOraniInputAyarlar.value = teklif.indirimOrani || 0;
     if(teklifKdvDahilCheckbox) teklifKdvDahilCheckbox.checked = teklif.kdvDahil || false; // API'den geliyorsa
