@@ -80,7 +80,7 @@ let isTeklifYonetimiInitialized = false;
 let isTeklifListelemeInitialized = false;
 let isMusteriYonetimiInitialized = false;
 let isMusteriListelemeInitialized = false;
-// Diğer modüller için de benzer flag'ler eklenebilir
+// Diğer modüller için ayrı ayrı de benzer flag'ler eklenebilir
 
 document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('.sidebar nav a'); // Tüm linkleri alır (hem ana hem alt menü)
