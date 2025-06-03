@@ -402,8 +402,8 @@
                         <div class="teklif-fiyat-ayarlari-container" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="manuelTeklifFiyatiInput">Belirlenen Teklif Fiyatı (Opsiyonel):</label>
-                                    <input type="number" id="manuelTeklifFiyatiInput" name="manuelTeklifFiyati" placeholder="Müşteriye sunulacak fiyat" class="form-control">
+                                    <label for="teklifTutariInputAyarlar">Teklif Tutarı (KDV Hariç, İndirimsiz):</label>
+                                    <input type="number" id="teklifTutariInputAyarlar" name="teklifTutariAyarlar" placeholder="Müşteriye sunulacak ana tutar" class="form-control" step="0.01">
                                 </div>
                                 <div class="form-group">
                                     <label for="teklifIndirimOraniInputAyarlar">İndirim Oranı (%):</label>
@@ -411,13 +411,12 @@
                                 </div>
                             </div>
                             <div class="form-row">
-                                <div class="form-group" style="display: flex; align-items: center;">
-                                    <input type="checkbox" id="teklifKdvDahilCheckbox" name="kdvDahil" style="margin-right: 8px; width: auto;">
-                                    <label for="teklifKdvDahilCheckbox" style="margin-bottom: 0;">KDV Dahil</label>
-                                </div>
                                 <div class="form-group">
                                     <label for="teklifKdvOraniInputAyarlar">KDV Oranı (%):</label>
                                     <input type="number" id="teklifKdvOraniInputAyarlar" name="kdvOraniAyarlar" min="0" value="20" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <!-- Bu form-group boş kalabilir veya KDV Dahil Checkbox'ı buradaydı, kaldırıldı -->
                                 </div>
                             </div>
                         </div>
@@ -443,18 +442,18 @@
                                     <label>KDV Tutarı:</label>
                                     <span id="teklifKdvTutariSpan" class="toplam-deger">0.00</span>
                                 </div>
-                                <div class="summary-item">
+                                <div class="teklif-toplam-satir">
                                     <label>Genel Toplam:</label>
-                                    <strong id="teklifGenelToplamSpan" class="toplam-deger genel-toplam-vurgu">0.00</strong> <span id="teklifParaBirimiGosterge" class="toplam-deger">TL</span>
+                                    <span id="teklifGenelToplamSpan" class="toplam-deger">0.00</span>
                                 </div>
+                            </div>
+                            <div class="teklif-toplam-satir">
+                                <label>Toplam Kâr:</label>
+                                <span id="teklifToplamKarSpan" class="toplam-deger kar-deger">0.00</span>
                             </div>
                             <div class="summary-item">
                                 <label>Toplam Maliyet (KDV Hariç):</label>
                                 <strong id="teklifToplamMaliyetSpan" class="toplam-deger">0.00</strong> <span class="toplam-deger">TL</span>
-                            </div>
-                            <div class="summary-item">
-                                <label>Toplam Kâr:</label>
-                                <strong id="teklifToplamKarSpan" class="toplam-deger">0.00</strong> <span class="toplam-deger">TL</span>
                             </div>
                         </div>
 

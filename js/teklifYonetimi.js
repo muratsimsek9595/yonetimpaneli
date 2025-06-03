@@ -53,10 +53,11 @@ const teklifIndirimTutariSpan = document.getElementById('teklifIndirimTutariSpan
 const teklifKdvOraniInputAyarlar = document.getElementById('teklifKdvOraniInputAyarlar');
 const teklifKdvTutariSpan = document.getElementById('teklifKdvTutariSpan');
 const teklifGenelToplamSpan = document.getElementById('teklifGenelToplamSpan');
+const teklifToplamKarSpan = document.getElementById('teklifToplamKarSpan'); // Yeni eklendi
 
 // Yeni eklenen Teklif Fiyat Ayarları DOM Elementleri
-const manuelTeklifFiyatiInput = document.getElementById('manuelTeklifFiyatiInput');
-const teklifKdvDahilCheckbox = document.getElementById('teklifKdvDahilCheckbox');
+const teklifTutariInputAyarlar = document.getElementById('teklifTutariInputAyarlar'); // Değiştirildi
+// const teklifKdvDahilCheckbox = document.getElementById('teklifKdvDahilCheckbox'); // Kaldırıldı
 
 // Dinamik ürün satırları için sayaç
 let urunSatirSayaci = 0;
@@ -212,15 +213,15 @@ function initTeklifYonetimi() {
         }
 
         // Yeni Teklif Fiyat Ayarları için olay dinleyicileri
-        if (manuelTeklifFiyatiInput) {
-            manuelTeklifFiyatiInput.addEventListener('input', genelToplamlariHesapla);
+        if (teklifTutariInputAyarlar) { // Değiştirildi
+            teklifTutariInputAyarlar.addEventListener('input', genelToplamlariHesapla); // Değiştirildi
         }
         if (teklifIndirimOraniInputAyarlar) {
             teklifIndirimOraniInputAyarlar.addEventListener('input', genelToplamlariHesapla);
         }
-        if (teklifKdvDahilCheckbox) {
-            teklifKdvDahilCheckbox.addEventListener('change', genelToplamlariHesapla);
-        }
+        // if (teklifKdvDahilCheckbox) { // Kaldırıldı
+        //     teklifKdvDahilCheckbox.addEventListener('change', genelToplamlariHesapla); // Kaldırıldı
+        // } // Kaldırıldı
         if (teklifKdvOraniInputAyarlar) {
             teklifKdvOraniInputAyarlar.addEventListener('input', genelToplamlariHesapla);
         }
@@ -295,9 +296,8 @@ function ayarlamaFormVarsayilanlari() {
     // if (teklifKdvOraniInput) teklifKdvOraniInput.value = 20;
 
     // Yeni Teklif Fiyat Ayarları için varsayılanlar
-    if (manuelTeklifFiyatiInput) manuelTeklifFiyatiInput.value = '';
+    if (teklifTutariInputAyarlar) teklifTutariInputAyarlar.value = '';
     if (teklifIndirimOraniInputAyarlar) teklifIndirimOraniInputAyarlar.value = 0;
-    if (teklifKdvDahilCheckbox) teklifKdvDahilCheckbox.checked = false; // Varsayılan KDV Hariç
     if (teklifKdvOraniInputAyarlar) teklifKdvOraniInputAyarlar.value = 20; // Varsayılan KDV oranı %20
 
     teklifParaBirimiInput.value = 'TL';
@@ -314,7 +314,7 @@ function ayarlamaFormVarsayilanlari() {
     genelToplamlariHesapla();
 }
 
-function formuTemizle() {
+function formuTemizle(clearForm = true) {
     teklifForm.reset();
     teklifIdInput.value = '';
     if (teklifUrunListesiContainer) teklifUrunListesiContainer.innerHTML = ''; 
@@ -332,6 +332,10 @@ function formuTemizle() {
 
     if(teklifFormTemizleButton) teklifFormTemizleButton.style.display = 'none';
     if(teklifNoInput) teklifNoInput.focus();
+
+    if (clearForm) {
+        teklifNoInput.value = '';
+    }
 }
 
 function yeniUrunSatiriEkle(urunVerisi = null) {
@@ -529,107 +533,109 @@ function urunSatiriHesapla(satirId) {
 }
 
 function genelToplamlariHesapla() {
-    let toplamMaliyetKdvHaric = 0;
+    // 1. Teklif Fiyat Ayarlarından Girdileri Oku
+    const teklifTutariAyarlarStr = teklifTutariInputAyarlar?.value.trim() || '0';
+    let teklifTutariAyarlar = parseFloat(teklifTutariAyarlarStr.replace(/,/g, '')) || 0;
 
-    // 1. Toplam Maliyeti Hesapla (KDV Hariç)
-    // Malzeme satır maliyetleri
-    document.querySelectorAll('#teklifUrunListesiContainer .teklif-urun-satiri').forEach(satir => {
-        toplamMaliyetKdvHaric += parseFloat(satir.dataset.maliyetTutari) || 0;
+    const indirimOraniAyarlar = parseFloat(teklifIndirimOraniInputAyarlar?.value) || 0;
+    const kdvOraniAyarlar = parseFloat(teklifKdvOraniInputAyarlar?.value) || 0;
+
+    // 2. Maliyetleri Hesapla (Malzeme ve İşçilik)
+    let toplamMalzemeMaliyeti = 0;
+    document.querySelectorAll('#teklifUrunListesiContainer .urun-satiri').forEach(satir => {
+        const satirId = satir.id;
+        const miktar = parseFloat(document.getElementById(`urunMiktar_${satirId}`)?.value) || 0;
+        const birimMaliyetStr = document.getElementById(`urunBirimMaliyet_${satirId}`)?.value.trim() || '0';
+        const birimMaliyet = parseFloat(birimMaliyetStr.replace(/,/g, '')) || 0;
+        const fiyatTuruMaliyet = document.getElementById(`urunFiyatTuruMaliyet_${satirId}`)?.value || 'dahil';
+        const kdvOraniMaliyet = parseFloat(document.getElementById(`urunKdvOraniMaliyet_${satirId}`)?.value) || 0;
+
+        let birimMaliyetKdvHaric = birimMaliyet;
+        if (fiyatTuruMaliyet === 'dahil') {
+            birimMaliyetKdvHaric = birimMaliyet / (1 + kdvOraniMaliyet / 100);
+        }
+        toplamMalzemeMaliyeti += miktar * birimMaliyetKdvHaric;
     });
 
-    // İşçilik satır maliyetleri
-    document.querySelectorAll('#teklifIscilikListesiContainer .teklif-iscilik-satiri').forEach(satir => {
-        toplamMaliyetKdvHaric += parseFloat(satir.dataset.maliyetTutariIscilik) || 0;
+    let toplamIscilikMaliyeti = 0;
+    document.querySelectorAll('#teklifIscilikListesiContainer .iscilik-satiri').forEach(satir => {
+        const satirId = satir.id;
+        const miktar = parseFloat(document.getElementById(`iscilikMiktar_${satirId}`)?.value) || 0;
+        const birimMaliyetStr = document.getElementById(`iscilikBirimMaliyet_${satirId}`)?.value.trim() || '0';
+        const birimMaliyet = parseFloat(birimMaliyetStr.replace(/,/g, '')) || 0;
+        const fiyatTuruMaliyet = document.getElementById(`iscilikFiyatTuruMaliyet_${satirId}`)?.value || 'dahil';
+        const kdvOraniMaliyet = parseFloat(document.getElementById(`iscilikKdvOraniMaliyet_${satirId}`)?.value) || 0;
+
+        let birimMaliyetKdvHaric = birimMaliyet;
+        if (fiyatTuruMaliyet === 'dahil') {
+            birimMaliyetKdvHaric = birimMaliyet / (1 + kdvOraniMaliyet / 100);
+        }
+        toplamIscilikMaliyeti += miktar * birimMaliyetKdvHaric;
     });
 
-    if (document.getElementById('teklifToplamMaliyetSpan')) {
-        document.getElementById('teklifToplamMaliyetSpan').textContent = toplamMaliyetKdvHaric.toFixed(2);
+    const toplamMaliyetKdvHaric = toplamMalzemeMaliyeti + toplamIscilikMaliyeti;
+
+    // 3. Satış Toplamlarını Hesapla (Ayarlara Göre)
+    const araToplamSatis = teklifTutariAyarlar; // Bu, kullanıcının girdiği KDV Hariç, İndirimsiz tutar
+    const indirimTutariSatis = (araToplamSatis * indirimOraniAyarlar) / 100;
+    const tutarIndirimSonrasiSatis = araToplamSatis - indirimTutariSatis;
+    const kdvTutariSatis = (tutarIndirimSonrasiSatis * kdvOraniAyarlar) / 100;
+    const genelToplamSatis = tutarIndirimSonrasiSatis + kdvTutariSatis;
+
+    // 4. Kârı Hesapla
+    const toplamKar = tutarIndirimSonrasiSatis - toplamMaliyetKdvHaric;
+
+    // 5. Span'leri Güncelle
+    if (teklifAraToplamSpan) teklifAraToplamSpan.textContent = araToplamSatis.toFixed(2);
+    if (teklifIndirimTutariSpan) teklifIndirimTutariSpan.textContent = indirimTutariSatis.toFixed(2);
+    if (teklifKdvTutariSpan) teklifKdvTutariSpan.textContent = kdvTutariSatis.toFixed(2);
+    if (teklifGenelToplamSpan) teklifGenelToplamSpan.textContent = genelToplamSatis.toFixed(2);
+    
+    const teklifToplamMaliyetSpan = document.getElementById('teklifToplamMaliyetSpan');
+    if (teklifToplamMaliyetSpan) teklifToplamMaliyetSpan.textContent = toplamMaliyetKdvHaric.toFixed(2);
+    
+    if (teklifToplamKarSpan) teklifToplamKarSpan.textContent = toplamKar.toFixed(2);
+
+    // Para birimi göstergesini de güncelleyelim (varsa)
+    const paraBirimiGosterge = document.getElementById('teklifParaBirimiGosterge');
+    const seciliParaBirimi = teklifParaBirimiInput?.options[teklifParaBirimiInput.selectedIndex]?.text || 'TL';
+    if (paraBirimiGosterge) {
+        paraBirimiGosterge.textContent = seciliParaBirimi;
     }
-
-    // 2. Yeni Ayar Alanlarından Değerleri Oku
-    const manuelFiyatStr = manuelTeklifFiyatiInput?.value.trim() || '';
-    const indirimOrani = parseFloat(teklifIndirimOraniInputAyarlar?.value) || 0;
-    const kdvDahil = teklifKdvDahilCheckbox?.checked || false;
-    const kdvOrani = parseFloat(teklifKdvOraniInputAyarlar?.value) || 0;
-
-    let calculatedAraToplamSatisKdvHaric = 0;
-    let calculatedIndirimTutari = 0;
-    let calculatedKdvTutari = 0;
-    let calculatedGenelToplamSatisKdvDahil = 0;
-    let karHesaplamaIcinSatisGeliriKdvHaric = 0;
-
-
-    if (manuelFiyatStr && !isNaN(parseFloat(manuelFiyatStr))) {
-        // Senaryo A: Manuel Fiyat Girilmiş
-        const manuelFiyat = parseFloat(manuelFiyatStr);
-        let fiyatKdvHaricIndirimUygulanacak;
-
-        if (kdvDahil) { // Manuel fiyat KDV dahil girilmiş
-            calculatedGenelToplamSatisKdvDahil = manuelFiyat; // Genel toplam direk manuel fiyat (KDV DAHİL)
-            if (kdvOrani > 0) {
-                fiyatKdvHaricIndirimUygulanacak = manuelFiyat / (1 + kdvOrani / 100);
-            } else {
-                fiyatKdvHaricIndirimUygulanacak = manuelFiyat;
-            }
-        } else { // Manuel fiyat KDV hariç girilmiş
-            fiyatKdvHaricIndirimUygulanacak = manuelFiyat;
-        }
-        
-        calculatedAraToplamSatisKdvHaric = fiyatKdvHaricIndirimUygulanacak; // İndirim uygulanmadan önceki KDV hariç tutar
-
-        calculatedIndirimTutari = (fiyatKdvHaricIndirimUygulanacak * indirimOrani) / 100;
-        karHesaplamaIcinSatisGeliriKdvHaric = fiyatKdvHaricIndirimUygulanacak - calculatedIndirimTutari;
-
-        if (kdvDahil) {
-            // KDV tutarı, KDV dahil genel toplam ile KDV hariç indirimli toplam arasındaki farktır.
-            calculatedKdvTutari = calculatedGenelToplamSatisKdvDahil - karHesaplamaIcinSatisGeliriKdvHaric;
-        } else {
-            // KDV tutarı, KDV hariç indirimli toplam üzerinden hesaplanır.
-            calculatedKdvTutari = karHesaplamaIcinSatisGeliriKdvHaric * (kdvOrani / 100);
-            calculatedGenelToplamSatisKdvDahil = karHesaplamaIcinSatisGeliriKdvHaric + calculatedKdvTutari;
-        }
-
-    } else {
-        // Senaryo B: Manuel Fiyat Girilmemiş
-        // Ara Toplam Satış (KDV Hariç) = Toplam Maliyet (KDV Hariç) varsayımı (kâr için ideal değil ama mevcut yapı bu)
-        // TODO: Malzeme ve işçilik satırlarına "Birim Satış Fiyatı" eklenirse burası güncellenmeli.
-        // Şimdilik, malzeme satırlarındaki 'satisToplamiKdvHaricUrun' dataset'ini kullanalım (eğer varsa).
-        // Eğer yoksa, maliyeti baz alalım.
-        let araToplamSatisKdvHaricFromItems = 0;
-        document.querySelectorAll('#teklifUrunListesiContainer .teklif-urun-satiri').forEach(satir => {
-            // Öncelik: Eğer bir satış fiyatı bilgisi varsa (örn: dataset.satisToplamiKdvHaricUrun)
-            // Yoksa, maliyeti kullan (bu durumda kar=0 olur indirimden önce)
-            araToplamSatisKdvHaricFromItems += parseFloat(satir.dataset.satisToplamiKdvHaricUrun || satir.dataset.maliyetTutari) || 0;
-        });
-        // İşçilik için de benzer bir mantık (eğer işçiliğin ayrı bir satış fiyatı varsa)
-        // Şu anki işçilik satırları sadece maliyet hesaplıyor.
-         document.querySelectorAll('#teklifIscilikListesiContainer .teklif-iscilik-satiri').forEach(satir => {
-            // İşçilik maliyetini satışa ekliyoruz, çünkü ayrı bir satış fiyatı yok.
-            araToplamSatisKdvHaricFromItems += parseFloat(satir.dataset.maliyetTutariIscilik) || 0;
-        });
-
-        calculatedAraToplamSatisKdvHaric = araToplamSatisKdvHaricFromItems;
-        calculatedIndirimTutari = (calculatedAraToplamSatisKdvHaric * indirimOrani) / 100;
-        karHesaplamaIcinSatisGeliriKdvHaric = calculatedAraToplamSatisKdvHaric - calculatedIndirimTutari;
-        calculatedKdvTutari = karHesaplamaIcinSatisGeliriKdvHaric * (kdvOrani / 100);
-        calculatedGenelToplamSatisKdvDahil = karHesaplamaIcinSatisGeliriKdvHaric + calculatedKdvTutari;
-    }
-
-    // 3. Span'leri Güncelle
-    if (teklifAraToplamSpan) teklifAraToplamSpan.textContent = calculatedAraToplamSatisKdvHaric.toFixed(2);
-    if (teklifIndirimTutariSpan) teklifIndirimTutariSpan.textContent = calculatedIndirimTutari.toFixed(2);
-    if (teklifKdvTutariSpan) teklifKdvTutariSpan.textContent = calculatedKdvTutari.toFixed(2);
-    if (teklifGenelToplamSpan) teklifGenelToplamSpan.textContent = calculatedGenelToplamSatisKdvDahil.toFixed(2);
-
-    // 4. Toplam Kârı Hesapla
-    const toplamKar = karHesaplamaIcinSatisGeliriKdvHaric - toplamMaliyetKdvHaric;
-    const teklifToplamKarSpan = document.getElementById('teklifToplamKarSpan');
-    if (teklifToplamKarSpan) {
-        teklifToplamKarSpan.textContent = toplamKar.toFixed(2);
-    }
+     // Diğer para birimi göstergelerini de güncelle (urun ve işçilik satırları için)
+    document.querySelectorAll('.para-birimi-gosterge-urun, .para-birimi-gosterge-iscilik, #teklifGenelToplamParaBirimiGosterge, #teklifToplamMaliyetParaBirimiGosterge, #teklifToplamKarParaBirimiGosterge').forEach(span => {
+        if(span) span.textContent = seciliParaBirimi;
+    });
 }
 
 function teklifFormundanVeriAl() {
+    // Temel Teklif Bilgileri
+    const anaVeri = {
+        id: teklifIdInput.value || null,
+        teklifNo: teklifNoInput.value.trim(),
+        musteri_id: teklifMusteriSecimi.value,
+        musteriAdi: teklifMusteriAdiInput.value.trim(), // Formda gösterim için, asıl veri musteri_id
+        musteriIletisim: teklifMusteriIletisimInput.value.trim(), // Formda gösterim için
+        teklifTarihi: teklifTarihiInput.value,
+        gecerlilikTarihi: teklifGecerlilikTarihiInput.value,
+        paraBirimi: teklifParaBirimiInput.value,
+        durum: teklifDurumInput.value,
+        notlar: teklifNotlarInput.value.trim(),
+        
+        // Teklif Fiyat Ayarlarından ve Hesaplamalardan Gelen Değerler
+        araToplamSatis: parseFloat(teklifTutariInputAyarlar.value.replace(/,/g, '')) || 0, // Kullanıcının girdiği ana tutar
+        indirimOrani: parseFloat(teklifIndirimOraniInputAyarlar.value) || 0,
+        kdvOrani: parseFloat(teklifKdvOraniInputAyarlar.value) || 0,
+        
+        indirimTutari: parseFloat(teklifIndirimTutariSpan.textContent.replace(/,/g, '')) || 0,
+        kdvTutari: parseFloat(teklifKdvTutariSpan.textContent.replace(/,/g, '')) || 0,
+        genelToplamSatis: parseFloat(teklifGenelToplamSpan.textContent.replace(/,/g, '')) || 0,
+        
+        toplamMaliyet: parseFloat(document.getElementById('teklifToplamMaliyetSpan')?.textContent.replace(/,/g, '')) || 0,
+        toplamKar: parseFloat(document.getElementById('teklifToplamKarSpan')?.textContent.replace(/,/g, '')) || 0,
+    };
+
+    // Malzeme Kalemleri
     const kalemler = []; // urunler ve iscilikler birleşti
 
     // Malzemeleri topla
@@ -697,32 +703,6 @@ function teklifFormundanVeriAl() {
         }
     });
 
-    const anaVeri = {
-        id: teklifIdInput.value || null,
-        teklifNo: teklifNoInput.value,
-        musteriId: teklifMusteriSecimi.value,
-        musteriAdi: teklifMusteriAdiInput.value,
-        musteriIletisim: teklifMusteriIletisimInput.value,
-        teklifTarihi: teklifTarihiInput.value,
-        gecerlilikTarihi: teklifGecerlilikTarihiInput.value,
-        
-        // Yeni ayarlardan değerler
-        manuelTeklifFiyati: manuelTeklifFiyatiInput?.value ? parseFloat(manuelTeklifFiyatiInput.value) : null,
-        kdvDahil: teklifKdvDahilCheckbox?.checked || false,
-        indirimOrani: parseFloat(teklifIndirimOraniInputAyarlar?.value) || 0,
-        kdvOrani: parseFloat(teklifKdvOraniInputAyarlar?.value) || 0,
-
-        paraBirimi: teklifParaBirimiInput.value,
-        durum: teklifDurumInput.value,
-        notlar: teklifNotlarInput.value,
-        urunler: kalemler, // 'kalemler' olarak güncellendi, backend 'urunler' bekliyor
-        // Ara toplamlar, KDV vb. backend'de yeniden hesaplanabilir veya buradan gönderilebilir.
-        // Şimdilik frontend'den gönderilen toplamları (genelToplamSatis vb.) backend'de de kullanıyoruz.
-        araToplam: parseFloat(teklifAraToplamSpan?.textContent) || 0,
-        indirimTutari: parseFloat(teklifIndirimTutariSpan?.textContent) || 0,
-        kdvTutari: parseFloat(teklifKdvTutariSpan?.textContent) || 0,
-        genelToplamSatis: parseFloat(teklifGenelToplamSpan?.textContent) || 0
-    };
     return anaVeri;
 }
 
@@ -730,100 +710,69 @@ function teklifFormunuDoldur(teklif) {
     if (!teklif) return;
     console.log("[TeklifYonetimi] teklifFormunuDoldur çağrıldı. Teklif verisi:", JSON.parse(JSON.stringify(teklif)));
     
+    formuTemizle(false); // Formu temizle ama yeni teklif no üretme
+
     teklifIdInput.value = teklif.id || '';
     teklifNoInput.value = teklif.teklifNo || '';
     
-    teklifMusteriAdiInput.value = ''; 
-    teklifMusteriIletisimInput.value = ''; 
-    
-    const musteriIdFromTeklif = teklif.musteriId || teklif.musteri_id;
-
-    if (teklifMusteriSecimi && musteriIdFromTeklif) {
-        console.log(`[TeklifYonetimi] Müşteri atanıyor. musteriIdFromTeklif: ${musteriIdFromTeklif} (tip: ${typeof musteriIdFromTeklif}), mevcut seçenekler HTML:`, teklifMusteriSecimi.innerHTML);
-        teklifMusteriSecimi.value = String(musteriIdFromTeklif);
-        console.log(`[TeklifYonetimi] Müşteri atandıktan sonra teklifMusteriSecimi.value: ${teklifMusteriSecimi.value}`);
-        
+    if (teklifMusteriSecimi && teklif.musteri_id) {
+        teklifMusteriSecimi.value = teklif.musteri_id;
+        // Müşteri seçimi değiştiğinde tetiklenen 'change' event'ını manuel olarak tetikle
+        // böylece musteriAdi ve musteriIletisim alanları otomatik dolar.
         const event = new Event('change');
         teklifMusteriSecimi.dispatchEvent(event);
-        console.log(`[TeklifYonetimi] Müşteri için 'change' olayı tetiklendikten sonra teklifMusteriSecimi.value: ${teklifMusteriSecimi.value}`);
     } else {
-        console.log(`[TeklifYonetimi] Müşteri ID bulunamadı veya teklifMusteriSecimi elementi yok. teklif.musteriAdi: ${teklif.musteriAdi}`);
+        // Eğer musteri_id yoksa, doğrudan adi ve iletisim bilgilerini bas (eski kayıtlar için)
         teklifMusteriAdiInput.value = teklif.musteriAdi || '';
         teklifMusteriIletisimInput.value = teklif.musteriIletisim || '';
     }
-    
+
     teklifTarihiInput.value = teklif.teklifTarihi ? new Date(teklif.teklifTarihi).toISOString().split('T')[0] : '';
     teklifGecerlilikTarihiInput.value = teklif.gecerlilikTarihi ? new Date(teklif.gecerlilikTarihi).toISOString().split('T')[0] : '';
     
-    // Eski inputlar yerine yeni ayar inputlarını doldur
-    // if(teklifIndirimOraniInput) teklifIndirimOraniInput.value = teklif.indirimOrani || 0; 
-    // if(teklifKdvOraniInput) teklifKdvOraniInput.value = teklif.kdvOrani === undefined ? 20 : teklif.kdvOrani;
-    
-    console.log('[TeklifYonetimi] Teklif Ayarları Yükleniyor:');
-    console.log(`  - manuelTeklifFiyati API'den gelen: ${teklif.manuelTeklifFiyati}`);
-    console.log(`  - kdvDahil API'den gelen: ${teklif.kdvDahil}`);
-    console.log(`  - indirimOrani API'den gelen: ${teklif.indirimOrani}`);
-    console.log(`  - kdvOrani API'den gelen: ${teklif.kdvOrani}`);
+    // Teklif Fiyat Ayarlarını Yükle
+    console.log('[TeklifYonetimi] Teklif Ayarları Yükleniyor (API\'den gelenler):');
+    console.log(`  - araToplamSatis (beklenen): ${teklif.araToplamSatis}`);
+    console.log(`  - indirimOrani: ${teklif.indirimOrani}`);
+    console.log(`  - kdvOrani: ${teklif.kdvOrani}`);
 
-    if(manuelTeklifFiyatiInput) manuelTeklifFiyatiInput.value = teklif.manuelTeklifFiyati || ''; // API'den geliyorsa
-    if(teklifIndirimOraniInputAyarlar) teklifIndirimOraniInputAyarlar.value = teklif.indirimOrani || 0;
-    if(teklifKdvDahilCheckbox) teklifKdvDahilCheckbox.checked = teklif.kdvDahil || false; // API'den geliyorsa
-    if(teklifKdvOraniInputAyarlar) teklifKdvOraniInputAyarlar.value = teklif.kdvOrani === undefined ? 20 : teklif.kdvOrani;
-
-    if (teklifParaBirimiInput) {
-        if (teklif.paraBirimi === "0" || teklif.paraBirimi === 0) {
-            teklifParaBirimiInput.value = 'TL';
-        } else {
-            teklifParaBirimiInput.value = teklif.paraBirimi || 'TL';
-        }
+    if(teklifTutariInputAyarlar) {
+        teklifTutariInputAyarlar.value = typeof teklif.araToplamSatis !== 'undefined' ? parseFloat(teklif.araToplamSatis).toFixed(2) : '0.00';
+    }
+    if(teklifIndirimOraniInputAyarlar) {
+        teklifIndirimOraniInputAyarlar.value = typeof teklif.indirimOrani !== 'undefined' ? teklif.indirimOrani : 0;
+    }
+    if(teklifKdvOraniInputAyarlar) {
+        teklifKdvOraniInputAyarlar.value = typeof teklif.kdvOrani !== 'undefined' ? teklif.kdvOrani : 20; // Varsayılan 20
     }
 
+    teklifParaBirimiInput.value = teklif.paraBirimi || 'TL';
     teklifDurumInput.value = teklif.durum || 'Hazırlanıyor';
     teklifNotlarInput.value = teklif.notlar || '';
 
-    if (teklifUrunListesiContainer) teklifUrunListesiContainer.innerHTML = '';
-    urunSatirSayaci = 0;
-    if (teklifIscilikListesiContainer) teklifIscilikListesiContainer.innerHTML = '';
+    // Malzeme ve İşçilik Kalemlerini Yükle
+    // Önce mevcut satırları temizle (varsa)
+    teklifUrunListesiContainer.innerHTML = ''; 
+    teklifIscilikListesiContainer.innerHTML = '';
+    urunSatirSayaci = 0; // Sayaçları sıfırla
     iscilikSatirSayaci = 0;
 
     if (teklif.urunler && Array.isArray(teklif.urunler)) {
         teklif.urunler.forEach(kalem => {
             if (kalem.kalemTipi === 'malzeme') {
-                yeniUrunSatiriEkle({ 
-                    id: kalem.malzeme_id || kalem.referans_id, // API'dan malzeme_id geliyor olabilir
-                    urunId: kalem.malzeme_id || kalem.referans_id, // Dropdown seçimi için
-                    malzemeAdi: kalem.aciklama, 
-                    miktar: kalem.miktar,
-                    birim_adi: kalem.birim, // yeniUrunSatiriEkle bunu doğrudan kullanmıyor, option oluşturmada kullanılıyor
-                    kaydedilen_birim_maliyet: kalem.kaydedilen_birim_maliyet, // Güncellendi: Maliyet bilgisini aktar
-                    kaydedilen_birim_satis_fiyati: kalem.kaydedilen_birim_satis_fiyati, 
-                    fiyatTuruSatis: kalem.fiyatTuruSatis, // Güncellendi: Satış fiyat türünü aktar
-                    // satir_toplam_satis_fiyati_kdv_haric: kalem.satir_toplam_satis_fiyati_kdv_haric // Bu bilgi artık yeniUrunSatiriEkle tarafından başlangıçta kullanılmıyor, urunSatiriHesapla tarafından hesaplanacak.
-                });
+                yeniUrunSatiriEkle(kalem);
             } else if (kalem.kalemTipi === 'iscilik') {
-                yeniIscilikSatiriEkle({
-                    isciId: kalem.isci_id || kalem.referans_id, // API'dan isci_id geliyor olabilir
-                    isciAdi: kalem.aciklama, 
-                    birim: kalem.birim,
-                    miktar: kalem.miktar,
-                    birimMaliyet: kalem.kaydedilen_birim_maliyet, // Güncellendi: Sadece maliyet bilgisini aktar
-                    // birimUcret: kalem.kaydedilen_birim_satis_fiyati, // Bu alan artık yeniIscilikSatiriEkle tarafından beklenmiyor/kullanılmıyor
-                    // satirToplami: kalem.satir_toplam_satis_fiyati_kdv_haric // Bu alan artık yeniIscilikSatiriEkle tarafından beklenmiyor/kullanılmıyor
-                });
+                yeniIscilikSatiriEkle(kalem);
             }
         });
     }
     
-    if (teklifUrunListesiContainer && teklifUrunListesiContainer.childElementCount === 0) {
-        yeniUrunSatiriEkle();
-    }
-    if (teklifIscilikListesiContainer && teklifIscilikListesiContainer.childElementCount === 0) {
-        yeniIscilikSatiriEkle();
-    }
+    // Tüm ayarlar ve kalemler yüklendikten sonra genel toplamları hesapla
+    genelToplamlariHesapla(); 
 
-    genelToplamlariHesapla();
-    if(teklifFormTemizleButton) teklifFormTemizleButton.style.display = 'inline-block';
-    if(teklifNoInput) teklifNoInput.focus();
+    showToast('Teklif bilgileri forma yüklendi.', 'info');
+    // Sayfanın üstüne odaklanabilir veya formun başına
+    window.scrollTo({ top: teklifForm.offsetTop - 20, behavior: 'smooth' }); 
 }
 
 function renderTekliflerTablosu(teklifler) {
