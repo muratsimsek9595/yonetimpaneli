@@ -59,6 +59,9 @@ let urunSatirSayaci = 0;
 // Dinamik işçilik satırları için sayaç
 let iscilikSatirSayaci = 0;
 
+// Flag to ensure event listeners are attached only once
+let teklifYonetimiListenersAttached = false;
+
 function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
     const iscilerListesi = iscilerListesiParam || getIsciler() || [];
     const aktifIsciler = iscilerListesi
@@ -72,142 +75,149 @@ function guncelleTeklifIsciDropdownlarini(iscilerListesiParam) {
 }
 
 function initTeklifYonetimi() {
+    // Always run these to refresh UI state when this function is called
     renderTekliflerTablosu(getTeklifler());
-    formuTemizle();
-    // Müşteri dropdown'ını sayfa yüklendiğinde doldur (EKLENDİ)
     if (teklifMusteriSecimi) {
         populeEtMusteriDropdown(getMusteriler(), teklifMusteriSecimi, "-- Müşteri Seçiniz --", false);
-        teklifMusteriSecimi.addEventListener('change', (e) => {
-            const musteriId = e.target.value;
-            if (musteriId) {
-                const musteri = getMusteriById(musteriId);
-                if (musteri) {
-                    teklifMusteriAdiInput.value = musteri.ad || '';
-                    let iletisim = [];
-                    if(musteri.telefon) iletisim.push(musteri.telefon);
-                    if(musteri.email) iletisim.push(musteri.email);
-                    teklifMusteriIletisimInput.value = iletisim.join(' / ');
-                }
-            } else {
-                teklifMusteriAdiInput.value = '';
-                teklifMusteriIletisimInput.value = '';
-            }
-        });
     }
+    guncelleTeklifIsciDropdownlarini(); // Ensure dropdowns are fresh
 
-    if (teklifUrunEkleButton) {
-        teklifUrunEkleButton.addEventListener('click', () => yeniUrunSatiriEkle());
-    }
+    // Attach event listeners only once
+    if (!teklifYonetimiListenersAttached) {
+        console.log("Attaching Teklif Yönetimi event listeners for the first time.");
 
-    if (teklifIscilikEkleButton) {
-        teklifIscilikEkleButton.addEventListener('click', () => yeniIscilikSatiriEkle());
-    }
-
-    teklifForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const submitButton = teklifForm.querySelector('button[type="submit"]');
-        setButtonLoading(submitButton, 'Kaydediliyor...');
-
-        try {
-            const teklifData = teklifFormundanVeriAl();
-            const id = teklifIdInput.value;
-            
-            const sonuc = await saveTeklifAPI(teklifData, id);
-            
-            if (sonuc && (sonuc.data || (sonuc.message && (sonuc.message.toLowerCase().includes('başarıyla eklendi') || sonuc.message.toLowerCase().includes('başarıyla güncellendi'))))) {
-                const basariMesaji = sonuc.message || (id ? 'Teklif başarıyla güncellendi.' : 'Teklif başarıyla eklendi.');
-                showToast(basariMesaji, 'success');
-
-                if (sonuc.data) {
-                    if (id) {
-                        updateTeklifInStore(sonuc.data);
-                    } else {
-                        addTeklifToStore(sonuc.data);
+        if (teklifMusteriSecimi) {
+            teklifMusteriSecimi.addEventListener('change', (e) => {
+                const musteriId = e.target.value;
+                if (musteriId) {
+                    const musteri = getMusteriById(musteriId);
+                    if (musteri) {
+                        teklifMusteriAdiInput.value = musteri.ad || '';
+                        let iletisim = [];
+                        if(musteri.telefon) iletisim.push(musteri.telefon);
+                        if(musteri.email) iletisim.push(musteri.email);
+                        teklifMusteriIletisimInput.value = iletisim.join(' / ');
                     }
                 } else {
-                    console.warn('Başarılı işlem mesajı alındı ancak API yanıtında güncel veri (sonuc.data) bulunamadı. Teklif listesi güncellenmemiş olabilir.');
+                    teklifMusteriAdiInput.value = '';
+                    teklifMusteriIletisimInput.value = '';
                 }
-                formuTemizle();
-            } else {
-                const hataMesaji = sonuc && sonuc.message ? sonuc.message : 'Teklif kaydedilirken bilinmeyen bir hata oluştu.';
-                throw new Error(hataMesaji);
-            }
-        } catch (error) {
-            globalHataYakala(error, 'Teklif kaydedilirken bir sorun oluştu.');
-        } finally {
-            resetButtonLoading(submitButton);
+            });
         }
-    });
 
-    if(teklifFormTemizleButton) {
-        teklifFormTemizleButton.addEventListener('click', formuTemizle);
-    }
+        if (teklifUrunEkleButton) {
+            teklifUrunEkleButton.addEventListener('click', () => yeniUrunSatiriEkle());
+        }
 
-    if (teklifIndirimOraniInput) {
-        teklifIndirimOraniInput.addEventListener('input', genelToplamlariHesapla);
-    }
-    if (teklifKdvOraniInput) {
-        teklifKdvOraniInput.addEventListener('input', genelToplamlariHesapla);
-    }
+        if (teklifIscilikEkleButton) {
+            teklifIscilikEkleButton.addEventListener('click', () => yeniIscilikSatiriEkle());
+        }
 
-    const tableBodyForEvents = document.querySelector('#teklifListesiTablosu tbody');
-    if (tableBodyForEvents) {
-        tableBodyForEvents.addEventListener('click', async (event) => {
-            const target = event.target;
-            const teklifRow = target.closest('tr');
-            const teklifId = target.dataset.id || target.closest('[data-id]')?.dataset.id;
+        if (teklifForm) { // Check if teklifForm exists before adding listener
+            teklifForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const submitButton = teklifForm.querySelector('button[type="submit"]');
+                setButtonLoading(submitButton, 'Kaydediliyor...');
 
-            if (target.classList.contains('edit-teklif-btn') || target.closest('.edit-teklif-btn')) {
-                if (!teklifId) return;
-                const teklif = getTeklifById(teklifId);
-                if (teklif) {
-                    teklifFormunuDoldur(teklif);
-                    showToast('Teklif bilgileri forma yüklendi.', 'info');
-                } else {
-                    globalHataYakala(new Error('Düzenlenecek teklif bulunamadı.'), 'Teklif düzenleme');
+                try {
+                    const teklifData = teklifFormundanVeriAl();
+                    const id = teklifIdInput.value;
+                    
+                    const sonuc = await saveTeklifAPI(teklifData, id);
+                    
+                    if (sonuc && (sonuc.data || (sonuc.message && (sonuc.message.toLowerCase().includes('başarıyla eklendi') || sonuc.message.toLowerCase().includes('başarıyla güncellendi'))))) {
+                        const basariMesaji = sonuc.message || (id ? 'Teklif başarıyla güncellendi.' : 'Teklif başarıyla eklendi.');
+                        showToast(basariMesaji, 'success');
+
+                        if (sonuc.data) {
+                            if (id) {
+                                updateTeklifInStore(sonuc.data);
+                            } else {
+                                addTeklifToStore(sonuc.data);
+                            }
+                        } else {
+                            console.warn('Başarılı işlem mesajı alındı ancak API yanıtında güncel veri (sonuc.data) bulunamadı. Teklif listesi güncellenmemiş olabilir.');
+                        }
+                        formuTemizle();
+                    } else {
+                        const hataMesaji = sonuc && sonuc.message ? sonuc.message : 'Teklif kaydedilirken bilinmeyen bir hata oluştu.';
+                        throw new Error(hataMesaji);
+                    }
+                } catch (error) {
+                    globalHataYakala(error, 'Teklif kaydedilirken bir sorun oluştu.');
+                } finally {
+                    resetButtonLoading(submitButton);
                 }
-            } else if (target.classList.contains('delete-teklif-btn')) {
-                if (!teklifId) return;
-                const teklif = getTeklifById(teklifId);
-                if (confirm(`'${teklif?.teklifNo || teklifId}' numaralı teklifi silmek istediğinize emin misiniz?`)) {
-                    try {
-                        await deleteTeklifAPI(teklifId);
-                        removeTeklifByIdFromStore(teklifId);
-                        showToast('Teklif başarıyla silindi.', 'success');
-                        formuTemizle(); // Eğer silinen teklif formda açıksa formu temizle
-                    } catch (error) {
-                        globalHataYakala(error, 'Teklif silinirken bir sorun oluştu.');
+            });
+        }
+
+        if (teklifFormTemizleButton) {
+            teklifFormTemizleButton.addEventListener('click', formuTemizle);
+        }
+
+        if (teklifIndirimOraniInput) {
+            teklifIndirimOraniInput.addEventListener('input', genelToplamlariHesapla);
+        }
+        if (teklifKdvOraniInput) {
+            teklifKdvOraniInput.addEventListener('input', genelToplamlariHesapla);
+        }
+
+        const tableBodyForEvents = document.querySelector('#teklifListesiTablosu tbody');
+        if (tableBodyForEvents) {
+            tableBodyForEvents.addEventListener('click', async (event) => {
+                const target = event.target;
+                const teklifRow = target.closest('tr');
+                const teklifId = target.dataset.id || target.closest('[data-id]')?.dataset.id;
+
+                if (target.classList.contains('edit-teklif-btn') || target.closest('.edit-teklif-btn')) {
+                    if (!teklifId) return;
+                    const teklif = getTeklifById(teklifId);
+                    if (teklif) {
+                        teklifFormunuDoldur(teklif);
+                        showToast('Teklif bilgileri forma yüklendi.', 'info');
+                    } else {
+                        globalHataYakala(new Error('Düzenlenecek teklif bulunamadı.'), 'Teklif düzenleme');
+                    }
+                } else if (target.classList.contains('delete-teklif-btn')) {
+                    if (!teklifId) return;
+                    const teklif = getTeklifById(teklifId);
+                    if (confirm(`'${teklif?.teklifNo || teklifId}' numaralı teklifi silmek istediğinize emin misiniz?`)) {
+                        try {
+                            await deleteTeklifAPI(teklifId);
+                            removeTeklifByIdFromStore(teklifId);
+                            showToast('Teklif başarıyla silindi.', 'success');
+                            formuTemizle(); // Eğer silinen teklif formda açıksa formu temizle
+                        } catch (error) {
+                            globalHataYakala(error, 'Teklif silinirken bir sorun oluştu.');
+                        }
+                    }
+                } else if (target.classList.contains('view-teklif-btn')) {
+                    if (!teklifId) return;
+                    const teklif = getTeklifById(teklifId);
+                    if (teklif) {
+                        // Şimdilik alert ile gösterelim, daha sonra modal veya detay sayfası eklenebilir.
+                        let teklifDetaylari = `Teklif No: ${teklif.teklifNo}\nMüşteri: ${teklif.musteriAdi}\nTarih: ${new Date(teklif.teklifTarihi).toLocaleDateString('tr-TR')}\nToplam: ${(parseFloat(teklif.genelToplamSatis) || 0).toFixed(2)} ${teklif.paraBirimi}\nDurum: ${teklif.durum}\n\nÜrünler:\n`;
+                        teklif.urunler.forEach(u => {
+                            teklifDetaylari += `- ${u.malzemeAdi}: ${u.miktar} ${u.birim} x ${u.birimFiyat.toFixed(2)} = ${u.satirToplami.toFixed(2)}\n`;
+                        });
+                        alert(teklifDetaylari);
+                    } else {
+                        globalHataYakala(new Error('Görüntülenecek teklif bulunamadı.'), 'Teklif görüntüleme');
                     }
                 }
-            } else if (target.classList.contains('view-teklif-btn')) {
-                if (!teklifId) return;
-                const teklif = getTeklifById(teklifId);
-                if (teklif) {
-                    // Şimdilik alert ile gösterelim, daha sonra modal veya detay sayfası eklenebilir.
-                    let teklifDetaylari = `Teklif No: ${teklif.teklifNo}\nMüşteri: ${teklif.musteriAdi}\nTarih: ${new Date(teklif.teklifTarihi).toLocaleDateString('tr-TR')}\nToplam: ${(parseFloat(teklif.genelToplamSatis) || 0).toFixed(2)} ${teklif.paraBirimi}\nDurum: ${teklif.durum}\n\nÜrünler:\n`;
-                    teklif.urunler.forEach(u => {
-                        teklifDetaylari += `- ${u.malzemeAdi}: ${u.miktar} ${u.birim} x ${u.birimFiyat.toFixed(2)} = ${u.satirToplami.toFixed(2)}\n`;
-                    });
-                    alert(teklifDetaylari);
-                } else {
-                    globalHataYakala(new Error('Görüntülenecek teklif bulunamadı.'), 'Teklif görüntüleme');
-                }
-            }
-        });
+            });
+        } else {
+            console.warn('#teklifListesiTablosu tbody element not found for attaching event listeners.');
+        }
+        
+        teklifYonetimiListenersAttached = true;
     } else {
-        console.warn('#teklifListesiTablosu tbody element not found for attaching event listeners.');
+        console.log("Teklif Yönetimi event listeners already attached, skipping re-attachment.");
     }
     
-    // Başlangıçta birer adet boş ürün ve işçilik satırı ekle (EKLENDİ)
-    // Bu çağrılar ayarlamaFormVarsayilanlari içinde yapılıyor, burada tekrar gerek yok.
-    // yeniUrunSatiriEkle();
-    // yeniIscilikSatiriEkle(); 
-    
-    // ayarlamaFormVarsayilanlari içinde ilk satırlar ekleniyor.
-    // O satırlardaki dropdown'ları mevcut işçi listesiyle doldurmayı dene.
-    guncelleTeklifIsciDropdownlarini();
-
-    genelToplamlariHesapla(); // Başlangıç toplamlarını hesapla
+    // Always reset the form state (which includes adding initial rows)
+    formuTemizle();
+    // genelToplamlariHesapla(); // This is called within formuTemizle -> ayarlamaFormVarsayilanlari
 }
 
 function ayarlamaFormVarsayilanlari() {
