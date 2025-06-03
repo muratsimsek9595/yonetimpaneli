@@ -76,6 +76,7 @@ function renderTeklifOzetleri(teklifler) {
 
 async function teklifDetayiniGoster(teklifId) {
     const teklif = getTeklifById(teklifId); // Store'dan al
+    console.log('[teklifListeleme.js] Modal için teklif detayı:', JSON.parse(JSON.stringify(teklif))); // Teklif nesnesini logla
 
     if (!teklif) {
         showToast('Teklif detayları bulunamadı.', 'error');
