@@ -422,38 +422,84 @@
                         </div>
                         
                         <h4>Toplamlar</h4>
-                        <div class="teklif-toplamlar-container">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Ara Toplam:</label>
-                                    <span id="teklifAraToplamSpan" class="toplam-deger">0.00</span>
+                        <div class="teklif-toplamlar-container card">
+                            <div class="toplam-bolum">
+                                <p><strong>Maliyetler:</strong></p>
+                                <div class="toplam-satir">
+                                    <label>Toplam Malzeme Maliyeti (KDV Hariç):</label>
+                                    <span id="teklifToplamMalzemeMaliyetiKdvHaricSpan" class="toplam-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
                                 </div>
-                                <!-- İndirim Oranı girişi yeni bölüme taşındığı için kaldırıldı -->
+                                <div class="toplam-satir">
+                                    <label>Toplam İşçilik Maliyeti (KDV Hariç):</label>
+                                    <span id="teklifToplamIscilikMaliyetiKdvHaricSpan" class="toplam-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
+                                </div>
+                                <div class="toplam-satir">
+                                    <label>Genel Giderler (Manuel):</label> <!-- Yeni Eklendi -->
+                                    <input type="number" id="teklifGenelGiderlerInput" class="toplam-input" value="0" step="0.01"> <span class="para-birimi-gosterge">TL</span>
+                                </div>
+                                <hr>
+                                <div class="toplam-satir">
+                                    <label><strong>Toplam Proje Maliyeti (KDV Hariç):</strong></label>
+                                    <strong id="teklifToplamProjeMaliyetiKdvHaricSpan" class="toplam-deger">0.00</strong> <span class="para-birimi-gosterge">TL</span>
+                                </div>
+                                <div class="toplam-satir">
+                                    <label>Proje Maliyeti KDV Tutarı:</label>
+                                    <span id="teklifProjeMaliyetiKdvTutariSpan" class="toplam-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
+                                </div>
+                                <div class="toplam-satir">
+                                    <label><strong>Toplam Proje Maliyeti (KDV Dahil):</strong></label>
+                                    <strong id="teklifToplamProjeMaliyetiKdvDahilSpan" class="toplam-deger vurgulu-toplam">0.00</strong> <span class="para-birimi-gosterge">TL</span>
+                                </div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
+
+                            <div class="toplam-bolum">
+                                <p><strong>Teklif ve Kâr Durumu:</strong></p>
+                                <div class="toplam-satir">
+                                    <label>Teklif Tutarı (KDV Hariç, İndirimsiz):</label>
+                                    <span id="teklifTutariKdvHaricIndirimsizSpan" class="toplam-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
+                                    <!-- Bu değer teklifTutariInputAyarlar'dan gelecek -->
+                                </div>
+                                <div class="toplam-satir">
                                     <label>İndirim Tutarı:</label>
-                                    <span id="teklifIndirimTutariSpan" class="toplam-deger">0.00</span>
+                                    <span id="teklifIndirimTutariYeniSpan" class="toplam-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
                                 </div>
-                                 <!-- KDV Oranı girişi yeni bölüme taşındığı için kaldırıldı -->
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>KDV Tutarı:</label>
-                                    <span id="teklifKdvTutariSpan" class="toplam-deger">0.00</span>
+                                <div class="toplam-satir">
+                                    <label><strong>Teklif Tutarı (KDV Hariç, İndirimli):</strong></label>
+                                    <strong id="teklifTutariKdvHaricIndirimliSpan" class="toplam-deger">0.00</strong> <span class="para-birimi-gosterge">TL</span>
                                 </div>
-                                <div class="teklif-toplam-satir">
-                                    <label>Genel Toplam:</label>
-                                    <span id="teklifGenelToplamSpan" class="toplam-deger">0.00</span>
+                                <hr>
+                                <div class="toplam-satir">
+                                    <label>Net Kâr (Vergisiz):</label>
+                                    <span id="teklifNetKarVergisizSpan" class="toplam-deger kar-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
+                                    <!-- (Teklif Tutarı KDV Hariç İndirimli) - (Toplam Proje Maliyeti KDV Hariç) -->
+                                </div>
+                                <div class="toplam-satir">
+                                    <label>Gelir Vergisi (%20 Stopaj):</label> <!-- Oran %25'ten %20'ye güncellendi, kullanıcı /4 dedi -->
+                                    <span id="teklifGelirVergisiSpan" class="toplam-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
+                                    <!-- Net Kâr (Vergisiz) * 0.20  (veya kullanıcının dediği gibi (KDV'siz Teklif Tutarı - KDV'siz Maliyet Toplamı)/4) -->
+                                </div>
+                                <div class="toplam-satir">
+                                    <label><strong>Net Kâr (Vergiler Sonrası):</strong></label>
+                                    <strong id="teklifNetKarVergilerSonrasiSpan" class="toplam-deger kar-deger vurgulu-toplam">0.00</strong> <span class="para-birimi-gosterge">TL</span>
+                                     <!-- Net Kâr (Vergisiz) - Gelir Vergisi -->
                                 </div>
                             </div>
-                            <div class="teklif-toplam-satir">
-                                <label>Toplam Kâr:</label>
-                                <span id="teklifToplamKarSpan" class="toplam-deger kar-deger">0.00</span>
-                            </div>
-                            <div class="summary-item">
-                                <label>Toplam Maliyet (KDV Hariç):</label>
-                                <strong id="teklifToplamMaliyetSpan" class="toplam-deger">0.00</strong> <span class="toplam-deger">TL</span>
+
+                            <div class="toplam-bolum">
+                                <p><strong>Müşteriye Sunulan Teklif:</strong></p>
+                                <div class="toplam-satir">
+                                    <label>Teklif Tutarı (KDV Hariç, İndirimli):</label>
+                                    <span id="teklifSunulanKdvHaricSpan" class="toplam-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
+                                    <!-- teklifTutariKdvHaricIndirimliSpan ile aynı değer -->
+                                </div>
+                                <div class="toplam-satir">
+                                    <label>Teklif KDV Tutarı:</label>
+                                    <span id="teklifSunulanKdvTutariSpan" class="toplam-deger">0.00</span> <span class="para-birimi-gosterge">TL</span>
+                                </div>
+                                <div class="toplam-satir">
+                                    <label><strong>Genel Toplam (KDV Dahil, Müşteriye):</strong></label>
+                                    <strong id="teklifGenelToplamKdvDahilMusteriyeSpan" class="toplam-deger genel-toplam-vurgu">0.00</strong> <span class="para-birimi-gosterge">TL</span>
+                                </div>
                             </div>
                         </div>
 
