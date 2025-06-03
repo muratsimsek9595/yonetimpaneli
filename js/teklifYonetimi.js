@@ -58,6 +58,8 @@ const teklifIndirimOraniInputAyarlar = document.getElementById('teklifIndirimOra
 const teklifIndirimTutariYeniSpan = document.getElementById('teklifIndirimTutariYeniSpan');
 const teklifTutariKdvHaricIndirimliSpan = document.getElementById('teklifTutariKdvHaricIndirimliSpan');
 
+const teklifTutariInputAyarlar = document.getElementById('teklifTutariInputAyarlar');
+
 const teklifNetKarVergisizSpan = document.getElementById('teklifNetKarVergisizSpan');
 const teklifGelirVergisiSpan = document.getElementById('teklifGelirVergisiSpan');
 const teklifNetKarVergilerSonrasiSpan = document.getElementById('teklifNetKarVergilerSonrasiSpan');
