@@ -61,6 +61,8 @@
                     </li>
 
                     <li><a href="#proje-yonetimi"><span class="nav-icon">📂</span> Proje Yönetimi</a></li>
+
+                    <li><a href="#araclar"><span class="nav-icon">🔧</span> Araçlar</a></li>
                 </ul>
             </nav>
         </aside>
@@ -639,6 +641,36 @@
                 <p>Proje yönetimi modülü yakında burada olacak.</p>
             </section>
 
+            <section id="araclar" style="display:none;">
+                <div class="page-header">
+                    <h1>Araçlar</h1>
+                    <p class="page-subtitle">Sık kullandığınız araçlara ve hesaplayıcılara buradan erişin.</p>
+                </div>
+
+                <div class="page-actions" style="text-align: right; margin-bottom: 20px;">
+                    <button id="yeniAracEkleButton" class="btn btn-primary">Yeni Araç Ekle</button>
+                    <!-- İleride buraya düzenle/sil gibi daha gelişmiş kontroller eklenebilir -->
+                </div>
+
+                <div id="araclarKartContainer" class="araclar-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- 
+                    Örnek Araç Kart Yapısı (JS ile dinamik olarak oluşturulacak):
+                    <div class="arac-karti card" style="padding: 15px; border-radius: 8px;">
+                        <div class="arac-karti-baslik" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0;">Araç Adı Örneği</h3>
+                            <div class="arac-karti-actions">
+                                <button class="btn-icon btn-edit-arac" title="Düzenle" data-arac-id="1" style="background: none; border: none; cursor: pointer; font-size: 1.2em; margin-left: 5px;">✏️</button>
+                                <button class="btn-icon btn-delete-arac" title="Sil" data-arac-id="1" style="background: none; border: none; cursor: pointer; font-size: 1.2em; margin-left: 5px;">🗑️</button>
+                            </div>
+                        </div>
+                        <p class="arac-karti-aciklama" style="font-size: 0.9em; margin-bottom: 15px; min-height: 40px;">Bu, aracın kısa bir açıklamasıdır. Örneğin, metraj hesaplamaları için kullanılır.</p>
+                        <a href="#" target="_blank" class="btn btn-secondary" style="text-decoration: none; padding: 8px 12px; border-radius: 5px;">Aracı Aç</a>
+                    </div>
+                    -->
+                </div>
+                <p id="aracYokMesaji" style="text-align:center; margin-top: 30px; display:none; font-size: 1.1em;">Henüz eklenmiş bir araç bulunmamaktadır. <br>Sağ üstteki "Yeni Araç Ekle" butonu ile ilk aracınızı ekleyebilirsiniz.</p>
+            </section>
+
             <!-- İşçiler Yönetim Paneli -->
             <section id="isciler" style="display:none;">
                 <h2>İşçiler Yönetimi</h2>
@@ -771,6 +803,7 @@
     <script src="js/projeYonetimi.js?v=1.0" type="module"></script>
     <script src="js/teklifListeleme.js?v=1.0" type="module"></script>
     <script src="js/musteriListeleme.js?v=1.0" type="module"></script>
+    <script src="js/aracYonetimi.js?v=1.0" type="module"></script>
 
     <div id="teklifDetayModal" class="modal" style="display:none;">
         <div class="modal-dialog"> 
@@ -801,6 +834,42 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary modal-kapat-buton">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="aracFormModal" class="modal" style="display:none;">
+        <div class="modal-dialog">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h3 id="aracFormModalBaslik">Yeni Araç Ekle</h3>
+                    <button type="button" class="modal-kapat-buton" data-modal-id="aracFormModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="aracForm">
+                        <input type="hidden" id="aracIdInput" name="aracId">
+                        <div class="form-group">
+                            <label for="aracAdiInput">Araç Adı (*):</label>
+                            <input type="text" id="aracAdiInput" name="ad" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="aracYoluInput">Araç Yolu/URL'si (*):</label>
+                            <input type="text" id="aracYoluInput" name="yol" required placeholder="Örn: tools/hesap.html veya https://site.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="aracAciklamaInput">Açıklama:</label>
+                            <textarea id="aracAciklamaInput" name="aciklama" rows="3" placeholder="Bu araç ne işe yarar?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="aracIconInput">İkon (Emoji veya FontAwesome):</label>
+                            <input type="text" id="aracIconInput" name="icon" placeholder="Örn: 🔧 veya fas fa-calculator">
+                        </div>
+                        <div class="modal-footer" style="text-align: right;">
+                            <button type="submit" id="aracKaydetButton" class="btn btn-primary">Kaydet</button>
+                            <button type="button" class="btn-secondary modal-kapat-buton" data-modal-id="aracFormModal">İptal</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

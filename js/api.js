@@ -1,8 +1,8 @@
 // js/api.js
 
-const API_BASE_URL = 'api'; // Base URL for your API endpoints
+export const API_BASE_URL = 'api'; // Base URL for your API endpoints
 
-async function fetchWrapper(url, options = {}) {
+export async function fetchWrapper(url, options = {}) {
     const response = await fetch(url, options);
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({ 
@@ -236,4 +236,6 @@ export async function deleteIsciAPI(isciId) {
         console.error('deleteIsciAPI Hata:', error);
         throw error;
     }
-} 
+}
+
+// Araçlar API Fonksiyonları ÇIKARILDI - Bu bölüm silinecek 

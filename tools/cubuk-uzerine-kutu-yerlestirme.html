@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çubuk Üzerine Kutu Yerleştirme</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+        .form-panel {
+            flex: 0 0 300px;
+        }
+        .display-panel {
+            flex: 1;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .canvas-container {
+            margin-top: 15px;
+            overflow-x: auto;
+        }
+        #cubukCanvas {
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        .sonuc {
+            margin-top: 15px;
+        }
+        .bilgi-item {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel form-panel">
+            <h2>Çubuk Bilgileri</h2>
+            <div class="form-group">
+                <label for="totalLength">Çubuk uzunluğu (cm):</label>
+                <input type="number" id="totalLength" min="1">
+            </div>
+            <div class="form-group">
+                <label for="cubukHeight">Çubuk kalınlığı (cm):</label>
+                <input type="number" id="cubukHeight" value="1" min="0.1" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="boxSize">Kutu boyutu (cm):</label>
+                <input type="number" id="boxSize" value="2" min="0.5" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="boxCount">Kutu sayısı:</label>
+                <input type="number" id="boxCount" min="1">
+            </div>
+            <div class="form-group">
+                <label for="yerlesimTipi">Yerleşim Tipi:</label>
+                <select id="yerlesimTipi">
+                    <option value="esit_aralik">Eşit Aralık</option>
+                    <option value="ozel_aralik">Özel Aralık</option>
+                </select>
+            </div>
+            <div id="ozelAralikForm" style="display: none;">
+                <div class="form-group">
+                    <label for="araliklar">Kutular Arası Aralıklar (cm):</label>
+                    <input type="text" id="araliklar" placeholder="Örn: 10,20,15">
+                    <small>Kutular arasındaki mesafeleri virgülle ayırarak girin</small>
+                </div>
+            </div>
+            <button id="hesaplaBtn">Hesapla</button>
+            <button id="temizleBtn">Temizle</button>
+        </div>
+        
+        <div class="panel display-panel">
+            <h2>Yerleşim Planı</h2>
+            <div class="canvas-container">
+                <canvas id="cubukCanvas" width="800" height="120"></canvas>
+            </div>
+            <div class="sonuc" id="sonuc"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('cubukCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const hesaplaBtn = document.getElementById('hesaplaBtn');
+        const temizleBtn = document.getElementById('temizleBtn');
+        const yerlesimTipi = document.getElementById('yerlesimTipi');
+        const ozelAralikForm = document.getElementById('ozelAralikForm');
+        
+        // Yerleşim tipi seçimine göre form görünürlüğü
+        yerlesimTipi.addEventListener('change', function() {
+            ozelAralikForm.style.display = this.value === 'ozel_aralik' ? 'block' : 'none';
+        });
+        
+        // Hesapla butonu
+        hesaplaBtn.addEventListener('click', function() {
+            const totalLength = parseFloat(document.getElementById('totalLength').value);
+            const cubukHeight = parseFloat(document.getElementById('cubukHeight').value) || 1;
+            const boxSize = parseFloat(document.getElementById('boxSize').value) || 2;
+            const boxCount = parseInt(document.getElementById('boxCount').value);
+            const selectedYerlesim = yerlesimTipi.value;
+            
+            if (!totalLength || !boxCount) {
+                alert('Lütfen tüm gerekli alanları doldurun!');
+                return;
+            }
+            
+            // Kutuların toplam uzunluğunu kontrol et
+            const totalBoxLength = boxCount * boxSize;
+            if (totalBoxLength > totalLength) {
+                alert('Kutuların toplam uzunluğu, çubuğun uzunluğundan büyük olamaz!');
+                return;
+            }
+            
+            // Kutular arası boşluk hesapla
+            let kutularinKonumu = [];
+            
+            if (selectedYerlesim === 'esit_aralik') {
+                // Eşit aralık hesaplama
+                const remainingSpace = totalLength - totalBoxLength;
+                const gapCount = boxCount + 1; // Başta, sonda ve kutular arasında
+                const gapSize = remainingSpace / gapCount;
+                
+                // Her kutunun konumunu hesapla
+                for (let i = 0; i < boxCount; i++) {
+                    const x = gapSize + (i * (boxSize + gapSize));
+                    kutularinKonumu.push(x);
+                }
+                
+                // Çizimi yap
+                drawYerlesimPlani(totalLength, cubukHeight, boxSize, kutularinKonumu, gapSize);
+                
+                // Sonuç bilgilerini göster
+                document.getElementById('sonuc').innerHTML = `
+                    <div class="bilgi-item">
+                        <h3>Yerleşim Bilgileri</h3>
+                        <p>Çubuk uzunluğu: ${totalLength} cm</p>
+                        <p>Çubuk kalınlığı: ${cubukHeight} cm</p>
+                        <p>Kutu boyutu: ${boxSize}x${boxSize} cm</p>
+                        <p>Kutu sayısı: ${boxCount}</p>
+                        <p>Kenarlardan ve kutular arası eşit boşluk: ${gapSize.toFixed(2)} cm</p>
+                    </div>
+                `;
+            } else {
+                // Özel aralık hesaplama
+                const araliklar = document.getElementById('araliklar').value.split(',').map(a => parseFloat(a.trim()));
+                
+                if (araliklar.length !== boxCount - 1 && boxCount > 1) {
+                    alert(`${boxCount} adet kutu için ${boxCount-1} adet aralık değeri girilmelidir.`);
+                    return;
+                }
+                
+                if (araliklar.some(isNaN)) {
+                    alert('Geçersiz aralık değerleri. Lütfen sayıları virgülle ayırarak girin.');
+                    return;
+                }
+                
+                // Toplam aralık uzunluğu
+                const totalGapLength = araliklar.reduce((a, b) => a + b, 0);
+                
+                // Kenarlardan kalacak boşluk
+                const remainingEdgeSpace = totalLength - totalBoxLength - totalGapLength;
+                
+                if (remainingEdgeSpace < 0) {
+                    alert('Girdiğiniz aralıklar çubuk uzunluğunu aşıyor!');
+                    return;
+                }
+                
+                // Kenarlardan eşit boşluk bırak
+                const edgeGap = remainingEdgeSpace / 2;
+                
+                // Her kutunun konumunu hesapla
+                let currentX = edgeGap;
+                kutularinKonumu.push(currentX);
+                
+                for (let i = 1; i < boxCount; i++) {
+                    currentX += boxSize + araliklar[i-1];
+                    kutularinKonumu.push(currentX);
+                }
+                
+                // Çizimi yap
+                drawYerlesimPlani(totalLength, cubukHeight, boxSize, kutularinKonumu, edgeGap, araliklar);
+                
+                // Sonuç bilgilerini göster
+                document.getElementById('sonuc').innerHTML = `
+                    <div class="bilgi-item">
+                        <h3>Yerleşim Bilgileri</h3>
+                        <p>Çubuk uzunluğu: ${totalLength} cm</p>
+                        <p>Çubuk kalınlığı: ${cubukHeight} cm</p>
+                        <p>Kutu boyutu: ${boxSize}x${boxSize} cm</p>
+                        <p>Kutu sayısı: ${boxCount}</p>
+                        <p>Kenarlardan boşluk: ${edgeGap.toFixed(2)} cm</p>
+                        <p>Kutular arası özel boşluklar: ${araliklar.join(', ')} cm</p>
+                    </div>
+                `;
+            }
+        });
+        
+        // Temizle butonu
+        temizleBtn.addEventListener('click', function() {
+            // Canvas'ı temizle
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Alanları temizle
+            document.getElementById('totalLength').value = '';
+            document.getElementById('cubukHeight').value = '1';
+            document.getElementById('boxSize').value = '2';
+            document.getElementById('boxCount').value = '';
+            document.getElementById('araliklar').value = '';
+            document.getElementById('sonuc').innerHTML = '';
+            yerlesimTipi.value = 'esit_aralik';
+            ozelAralikForm.style.display = 'none';
+        });
+        
+        // Yerleşim planını çiz
+        function drawYerlesimPlani(totalLength, cubukHeight, boxSize, kutuKonumlari, kenarBosluk, araliklar = null) {
+            // Canvas'ı temizle
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Canvas'ı otomatik boyutlandır
+            const height = 150; // Yükseklik
+            canvas.height = height;
+            
+            // Ölçek faktörü (canvas genişliğine göre)
+            const scaleFactor = (canvas.width - 60) / totalLength;
+            
+            // Çubuğun başlangıç noktası (sol kenar)
+            const startX = 30;
+            const startY = height/2;
+            
+            // Arka plan açıklama kutuları
+            // Başlıklar ve açıklamalar
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(5, 5, 200, 25);
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Siyah Çubuk: Yerleştirme yapılacak yer', 10, 20);
+            
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(210, 5, 200, 25);
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Kırmızı Kutular: 2x2 cm kutular', 215, 20);
+            
+            // Çubuğu çiz - siyah çizgi
+            ctx.beginPath();
+            ctx.lineWidth = cubukHeight * scaleFactor;
+            ctx.strokeStyle = 'black';
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX + totalLength * scaleFactor, startY);
+            ctx.stroke();
+            
+            // Kutuları çiz - kırmızı kareler
+            kutuKonumlari.forEach((x, index) => {
+                // İçi hafif kırmızı dolgulu, dışı koyu kırmızı kenarlıklı kutular
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                ctx.fillRect(
+                    startX + x * scaleFactor, 
+                    startY - (boxSize/2) * scaleFactor, 
+                    boxSize * scaleFactor, 
+                    boxSize * scaleFactor
+                );
+                
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                    startX + x * scaleFactor, 
+                    startY - (boxSize/2) * scaleFactor, 
+                    boxSize * scaleFactor, 
+                    boxSize * scaleFactor
+                );
+                
+                // Kutu numarasını içine yaz
+                ctx.fillStyle = 'red';
+                ctx.font = 'bold 11px Arial';
+                ctx.fillText(
+                    `Kutu ${index+1}`, 
+                    startX + x * scaleFactor + 2, 
+                    startY
+                );
+            });
+            
+            // Ölçüler ve etiketleri ekle
+            ctx.fillStyle = '#000';
+            ctx.font = '12px Arial';
+            
+            // Çubuk uzunluğu
+            ctx.fillStyle = 'black';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText(`Toplam Uzunluk: ${totalLength} cm`, startX, height - 10);
+            
+            // Başlangıç ve bitiş noktaları
+            ctx.fillStyle = 'black';
+            ctx.font = '12px Arial';
+            ctx.fillText('0', startX - 5, startY + 20);
+            ctx.fillText(`${totalLength}`, startX + totalLength * scaleFactor - 5, startY + 20);
+            
+            // Kutu konumları ve aralarındaki mesafeler
+            ctx.font = '11px Arial';
+            
+            // Kenar boşluğunu göster
+            ctx.fillStyle = 'blue';
+            ctx.fillText(`${kenarBosluk.toFixed(1)} cm`, startX + kenarBosluk * scaleFactor / 2 - 10, startY + 35);
+            
+            // Son kutunun konumu + genişliği + kenar boşluğu = toplam uzunluk
+            const sonKutuBitis = kutuKonumlari[kutuKonumlari.length - 1] + boxSize;
+            ctx.fillStyle = 'blue';
+            ctx.fillText(
+                `${kenarBosluk.toFixed(1)} cm`,
+                startX + (sonKutuBitis + kenarBosluk/2) * scaleFactor - 10,
+                startY + 35
+            );
+            
+            // Kutu konumları ve aralarındaki mesafeler
+            kutuKonumlari.forEach((x, index) => {
+                // Kutu başlangıç konumu
+                ctx.fillStyle = 'green';
+                ctx.fillText(`${x.toFixed(1)} cm`, startX + x * scaleFactor, startY - boxSize * scaleFactor - 5);
+                
+                if (index < kutuKonumlari.length - 1) {
+                    const nextX = kutuKonumlari[index + 1];
+                    const aralik = araliklar ? araliklar[index] : (nextX - (x + boxSize));
+                    
+                    // Kutular arası mesafeleri göster
+                    ctx.fillStyle = 'blue';
+                    ctx.fillText(
+                        `${aralik.toFixed(1)} cm`, 
+                        startX + (x + boxSize + aralik/2) * scaleFactor - 10, 
+                        startY + 35
+                    );
+                }
+            });
+        }
+    </script>
+</body>
+</html>

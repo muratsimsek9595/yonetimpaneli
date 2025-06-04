@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kesim Optimizasyonu</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background: #f0f2f5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .left-panel {
+            width: 90%;
+            max-width: 400px;
+            margin: 10px auto;
+            padding: 15px;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .left-panel:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+        }
+        .right-panel {
+            width: 90%;
+            max-width: 600px;
+            margin: 10px auto;
+            padding: 15px;
+        }
+        .piece-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        input:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-size: 16px;
+            margin: 5px;
+            width: 100%;
+            max-width: 200px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .canvas-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        canvas {
+            width: 100%;
+            max-width: 600px;
+        }
+        #summary, #color-legend, .bin-summary {
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .bin-summary {
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+        .bin-summary h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        .bin-summary ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .bin-summary ul li {
+            margin: 5px 0;
+        }
+        /* Modal Stili */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            animation: fadeIn 0.3s;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .close {
+            color: #aaa;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #333;
+        }
+        .modal-body {
+            margin-bottom: 15px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .modal-footer button {
+            margin-left: 10px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
+            .left-panel {
+                width: 30%;
+                margin: 20px;
+            }
+            .right-panel {
+                width: 70%;
+                margin: 20px;
+            }
+            button {
+                width: auto;
+            }
+            input {
+                width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h2>Kesim Bilgileri</h2>
+            <div id="inputs">
+                <div class="piece-input">
+                    <input type="number" placeholder="Uzunluk (cm)" class="length" min="0.1" step="0.1">
+                    <input type="number" placeholder="Adet" class="quantity" min="1" onkeypress="return (event.charCode !=8 && event.charCode >= 48 && event.charCode <= 57)">
+                </div>
+            </div>
+            <button onclick="addInput()">Parça Ekle</button>
+            <button onclick="calculate()">Hesapla</button>
+            <button onclick="openGapModal()">Kesim Payı Ayarla</button>
+        </div>
+        <div class="right-panel">
+            <h2>Kesim Planı</h2>
+            <div class="canvas-container">
+                <canvas id="canvas"></canvas>
+            </div>
+            <div id="color-legend"></div>
+            <div id="summary"></div>
+            <div id="bin-summaries"></div>
+        </div>
+    </div>
+
+    <!-- Kesim Payı Modal -->
+    <div id="gapModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Kesim Payı Ayarla</h3>
+                <span class="close" onclick="closeGapModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Kesim payı değerini girin (mm):</p>
+                <input type="number" id="gapInput" min="0" step="1" value="2">
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeGapModal()">İptal</button>
+                <button onclick="saveGapValue()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STOCK_LENGTH = 600;
+        let pieces = [];
+        const colorMap = {};
+        let GAP = 2; // Kesim payı (mm)
+        const GAP_CM_FACTOR = 0.1; // mm'den cm'ye çevirmek için (1 mm = 0.1 cm)
+        const GAP_VISUAL_FACTOR = 5; // Görselleştirmede kesim payını daha belirgin yapmak için çarpan
+        const ROW_HEIGHT = 40;
+
+        // Modal işlevleri
+        function openGapModal() {
+            document.getElementById('gapModal').style.display = 'block';
+            document.getElementById('gapInput').value = GAP;
+        }
+
+        function closeGapModal() {
+            document.getElementById('gapModal').style.display = 'none';
+        }
+
+        function saveGapValue() {
+            const newGap = parseFloat(document.getElementById('gapInput').value);
+            if (!isNaN(newGap) && newGap >= 0) {
+                GAP = newGap;
+                closeGapModal();
+                // Eğer daha önce hesaplama yapıldıysa, yeni GAP değeriyle tekrar hesapla
+                if (pieces.length > 0) {
+                    calculate();
+                }
+            } else {
+                alert("Lütfen geçerli bir kesim payı değeri girin!");
+            }
+        }
+
+        // Sayfa yüklendiğinde modalı kapatmak için event listener
+        window.onclick = function(event) {
+            const modal = document.getElementById('gapModal');
+            if (event.target == modal) {
+                closeGapModal();
+            }
+        }
+
+        function setCanvasWidth() {
+            const canvas = document.getElementById('canvas');
+            const containerWidth = document.querySelector('.canvas-container').clientWidth;
+            canvas.width = Math.min(containerWidth, STOCK_LENGTH);
+        }
+
+        window.addEventListener('resize', setCanvasWidth);
+        window.addEventListener('load', setCanvasWidth);
+
+        function addInput() {
+            const div = document.createElement('div');
+            div.className = 'piece-input';
+            div.innerHTML = `<input type="number" placeholder="Uzunluk (cm)" class="length" min="0.1" step="0.1">
+                             <input type="number" placeholder="Adet" class="quantity" min="1" onkeypress="return (event.charCode !=8 && event.charCode >= 48 && event.charCode <= 57)">`;
+            document.getElementById('inputs').appendChild(div);
+        }
+
+        function calculate() {
+            pieces = [];
+            // Renk haritasını temizle
+            for (let key in colorMap) {
+                delete colorMap[key];
+            }
+            let hasInvalidInput = false;
+            let hasValidInput = false;
+
+            document.querySelectorAll('.piece-input').forEach(input => {
+                const lengthInput = input.querySelector('.length').value;
+                const quantityInput = input.querySelector('.quantity').value;
+
+                if (lengthInput === '' || quantityInput === '') {
+                    return;
+                }
+
+                const length = parseFloat(lengthInput);
+                const quantity = parseInt(quantityInput);
+
+                if (isNaN(length) || isNaN(quantity) || length <= 0 || quantity <= 0) {
+                    hasInvalidInput = true;
+                } else {
+                    pieces.push({ length, quantity });
+                    hasValidInput = true;
+                }
+            });
+
+            if (hasInvalidInput) {
+                alert("Lütfen tüm uzunluk ve adet değerlerini pozitif rakamlar olarak girin!");
+                return;
+            }
+
+            if (!hasValidInput) {
+                alert("Lütfen en az bir geçerli parça bilgisi girin! Boş alanlar dikkate alınmaz.");
+                return;
+            }
+
+            const result = optimizeCutting();
+            setCanvasWidth();
+            drawResult(result);
+            showColorLegend();
+        }
+
+        function optimizeCutting() {
+            let bins = [];
+            let remainingPieces = pieces.map(p => ({ length: p.length, quantity: p.quantity }));
+
+            while (remainingPieces.some(p => p.quantity > 0)) {
+                let bin = { used: 0, pieces: [] };
+                remainingPieces.sort((a, b) => b.length - a.length);
+
+                for (let i = 0; i < remainingPieces.length; i++) {
+                    while (remainingPieces[i].quantity > 0 && bin.used + remainingPieces[i].length + (bin.pieces.length > 0 ? GAP * GAP_CM_FACTOR : 0) <= STOCK_LENGTH) {
+                        if (bin.pieces.length > 0) {
+                            bin.used += GAP * GAP_CM_FACTOR;
+                        }
+                        bin.used += remainingPieces[i].length;
+                        bin.pieces.push(remainingPieces[i].length);
+                        remainingPieces[i].quantity--;
+                    }
+                    if (remainingPieces[i].quantity === 0) continue;
+                }
+                bins.push(bin);
+            }
+            return bins;
+        }
+
+        function drawResult(bins) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const requiredHeight = bins.length * ROW_HEIGHT;
+            canvas.height = requiredHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const scaleFactor = canvas.width / STOCK_LENGTH;
+            const colors = ['#007BFF', '#28A745', '#DC3545', '#FFC107', '#6F42C1'];
+            let y = 20;
+
+            pieces.forEach((piece, index) => {
+                if (!colorMap[piece.length]) {
+                    colorMap[piece.length] = colors[index % colors.length];
+                }
+            });
+
+            bins.forEach((bin, index) => {
+                let x = 0;
+                let actualUsed = 0;
+
+                bin.pieces.forEach((length, pieceIndex) => {
+                    if (actualUsed + length <= STOCK_LENGTH) {
+                        ctx.fillStyle = colorMap[length];
+                        const isLastPiece = pieceIndex === bin.pieces.length - 1;
+                        const scaledLength = length * scaleFactor;
+                        const scaledGap = isLastPiece ? 0 : (GAP * GAP_CM_FACTOR * GAP_VISUAL_FACTOR);
+                        const drawLength = scaledLength - scaledGap;
+                        ctx.fillRect(x, y - 15, drawLength, 20);
+                        x += drawLength + scaledGap;
+                        actualUsed += length;
+                    }
+                });
+
+                if (actualUsed < STOCK_LENGTH) {
+                    ctx.fillStyle = '#ccc';
+                    const fireLength = (STOCK_LENGTH - actualUsed) * scaleFactor;
+                    ctx.fillRect(actualUsed * scaleFactor, y - 15, fireLength, 20);
+                }
+                y += ROW_HEIGHT;
+            });
+
+            updateBinSummaries(bins);
+            const totalWaste = bins.reduce((sum, bin) => sum + (STOCK_LENGTH - bin.used), 0);
+            // Fire değerini 2 ondalık basamağa yuvarlayalım
+            const roundedWaste = Math.round(totalWaste * 100) / 100;
+            document.getElementById('summary').innerHTML = `Toplam Çubuk: ${bins.length}, Toplam Fire: ${roundedWaste} cm`;
+        }
+
+        function updateBinSummaries(bins) {
+            const summariesDiv = document.getElementById('bin-summaries');
+            summariesDiv.innerHTML = '';
+
+            bins.forEach((bin, index) => {
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'bin-summary';
+
+                // Çubuk numarası başlığı
+                const heading = document.createElement('h3');
+                heading.textContent = `Çubuk-${index + 1}`;
+                summaryDiv.appendChild(heading);
+
+                const ul = document.createElement('ul');
+
+                const pieceCounts = {};
+                bin.pieces.forEach(length => {
+                    pieceCounts[length] = (pieceCounts[length] || 0) + 1;
+                });
+
+                for (let length in pieceCounts) {
+                    const li = document.createElement('li');
+                    li.textContent = `${length} cm: ${pieceCounts[length]} adet`;
+                    ul.appendChild(li);
+                }
+
+                // Kesim payı bilgisini ekle
+                if (bin.pieces.length > 1) {
+                    const gapLi = document.createElement('li');
+                    gapLi.textContent = `Kesim payı: ${(bin.pieces.length - 1) * GAP} mm (${bin.pieces.length - 1} adet)`;
+                    ul.appendChild(gapLi);
+                }
+
+                // Kullanılan ve kalan uzunluk bilgisini ekle
+                const usedLi = document.createElement('li');
+                usedLi.textContent = `Kullanılan: ${bin.used} cm, Kalan: ${Math.round((STOCK_LENGTH - bin.used) * 100) / 100} cm`;
+                ul.appendChild(usedLi);
+
+                summaryDiv.appendChild(ul);
+                summariesDiv.appendChild(summaryDiv);
+            });
+        }
+
+        function showColorLegend() {
+            const legend = document.getElementById('color-legend');
+            legend.innerHTML = '<strong>Renk Kılavuzu:</strong><br>';
+            for (let length in colorMap) {
+                legend.innerHTML += `<span style="color: ${colorMap[length]}">■</span> ${length} cm<br>`;
+            }
+        }
+    </script>
+</body>
+</html>

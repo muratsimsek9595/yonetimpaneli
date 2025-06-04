@@ -137,6 +137,20 @@ Bir teklifin içerdiği malzeme ve işçilik kalemlerini detaylandırır. Her bi
 | `created_at`                        | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP                                            |
 | `updated_at`                        | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP                |
 
+### 8. `araclar`
+
+Kullanıcı tanımlı araçların (örneğin hesaplama araçları, faydalı linkler vb.) bilgilerini tutar.
+
+| Sütun Adı     | Veri Türü     | Notlar                                                                 |
+|---------------|---------------|------------------------------------------------------------------------|
+| `id`          | INT           | Primary Key, AUTO_INCREMENT                                            |
+| `ad`          | VARCHAR(255)  | NOT NULL, Aracın kullanıcı dostu adı                                   |
+| `yol`         | VARCHAR(1024) | NOT NULL, Araca ait dosya yolu veya URL'i                              |
+| `aciklama`    | TEXT          | NULL, Araç hakkında kısa açıklama                                      |
+| `icon`        | VARCHAR(50)   | NULL, Araç kartında gösterilecek ikon (örn: 'fas fa-calculator', '🔧') |
+| `created_at`  | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP                                              |
+| `updated_at`  | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP                  |
+
 ## Önemli Notlar
 
 *   **VARCHAR ID'ler:** `teklifler` tablosundaki `id` sütunu `VARCHAR(64)` olarak tanımlanmıştır. Bu, genellikle UUID (Universally Unique Identifier) veya benzeri benzersiz metin tabanlı anahtarlar kullanıldığını gösterir. API tarafında bu ID'lerin oluşturulması ve yönetilmesi gerekmektedir.
