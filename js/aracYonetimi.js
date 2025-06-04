@@ -218,11 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loadAndDisplayAraclar = async () => {
         try {
-            const araclar = await fetchAraclar(); // api.js'den gelecek
+            const response = await fetchAraclar(); // Renamed for clarity
             araclarKartContainer.innerHTML = ''; // Mevcut kartları temizle
 
-            if (araclar && araclar.length > 0) {
-                araclar.forEach(arac => {
+            if (response && response.success && response.data && response.data.length > 0) {
+                const araclarList = response.data; // Extract the array of tools
+                araclarList.forEach(arac => {
                     const aracKarti = renderAracKarti(arac);
                     araclarKartContainer.appendChild(aracKarti);
                 });
@@ -231,6 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 aracYokMesaji.style.display = 'block';
                 araclarKartContainer.style.display = 'none';
+                // Optional: Display a more specific message if response.success is false
+                if (response && !response.success) {
+                    aracYokMesaji.textContent = `Araçlar yüklenemedi: ${response.message || 'Bilinmeyen bir API hatası oluştu.'}`;
+                } else if (!response || !response.data || response.data.length === 0) {
+                    aracYokMesaji.textContent = 'Gösterilecek araç bulunmamaktadır.';
+                }
             }
         } catch (error) {
             console.error("Araçlar yüklenirken hata oluştu:", error);
