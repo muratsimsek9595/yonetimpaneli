@@ -535,4 +535,34 @@ export function populeEtMusteriDropdown(musterilerListesi, selectElement, placeh
     }
 }
 
+/**
+ * Belirtilen ID'ye sahip bir modalı görünür hale getirir.
+ * @param {string} modalId Gösterilecek modalın ID'si.
+ */
+export function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex'; // veya 'block', modalınızın CSS'ine göre
+        // İsteğe bağlı: Modal açıldığında body scroll'unu engellemek için
+        // document.body.style.overflow = 'hidden';
+    } else {
+        console.error(`Modal bulunamadı: ${modalId}`);
+    }
+}
+
+/**
+ * Belirtilen ID'ye sahip bir modalı gizler.
+ * @param {string} modalId Gizlenecek modalın ID'si.
+ */
+export function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        // İsteğe bağlı: Modal kapandığında body scroll'unu geri getirmek için
+        // document.body.style.overflow = 'auto';
+    } else {
+        console.error(`Modal bulunamadı: ${modalId}`);
+    }
+}
+
 // Diğer UI fonksiyonları buraya eklenecek... 
