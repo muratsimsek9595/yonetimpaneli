@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentDirectory = ''; // Dosya tarayıcısının o an bulunduğu dizin
     const FILE_BROWSER_ROOT_PATH = 'tools/'; // Ana tarama kök dizini
     let fileBrowserActiveBasePath = 'images/'; // Varsayılan olarak images altındayız
-    const ALLOWED_IMAGE_EXTENSIONS = [/'.jpg$/i, /'.jpeg$/i, /'.png$/i, /'.gif$/i, /'.svg$/i, /'.webp$/i];
+    const ALLOWED_IMAGE_EXTENSIONS = [/\.jpg$/i, /\.jpeg$/i, /\.png$/i, /\.gif$/i, /\.svg$/i, /\.webp$/i];
 
     // ÖZEL KART STİLLERİNİ EKLE
     if(araclarKartContainer) { // Sadece araçlar bölümü varsa stilleri yükle
