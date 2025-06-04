@@ -169,33 +169,54 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Araçları Yükleme ve Listeleme ---
     const renderAracKarti = (arac) => {
         const kart = document.createElement('div');
-        kart.className = 'arac-karti card shadow-sm'; // Bootstrap card ve hafif gölge
-        kart.style.borderRadius = '12px'; // Daha yuvarlak köşeler
-        kart.style.marginBottom = '20px'; // Kartlar arası boşluk
-        kart.style.backgroundColor = '#f8f9fa'; // Açık gri bir arka plan, görsele benzer
-        kart.style.overflow = 'hidden'; // İçerik taşmasını engelle
+        kart.className = 'arac-karti'; // Özel stil için temel sınıf
+        kart.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
+        kart.style.background = 'linear-gradient(135deg, #e8e6d8 0%, #f0eee6 50%, #e0ddd0 100%)';
+        kart.style.borderRadius = '32px';
+        kart.style.padding = '24px 20px';
+        kart.style.position = 'relative';
+        kart.style.overflow = 'hidden';
+        kart.style.marginBottom = '25px'; // Kartlar arası boşluk
+        kart.style.boxShadow = '0 6px 25px rgba(0, 0, 0, 0.1)';
         kart.dataset.aracId = arac.id;
 
         kart.innerHTML = `
-            <div class="card-body" style="padding: 20px;">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="arac-baslik d-flex align-items-center">
-                        ${arac.icon ? `<span class="arac-icon" style="font-size: 1.8em; margin-right: 12px; color: #007bff;">${arac.icon}</span>` : '<span class="arac-icon-placeholder" style="width: 2em; height: 1.8em; margin-right: 12px; display: inline-block;"></span>'}
-                        <h5 class="card-title mb-0" style="font-size: 1.25rem; font-weight: 500;">${arac.ad}</h5>
-                    </div>
-                    <div class="arac-karti-actions">
-                        <button class="btn btn-sm btn-outline-primary btn-edit-arac" title="Düzenle" style="margin-left: 5px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">✏️</button>
-                        <button class="btn btn-sm btn-outline-danger btn-delete-arac" title="Sil" style="margin-left: 5px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">🗑️</button>
-                    </div>
-                </div>
-                <p class="card-text arac-karti-aciklama" style="font-size: 0.95em; color: #6c757d; min-height: 40px; margin-bottom: 20px;">
-                    ${arac.aciklama || 'Açıklama bulunmuyor.'}
-                </p>
-                <a href="${arac.yol}" target="_blank" class="btn btn-primary" style="text-decoration: none; padding: 10px 15px; border-radius: 8px; font-size: 0.9em; display: inline-block;">
-                    <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Aracı Aç
-                </a>
+            <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
+                <button class="btn-edit-arac" title="Düzenle" style="background-color: #6b7c5a; color: white; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.2s ease, background-color 0.2s ease;">✏️</button>
+                <button class="btn-delete-arac" title="Sil" style="background-color: #c86462; /* Daha yumuşak bir kırmızı */ color: white; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.2s ease, background-color 0.2s ease;">🗑️</button>
             </div>
+
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 18px;">
+                ${arac.icon ? `<span class="arac-icon" style="font-size: 28px; color: #4a5d3a; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: 12px; display: flex; align-items: center; justify-content: center;">${arac.icon}</span>` : '<div style="width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.3); border-radius: 12px;"></div>'}
+                <h2 class="arac-ad" style="font-size: 20px; font-weight: 600; color: #4a5d3a; margin: 0;">${arac.ad}</h2>
+            </div>
+            
+            <p class="arac-aciklama" style="font-size: 14px; color: #6a7869; margin-bottom: 22px; min-height: 38px; line-height: 1.5;">
+                ${arac.aciklama || 'Açıklama bulunmuyor.'}
+            </p>
+            
+            <a href="${arac.yol}" target="_blank" class="btn-arac-ac" style="background-color: #7b8c6b; /* Ana butona daha koyu yeşil */ color: white; padding: 10px 18px; border-radius: 18px; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-block; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12); transition: background-color 0.3s ease, transform 0.2s ease;">
+                Aracı Görüntüle
+            </a>
         `;
+
+        // Butonlara hover efekti ekleyelim
+        const editButton = kart.querySelector('.btn-edit-arac');
+        const deleteButton = kart.querySelector('.btn-delete-arac');
+        const openButton = kart.querySelector('.btn-arac-ac');
+
+        if(editButton) {
+            editButton.addEventListener('mouseover', () => { editButton.style.backgroundColor = '#5a6b49'; editButton.style.transform = 'scale(1.05)'; });
+            editButton.addEventListener('mouseout', () => { editButton.style.backgroundColor = '#6b7c5a'; editButton.style.transform = 'scale(1)'; });
+        }
+        if(deleteButton) {
+            deleteButton.addEventListener('mouseover', () => { deleteButton.style.backgroundColor = '#b35250'; deleteButton.style.transform = 'scale(1.05)'; });
+            deleteButton.addEventListener('mouseout', () => { deleteButton.style.backgroundColor = '#c86462'; deleteButton.style.transform = 'scale(1)'; });
+        }
+        if(openButton) {
+            openButton.addEventListener('mouseover', () => { openButton.style.backgroundColor = '#6a7c5a'; openButton.style.transform = 'translateY(-2px)'; });
+            openButton.addEventListener('mouseout', () => { openButton.style.backgroundColor = '#7b8c6b'; openButton.style.transform = 'translateY(0px)'; });
+        }
 
         // Düzenle butonu
         kart.querySelector('.btn-edit-arac').addEventListener('click', () => {
