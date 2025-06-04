@@ -26,6 +26,135 @@ async function deleteAracById(aracId) {
     return fetchWrapper(`${API_BASE_URL}/araclar.php?id=${aracId}`, { method: 'DELETE' });
 }
 
+function ensureCustomCardStyles(araclarKartContainerElement) {
+    if (document.getElementById('custom-arac-karti-styles')) {
+        return; // Stiller zaten eklenmiş
+    }
+    const styleSheet = document.createElement("style");
+    styleSheet.id = 'custom-arac-karti-styles';
+    styleSheet.innerHTML = `
+        .arac-karti-container {
+            /* Gerekirse grid veya flex ayarları buraya gelebilir */
+        }
+        .arac-karti-container .card {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #e8e6d8 0%, #f0eee6 50%, #e0ddd0 100%);
+            border-radius: 32px;
+            padding: 24px 20px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12); /* Biraz daha yumuşak gölge */
+            min-height: 190px; /* İçeriğe göre esneklik */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #4a5d3a; /* Ana metin rengi */
+        }
+
+        .arac-karti-container .card .action-buttons-wrapper {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px; /* Butonlar arası boşluk */
+            z-index: 10;
+        }
+
+        .arac-karti-container .card .action-button {
+            background-color: #6b7c5a; /* Örnekteki add-button rengi */
+            color: white;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            font-size: 16px; /* İkon boyutu */
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        .arac-karti-container .card .action-button:hover {
+            transform: scale(1.1); /* Biraz daha belirgin hover */
+        }
+        .arac-karti-container .card .btn-edit-arac:hover { background-color: #5a6b49; }
+        .arac-karti-container .card .btn-delete-arac { background-color: #c2706e; } /* Sil butonu için farklı renk */
+        .arac-karti-container .card .btn-delete-arac:hover { background-color: #b05f5d; }
+
+        .arac-karti-container .card .card-content-wrapper {
+             /* action-buttons-wrapper'ın mutlak konumlandırılması nedeniyle gerekirse üstten padding eklenebilir, ancak genel padding yeterli olmalı */
+        }
+        
+        .arac-karti-container .card .tool-icon { /* Araç ikonu için */
+            font-size: 2em; /* Büyük ikon */
+            margin-bottom: 12px;
+            color: #4a5d3a;
+            line-height: 1;
+        }
+
+        .arac-karti-container .card .tool-name { /* Araç adı (steps-label gibi) */
+            font-size: 20px;
+            font-weight: 600;
+            color: #4a5d3a;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .arac-karti-container .card .tool-description { /* Araç açıklaması */
+            font-size: 14px;
+            color: #5c6b51; /* Ana metinden biraz daha açık */
+            line-height: 1.6;
+            margin-bottom: 18px;
+            flex-grow: 1; /* Açıklamanın kalan alanı doldurmasını sağlar */
+        }
+
+        .arac-karti-container .card .card-footer {
+            margin-top: auto; /* İçerik kısa olsa bile footer'ı aşağı iter */
+        }
+
+        .arac-karti-container .card .btn-open-tool { /* "Aracı Aç" butonu */
+            background-color: #6b7c5a; /* Yeşil tonu */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px; /* Daha yuvarlak */
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            transition: background-color 0.25s ease, transform 0.2s ease;
+            border: none;
+        }
+        .arac-karti-container .card .btn-open-tool:hover {
+            background-color: #5a6b49;
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .arac-karti-container .card .decorative-dots {
+            position: absolute;
+            bottom: 18px;
+            right: 22px;
+            display: flex;
+            gap: 7px;
+        }
+        .arac-karti-container .card .dot {
+            width: 7px;
+            height: 7px;
+            background-color: #a8b89a; /* Nokta rengi */
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+    `;
+    document.head.appendChild(styleSheet);
+
+    if (araclarKartContainerElement && !araclarKartContainerElement.classList.contains('arac-karti-container')) {
+        araclarKartContainerElement.classList.add('arac-karti-container');
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("aracYonetimi.js yüklendi ve DOM hazır.");
 
@@ -57,13 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileBrowserUpButton = document.getElementById('fileBrowserUpButton');
 
     let currentDirectory = ''; // Dosya tarayıcısının o an bulunduğu dizin
-    const FILE_BROWSER_BASE_PATH = 'tools/'; // Sunucuda taranacak ana klasör. API script'i de bunu dikkate almalı.
+    const FILE_BROWSER_BASE_PATH = 'tools/'; 
+
+    // ÖZEL KART STİLLERİNİ EKLE
+    if(araclarKartContainer) { // Sadece araçlar bölümü varsa stilleri yükle
+        ensureCustomCardStyles(araclarKartContainer);
+    }
+
 
     // --- Dosya Tarayıcı İşlevleri ---
     const openFileBrowserModal = () => {
-        selectedFilePathInput.value = ''; // Her açılışta seçili dosya alanını temizle
+        selectedFilePathInput.value = ''; 
         fileBrowserSelectButton.disabled = true;
-        loadDirectoryContents(); // Kök dizini yükle
+        loadDirectoryContents(); 
         showModal('fileBrowserModal');
     };
 
@@ -74,13 +209,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadDirectoryContents = async (path = '') => {
         currentDirectory = path;
         currentFilePathDisplay.textContent = FILE_BROWSER_BASE_PATH + (path ? path + '/' : '');
-        fileListContainer.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"><span class="sr-only">Yükleniyor...</span></div></div>'; // Yükleniyor göstergesi
-        fileBrowserUpButton.disabled = !path; // Kök dizindeyken yukarı gitme butonu pasif
+        fileListContainer.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"><span class="sr-only">Yükleniyor...</span></div></div>'; 
+        fileBrowserUpButton.disabled = !path; 
 
         try {
-            // API_BASE_URL burada tanımlı olmalı veya doğrudan URL yazılmalı
             const response = await fetchWrapper(`${API_BASE_URL}/list_files.php?path=${encodeURIComponent(path)}`);
-            fileListContainer.innerHTML = ''; // Temizle
+            fileListContainer.innerHTML = ''; 
 
             if (response.success && response.data) {
                 if (response.data.length === 0) {
@@ -92,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     listItem.style.cursor = 'pointer';
                     listItem.textContent = item.name;
                     listItem.dataset.type = item.type;
-                    listItem.dataset.path = item.path; // Tam yolu (base path hariç)
+                    listItem.dataset.path = item.path; 
 
                     if (item.type === 'directory') {
                         listItem.innerHTML = `📁 ${item.name}`;
@@ -100,12 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         listItem.innerHTML = `📄 ${item.name}`;
                         listItem.addEventListener('click', () => {
-                            // Önceki seçili elemandan active sınıfını kaldır
                             const currentlyActive = fileListContainer.querySelector('.active');
                             if (currentlyActive) {
                                 currentlyActive.classList.remove('active');
                             }
-                            // Tıklanan elemana active sınıfını ekle
                             listItem.classList.add('active');
                             selectedFilePathInput.value = FILE_BROWSER_BASE_PATH + item.path;
                             fileBrowserSelectButton.disabled = false;
@@ -127,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fileBrowserUpButton.addEventListener('click', () => {
             if (currentDirectory) {
                 const parts = currentDirectory.split('/').filter(p => p);
-                parts.pop(); // Son kısmı çıkar
+                parts.pop(); 
                 loadDirectoryContents(parts.join('/'));
             }
         });
@@ -144,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Modal İşlevleri ---
     const openAracModal = (arac = null) => {
-        aracForm.reset(); // Formu her açılışta sıfırla
+        aracForm.reset(); 
         if (arac && arac.id) {
             aracFormModalBaslik.textContent = 'Aracı Düzenle';
             aracIdInput.value = arac.id;
@@ -155,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
             aracKaydetButton.textContent = 'Güncelle';
         } else {
             aracFormModalBaslik.textContent = 'Yeni Araç Ekle';
-            aracIdInput.value = ''; // Yeni araç için ID boş olmalı
+            aracIdInput.value = ''; 
             aracKaydetButton.textContent = 'Kaydet';
         }
         showModal('aracFormModal');
@@ -169,146 +301,133 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Araçları Yükleme ve Listeleme ---
     const renderAracKarti = (arac) => {
         const kart = document.createElement('div');
-        kart.className = 'arac-karti'; // Özel stil için temel sınıf
-        kart.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif';
-        kart.style.background = 'linear-gradient(135deg, #e8e6d8 0%, #f0eee6 50%, #e0ddd0 100%)';
-        kart.style.borderRadius = '32px';
-        kart.style.padding = '24px 20px';
-        kart.style.position = 'relative';
-        kart.style.overflow = 'hidden';
-        kart.style.marginBottom = '25px'; // Kartlar arası boşluk
-        kart.style.boxShadow = '0 6px 25px rgba(0, 0, 0, 0.1)';
+        // Ana sınıfı .card olarak ayarlıyoruz, stiller enjekte edilen CSS'den gelecek.
+        kart.className = 'card'; 
         kart.dataset.aracId = arac.id;
 
         kart.innerHTML = `
-            <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
-                <button class="btn-edit-arac" title="Düzenle" style="background-color: #6b7c5a; color: white; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.2s ease, background-color 0.2s ease;">✏️</button>
-                <button class="btn-delete-arac" title="Sil" style="background-color: #c86462; /* Daha yumuşak bir kırmızı */ color: white; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.2s ease, background-color 0.2s ease;">🗑️</button>
+            <div class="action-buttons-wrapper">
+                <button class="btn-edit-arac action-button" title="Düzenle">✏️</button>
+                <button class="btn-delete-arac action-button" title="Sil">🗑️</button>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 18px;">
-                ${arac.icon ? `<span class="arac-icon" style="font-size: 28px; color: #4a5d3a; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: 12px; display: flex; align-items: center; justify-content: center;">${arac.icon}</span>` : '<div style="width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.3); border-radius: 12px;"></div>'}
-                <h2 class="arac-ad" style="font-size: 20px; font-weight: 600; color: #4a5d3a; margin: 0;">${arac.ad}</h2>
+            <div class="card-content-wrapper">
+                ${arac.icon ? `<div class="tool-icon">${arac.icon}</div>` : '<div class="tool-icon" style="height: 1em;"></div>'}
+                <div class="tool-name">${arac.ad}</div>
+                <p class="tool-description">${arac.aciklama || 'Açıklama bulunmuyor.'}</p>
             </div>
             
-            <p class="arac-aciklama" style="font-size: 14px; color: #6a7869; margin-bottom: 22px; min-height: 38px; line-height: 1.5;">
-                ${arac.aciklama || 'Açıklama bulunmuyor.'}
-            </p>
-            
-            <a href="${arac.yol}" target="_blank" class="btn-arac-ac" style="background-color: #7b8c6b; /* Ana butona daha koyu yeşil */ color: white; padding: 10px 18px; border-radius: 18px; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-block; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12); transition: background-color 0.3s ease, transform 0.2s ease;">
-                Aracı Görüntüle
-            </a>
+            <div class="card-footer">
+                <a href="${arac.yol}" target="_blank" class="btn-open-tool">Aracı Görüntüle</a>
+            </div>
+
+            <div class="decorative-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
         `;
 
-        // Butonlara hover efekti ekleyelim
-        const editButton = kart.querySelector('.btn-edit-arac');
-        const deleteButton = kart.querySelector('.btn-delete-arac');
-        const openButton = kart.querySelector('.btn-arac-ac');
-
-        if(editButton) {
-            editButton.addEventListener('mouseover', () => { editButton.style.backgroundColor = '#5a6b49'; editButton.style.transform = 'scale(1.05)'; });
-            editButton.addEventListener('mouseout', () => { editButton.style.backgroundColor = '#6b7c5a'; editButton.style.transform = 'scale(1)'; });
-        }
-        if(deleteButton) {
-            deleteButton.addEventListener('mouseover', () => { deleteButton.style.backgroundColor = '#b35250'; deleteButton.style.transform = 'scale(1.05)'; });
-            deleteButton.addEventListener('mouseout', () => { deleteButton.style.backgroundColor = '#c86462'; deleteButton.style.transform = 'scale(1)'; });
-        }
-        if(openButton) {
-            openButton.addEventListener('mouseover', () => { openButton.style.backgroundColor = '#6a7c5a'; openButton.style.transform = 'translateY(-2px)'; });
-            openButton.addEventListener('mouseout', () => { openButton.style.backgroundColor = '#7b8c6b'; openButton.style.transform = 'translateY(0px)'; });
-        }
-
         // Düzenle butonu
-        kart.querySelector('.btn-edit-arac').addEventListener('click', () => {
-            // Önce API'den güncel aracı çekmek daha iyi olabilir, ama şimdilik listedeki ile açalım
-            openAracModal(arac);
-        });
+        const editButton = kart.querySelector('.btn-edit-arac');
+        if (editButton) {
+            editButton.addEventListener('click', () => {
+                openAracModal(arac);
+            });
+        }
 
         // Sil butonu
-        kart.querySelector('.btn-delete-arac').addEventListener('click', async () => {
-            if (confirm(`'${arac.ad}' adlı aracı silmek istediğinizden emin misiniz?`)) {
-                try {
-                    await deleteAracById(arac.id);
-                    showToast(`'${arac.ad}' başarıyla silindi.`, 'success');
-                    loadAndDisplayAraclar(); // Listeyi yenile
-                } catch (error) {
-                    console.error('Araç silinirken hata:', error);
-                    showToast(`Araç silinirken bir hata oluştu: ${error.message}`, 'error');
+        const deleteButton = kart.querySelector('.btn-delete-arac');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', async () => {
+                if (confirm(`'${arac.ad}' adlı aracı silmek istediğinizden emin misiniz?`)) {
+                    try {
+                        await deleteAracById(arac.id);
+                        showToast(`'${arac.ad}' başarıyla silindi.`, 'success');
+                        loadAndDisplayAraclar(); // Listeyi yenile
+                    } catch (error) {
+                        console.error('Araç silinirken hata:', error);
+                        showToast(`Araç silinirken bir hata oluştu: ${error.message}`, 'error');
+                    }
                 }
-            }
-        });
+            });
+        }
         return kart;
     };
 
     const loadAndDisplayAraclar = async () => {
         try {
-            const response = await fetchAraclar(); // Renamed for clarity
-            araclarKartContainer.innerHTML = ''; // Mevcut kartları temizle
+            const response = await fetchAraclar(); 
+            if (!araclarKartContainer) return; // Eğer container yoksa işlem yapma
+            araclarKartContainer.innerHTML = ''; 
 
             if (response && response.success && response.data && response.data.length > 0) {
-                const araclarList = response.data; // Extract the array of tools
+                const araclarList = response.data; 
                 araclarList.forEach(arac => {
                     const aracKarti = renderAracKarti(arac);
                     araclarKartContainer.appendChild(aracKarti);
                 });
-                aracYokMesaji.style.display = 'none';
-                araclarKartContainer.style.display = 'grid'; // veya initial değeri
+                if (aracYokMesaji) aracYokMesaji.style.display = 'none';
+                araclarKartContainer.style.display = 'grid'; // veya flex, initial değeri neyse
             } else {
-                aracYokMesaji.style.display = 'block';
+                if (aracYokMesaji) aracYokMesaji.style.display = 'block';
                 araclarKartContainer.style.display = 'none';
-                // Optional: Display a more specific message if response.success is false
                 if (response && !response.success) {
-                    aracYokMesaji.textContent = `Araçlar yüklenemedi: ${response.message || 'Bilinmeyen bir API hatası oluştu.'}`;
+                    if (aracYokMesaji) aracYokMesaji.textContent = `Araçlar yüklenemedi: ${response.message || 'Bilinmeyen bir API hatası oluştu.'}`;
                 } else if (!response || !response.data || response.data.length === 0) {
-                    aracYokMesaji.textContent = 'Gösterilecek araç bulunmamaktadır.';
+                    if (aracYokMesaji) aracYokMesaji.textContent = 'Gösterilecek araç bulunmamaktadır.';
                 }
             }
         } catch (error) {
             console.error("Araçlar yüklenirken hata oluştu:", error);
+            if (aracYokMesaji) {
+                aracYokMesaji.textContent = 'Araçlar yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.';
+                aracYokMesaji.style.display = 'block';
+            }
+            if (araclarKartContainer) araclarKartContainer.style.display = 'none';
             showToast(`Araçlar yüklenirken bir hata oluştu: ${error.message}`, 'error');
-            aracYokMesaji.textContent = 'Araçlar yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.';
-            aracYokMesaji.style.display = 'block';
-            araclarKartContainer.style.display = 'none';
         }
     };
 
     // --- Form Gönderme İşlevi ---
-    aracForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const id = aracIdInput.value;
-        const aracData = {
-            ad: aracAdiInput.value.trim(),
-            yol: aracYoluInput.value.trim(),
-            aciklama: aracAciklamaInput.value.trim(),
-            icon: aracIconInput.value.trim()
-        };
+    if(aracForm) {
+        aracForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const id = aracIdInput.value;
+            const aracData = {
+                ad: aracAdiInput.value.trim(),
+                yol: aracYoluInput.value.trim(),
+                aciklama: aracAciklamaInput.value.trim(),
+                icon: aracIconInput.value.trim()
+            };
 
-        if (!aracData.ad || !aracData.yol) {
-            showToast('Araç adı ve yolu boş bırakılamaz.', 'error');
-            return;
-        }
-
-        aracKaydetButton.disabled = true;
-        aracKaydetButton.textContent = id ? 'Güncelleniyor...' : 'Kaydediliyor...';
-
-        try {
-            if (id) { // Güncelleme
-                await updateArac(id, aracData); // api.js'den
-                showToast('Araç başarıyla güncellendi.', 'success');
-            } else { // Yeni ekleme
-                await addArac(aracData); // api.js'den
-                showToast('Araç başarıyla eklendi.', 'success');
+            if (!aracData.ad || !aracData.yol) {
+                showToast('Araç adı ve yolu boş bırakılamaz.', 'error');
+                return;
             }
-            closeAracModal();
-            loadAndDisplayAraclar(); // Listeyi yenile
-        } catch (error) {
-            console.error('Araç kaydedilirken hata:', error);
-            showToast(`Araç kaydedilirken bir hata oluştu: ${error.message}`, 'error');
-        } finally {
-            aracKaydetButton.disabled = false;
-            aracKaydetButton.textContent = id ? 'Güncelle' : 'Kaydet';
-        }
-    });
+
+            aracKaydetButton.disabled = true;
+            aracKaydetButton.textContent = id ? 'Güncelleniyor...' : 'Kaydediliyor...';
+
+            try {
+                if (id) { 
+                    await updateArac(id, aracData); 
+                    showToast('Araç başarıyla güncellendi.', 'success');
+                } else { 
+                    await addArac(aracData); 
+                    showToast('Araç başarıyla eklendi.', 'success');
+                }
+                closeAracModal();
+                loadAndDisplayAraclar(); 
+            } catch (error) {
+                console.error('Araç kaydedilirken hata:', error);
+                showToast(`Araç kaydedilirken bir hata oluştu: ${error.message}`, 'error');
+            } finally {
+                aracKaydetButton.disabled = false;
+                aracKaydetButton.textContent = id ? 'Güncelle' : 'Kaydet';
+            }
+        });
+    }
 
 
     // --- Başlatma ve Olay Dinleyicileri ---
@@ -319,12 +438,10 @@ document.addEventListener('DOMContentLoaded', () => {
             yeniAracEkleButton.addEventListener('click', () => openAracModal());
         }
 
-        // "Araç Yolu" alanı yanındaki "Gözat..." butonu
         if (aracYoluGozatButton) {
             aracYoluGozatButton.addEventListener('click', () => openFileBrowserModal());
         }
 
-        // Dosya Tarayıcı Modal kapatma butonları
         if (fileBrowserModalCloseX) {
             fileBrowserModalCloseX.addEventListener('click', () => closeFileBrowserModal());
         }
@@ -332,7 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
             fileBrowserModalKapatButton.addEventListener('click', () => closeFileBrowserModal());
         }
 
-        // Modal kapatma işlevleri için event listener'lar
         if (aracFormIptalButton) {
             aracFormIptalButton.addEventListener('click', () => closeAracModal());
         }
@@ -340,16 +456,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modalKapatXButton) {
             modalKapatXButton.addEventListener('click', () => closeAracModal());
         }
-
-        // Araçlar sekmesi aktif olduğunda araçları yükle
-        // Bu, script.js'deki navigasyon mantığına entegre edilebilir
-        // Şimdilik, eğer #araclar bölümü görünürse yükleyelim
-        // veya direkt sayfa yüklendiğinde eğer kullanıcı bu sekmeyi görebiliyorsa.
-        // En basit haliyle, eğer #araclar diye bir link varsa ve bu modül yüklendiyse,
-        // bu sekme için bir gösterici olarak kabul edip yükleyebiliriz.
-        // Ancak, en doğru yöntem script.js'deki sekmeye tıklama olayını dinlemek olacaktır.
-        // Biz şimdilik doğrudan yükleyelim, daha sonra bu optimize edilebilir.
-        if (document.getElementById('araclar')) { // Eğer "Araçlar" bölümü DOM'da varsa
+        
+        if (document.getElementById('araclar')) { 
              loadAndDisplayAraclar();
         }
     };
