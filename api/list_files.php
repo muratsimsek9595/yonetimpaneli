@@ -29,15 +29,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 // $baseDir = realpath($_SERVER['DOCUMENT_ROOT'] . '/tools');
 // Bu örnek için, script'in bulunduğu yerden bir üst dizindeki 'tools' klasörünü kullanalım:
 
-$documentRoot = $_SERVER['DOCUMENT_ROOT']; // Genellikle /home/username/public_html veya benzeri
-$projectRootRelativeToDocumentRoot = ''; // Eğer siteniz ana dizinde değilse burayı ayarlayın, örn: /projem
+// $documentRoot = $_SERVER['DOCUMENT_ROOT']; // Genellikle /home/username/public_html veya benzeri
+// $projectRootRelativeToDocumentRoot = ''; // Eğer siteniz ana dizinde değilse burayı ayarlayın, örn: /projem
 
 // Taranacak ana klasör (JS tarafındaki FILE_BROWSER_BASE_PATH ile tutarlı olmalı ama bu sunucu tarafı yoludur)
 // Bu yolun, web sunucusunun erişimine açık ve güvenli olduğundan emin olun.
 // ASLA web kök dizininin tamamını veya hassas sistem dosyalarını ifşa ETMEYİN.
-$scanBaseDirectory = 'tools'; // Web kök dizininize göre 'tools' klasörü
+$scanBaseDirectory = 'tools'; // Taranacak klasörün adı (proje ana dizininde olduğu varsayılıyor)
 
-$baseDir = realpath($documentRoot . $projectRootRelativeToDocumentRoot . '/' . $scanBaseDirectory);
+// __DIR__ bu dosyanın (api/list_files.php) bulunduğu klasörün (api) tam sunucu yolunu verir.
+// '/../' ifadesi ile bir üst klasöre (proje ana dizinine) çıkarız.
+// Sonrasında $scanBaseDirectory (tools) ile birleştirerek tools klasörünün tam yolunu oluştururuz.
+$baseDir = realpath(__DIR__ . '/../' . $scanBaseDirectory);
 
 if (!$baseDir) {
     http_response_code(500);
