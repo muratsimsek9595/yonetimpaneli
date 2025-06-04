@@ -34,22 +34,70 @@ function ensureCustomCardStyles(araclarKartContainerElement) {
     styleSheet.id = 'custom-arac-karti-styles';
     styleSheet.innerHTML = `
         .arac-karti-container {
-            /* Gerekirse grid veya flex ayarları buraya gelebilir */
+            /* Grid ayarları burada kalabilir veya ihtiyaca göre düzenlenebilir */
         }
         .arac-karti-container .card {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            /* Varsayılan gradyan arka plan, resim olmadığında kullanılır */
             background: linear-gradient(135deg, #e8e6d8 0%, #f0eee6 50%, #e0ddd0 100%);
+            background-size: cover; /* Arka plan resminin kartı kaplaması için */
+            background-position: center; /* Resmin ortalanması için */
             border-radius: 32px;
             padding: 24px 20px;
             position: relative;
             overflow: hidden;
             margin-bottom: 25px;
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12); /* Biraz daha yumuşak gölge */
-            min-height: 190px; /* İçeriğe göre esneklik */
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+            min-height: 200px; /* İçerik ve resme göre ayarlanabilir */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            color: #4a5d3a; /* Ana metin rengi */
+            color: #4a5d3a;
+            transition: box-shadow 0.3s ease; /* Hover için yumuşak geçiş */
+        }
+        .arac-karti-container .card:hover {
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15); /* Hover'da gölgeyi artır */
+        }
+
+        /* Resim olduğunda yazının okunabilirliği için overlay */
+        .arac-karti-container .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.5) 100%); /* Okunabilirlik için hafif overlay */
+            opacity: 0; /* Başlangıçta gizli */
+            transition: opacity 0.3s ease;
+            z-index: 1; /* İçeriğin altında, resmin üstünde */
+            border-radius: 32px; /* Ana kartın border-radius'unu alır */
+        }
+        .arac-karti-container .card.has-background-image::before {
+            opacity: 1; /* Resim varsa overlay'i göster */
+        }
+        .arac-karti-container .card.has-background-image * {
+            position: relative; /* İçeriğin overlay üzerinde kalması için */
+            z-index: 2;
+            color: #ffffff; /* Resim varken metin rengi beyaz */
+        }
+         .arac-karti-container .card.has-background-image .tool-description {
+            color: #f0f0f0; /* Resim varken açıklama rengi biraz daha sönük beyaz */
+        }
+        .arac-karti-container .card.has-background-image .btn-open-tool {
+            background-color: rgba(255,255,255,0.2); /* Resim varken buton arka planı */
+            border: 1px solid rgba(255,255,255,0.7);
+            color: white;
+        }
+        .arac-karti-container .card.has-background-image .btn-open-tool:hover {
+            background-color: rgba(255,255,255,0.35);
+        }
+        .arac-karti-container .card.has-background-image .action-button {
+            background-color: rgba(0,0,0,0.3); /* Resim varken düzenle/sil butonları */
+            color: white;
+        }
+        .arac-karti-container .card.has-background-image .action-button:hover {
+            background-color: rgba(0,0,0,0.5);
+        }
+         .arac-karti-container .card.has-background-image .dot {
+            background-color: rgba(255,255,255,0.5); /* Resim varken noktaların rengi */
         }
 
         .arac-karti-container .card .action-buttons-wrapper {
@@ -57,12 +105,12 @@ function ensureCustomCardStyles(araclarKartContainerElement) {
             top: 20px;
             right: 20px;
             display: flex;
-            gap: 10px; /* Butonlar arası boşluk */
-            z-index: 10;
+            gap: 10px;
+            z-index: 10; /* Diğer stillerden daha üstte */
         }
 
         .arac-karti-container .card .action-button {
-            background-color: #6b7c5a; /* Örnekteki add-button rengi */
+            background-color: #6b7c5a;
             color: white;
             border-radius: 50%;
             width: 38px;
@@ -72,53 +120,56 @@ function ensureCustomCardStyles(araclarKartContainerElement) {
             justify-content: center;
             border: none;
             cursor: pointer;
-            font-size: 16px; /* İkon boyutu */
+            font-size: 16px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
             transition: transform 0.2s ease, background-color 0.2s ease;
         }
         .arac-karti-container .card .action-button:hover {
-            transform: scale(1.1); /* Biraz daha belirgin hover */
+            transform: scale(1.1);
         }
         .arac-karti-container .card .btn-edit-arac:hover { background-color: #5a6b49; }
-        .arac-karti-container .card .btn-delete-arac { background-color: #c2706e; } /* Sil butonu için farklı renk */
+        .arac-karti-container .card .btn-delete-arac { background-color: #c2706e; }
         .arac-karti-container .card .btn-delete-arac:hover { background-color: #b05f5d; }
 
         .arac-karti-container .card .card-content-wrapper {
-             /* action-buttons-wrapper'ın mutlak konumlandırılması nedeniyle gerekirse üstten padding eklenebilir, ancak genel padding yeterli olmalı */
+            /* İhtiyaç duyulursa ek stiller */
+            flex-grow: 1; /* İçeriğin dikeyde ortalanmasına yardımcı olur */
+            display: flex;
+            flex-direction: column;
         }
         
-        .arac-karti-container .card .tool-icon { /* Araç ikonu için */
-            font-size: 2em; /* Büyük ikon */
+        .arac-karti-container .card .tool-icon-text { /* Metin tabanlı ikon için (resim yoksa) */
+            font-size: 2em;
             margin-bottom: 12px;
-            color: #4a5d3a;
+            color: #4a5d3a; /* Stil .has-background-image altında ezilecek */
             line-height: 1;
         }
 
-        .arac-karti-container .card .tool-name { /* Araç adı (steps-label gibi) */
+        .arac-karti-container .card .tool-name {
             font-size: 20px;
             font-weight: 600;
-            color: #4a5d3a;
+            color: #4a5d3a; /* Stil .has-background-image altında ezilecek */
             margin-bottom: 10px;
             line-height: 1.3;
         }
 
-        .arac-karti-container .card .tool-description { /* Araç açıklaması */
+        .arac-karti-container .card .tool-description {
             font-size: 14px;
-            color: #5c6b51; /* Ana metinden biraz daha açık */
+            color: #5c6b51; /* Stil .has-background-image altında ezilecek */
             line-height: 1.6;
             margin-bottom: 18px;
-            flex-grow: 1; /* Açıklamanın kalan alanı doldurmasını sağlar */
+            flex-grow: 1;
         }
 
         .arac-karti-container .card .card-footer {
-            margin-top: auto; /* İçerik kısa olsa bile footer'ı aşağı iter */
+            margin-top: auto; /* Footer'ı aşağıya iter */
         }
 
-        .arac-karti-container .card .btn-open-tool { /* "Aracı Aç" butonu */
-            background-color: #6b7c5a; /* Yeşil tonu */
+        .arac-karti-container .card .btn-open-tool {
+            background-color: #6b7c5a;
             color: white;
             padding: 10px 20px;
-            border-radius: 20px; /* Daha yuvarlak */
+            border-radius: 20px;
             font-size: 14px;
             font-weight: 500;
             text-decoration: none;
@@ -138,11 +189,12 @@ function ensureCustomCardStyles(araclarKartContainerElement) {
             right: 22px;
             display: flex;
             gap: 7px;
+            z-index: 5; /* Diğer butonlardan geride olabilir */
         }
         .arac-karti-container .card .dot {
             width: 7px;
             height: 7px;
-            background-color: #a8b89a; /* Nokta rengi */
+            background-color: #a8b89a; /* Stil .has-background-image altında ezilecek */
             border-radius: 50%;
             opacity: 0.5;
         }
@@ -186,7 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileBrowserUpButton = document.getElementById('fileBrowserUpButton');
 
     let currentDirectory = ''; // Dosya tarayıcısının o an bulunduğu dizin
-    const FILE_BROWSER_BASE_PATH = 'tools/'; 
+    const FILE_BROWSER_ROOT_PATH = 'tools/'; // Ana tarama kök dizini
+    let fileBrowserActiveBasePath = 'images/'; // Varsayılan olarak images altındayız
+    const ALLOWED_IMAGE_EXTENSIONS = [/'.jpg$/i, /'.jpeg$/i, /'.png$/i, /'.gif$/i, /'.svg$/i, /'.webp$/i];
 
     // ÖZEL KART STİLLERİNİ EKLE
     if(araclarKartContainer) { // Sadece araçlar bölümü varsa stilleri yükle
@@ -198,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openFileBrowserModal = () => {
         selectedFilePathInput.value = ''; 
         fileBrowserSelectButton.disabled = true;
-        loadDirectoryContents(); 
+        loadDirectoryContents(fileBrowserActiveBasePath); // Başlangıçta images klasörünü yükle
         showModal('fileBrowserModal');
     };
 
@@ -206,40 +260,62 @@ document.addEventListener('DOMContentLoaded', () => {
         hideModal('fileBrowserModal');
     };
 
-    const loadDirectoryContents = async (path = '') => {
-        currentDirectory = path;
-        currentFilePathDisplay.textContent = FILE_BROWSER_BASE_PATH + (path ? path + '/' : '');
+    const loadDirectoryContents = async (relativePathFromTools = '') => {
+        // relativePathFromTools, FILE_BROWSER_ROOT_PATH ('tools/') altına eklenen yoldur.
+        currentDirectory = relativePathFromTools;
+        currentFilePathDisplay.textContent = FILE_BROWSER_ROOT_PATH + (currentDirectory ? currentDirectory + '/' : '');
         fileListContainer.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"><span class="sr-only">Yükleniyor...</span></div></div>'; 
-        fileBrowserUpButton.disabled = !path; 
+        
+        // Yukarı git butonu: Eğer images klasörünün kökündeysek (yani relativePathFromTools 'images' veya 'images/' ise) veya daha üstte isek (boş string)
+        // ya da tools/ içindeysek ama images/ içinde değilsek, butonu pasif yapmalıyız.
+        // Sadece images ve alt klasörlerinde gezinmeye izin veriyoruz.
+        const isInsideImagesFolder = currentDirectory.startsWith('images');
+        fileBrowserUpButton.disabled = !currentDirectory || currentDirectory === 'images' || currentDirectory === 'images/';
 
         try {
-            const response = await fetchWrapper(`${API_BASE_URL}/list_files.php?path=${encodeURIComponent(path)}`);
+            // API'ye gönderilen yol her zaman 'tools/' altından tam yol olmalı
+            const apiPath = currentDirectory; 
+            const response = await fetchWrapper(`${API_BASE_URL}/list_files.php?path=${encodeURIComponent(apiPath)}`);
             fileListContainer.innerHTML = ''; 
 
             if (response.success && response.data) {
-                if (response.data.length === 0) {
-                    fileListContainer.innerHTML = '<li class="list-group-item text-muted">Bu klasör boş.</li>';
+                const filteredData = response.data.filter(item => {
+                    if (item.type === 'directory') {
+                        // images klasörü veya altındaki klasörler gösterilebilir.
+                        // Kullanıcının images dışına çıkmasını engellemek için base path kontrolü önemli.
+                        return item.path.startsWith('images');
+                    }
+                    // Sadece izin verilen uzantılara sahip dosyaları göster
+                    return ALLOWED_IMAGE_EXTENSIONS.some(ext => ext.test(item.name));
+                });
+
+                if (filteredData.length === 0) {
+                    fileListContainer.innerHTML = '<li class="list-group-item text-muted">Bu klasörde uygun resim dosyası bulunmuyor veya klasör boş.</li>';
                 }
-                response.data.forEach(item => {
+                filteredData.forEach(item => {
                     const listItem = document.createElement('li');
                     listItem.className = 'list-group-item list-group-item-action';
                     listItem.style.cursor = 'pointer';
                     listItem.textContent = item.name;
                     listItem.dataset.type = item.type;
+                    // item.path API'den 'tools/images/foo.jpg' gibi gelebilir veya sadece 'images/foo.jpg' (apiPath'e bağlı)
+                    // Biz API'ye 'images' veya 'images/altklasor' gönderiyoruz, dönen path de buna göre olmalı.
+                    // Gelen item.path'in tools/ içermediğini varsayarak devam edelim.
                     listItem.dataset.path = item.path; 
 
                     if (item.type === 'directory') {
                         listItem.innerHTML = `📁 ${item.name}`;
-                        listItem.addEventListener('click', () => loadDirectoryContents(item.path));
+                        // Klasöre tıklanınca yeni yolu yükle (tools/ altındaki göreceli yol)
+                        listItem.addEventListener('click', () => loadDirectoryContents(item.path)); 
                     } else {
-                        listItem.innerHTML = `📄 ${item.name}`;
+                        listItem.innerHTML = `🖼️ ${item.name}`;
                         listItem.addEventListener('click', () => {
                             const currentlyActive = fileListContainer.querySelector('.active');
                             if (currentlyActive) {
                                 currentlyActive.classList.remove('active');
                             }
                             listItem.classList.add('active');
-                            selectedFilePathInput.value = FILE_BROWSER_BASE_PATH + item.path;
+                            selectedFilePathInput.value = FILE_BROWSER_ROOT_PATH + item.path;
                             fileBrowserSelectButton.disabled = false;
                         });
                     }
@@ -283,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             aracAdiInput.value = arac.ad || '';
             aracYoluInput.value = arac.yol || '';
             aracAciklamaInput.value = arac.aciklama || '';
-            aracIconInput.value = arac.icon || '';
+            aracIconInput.value = arac.resimyolu || '';
             aracKaydetButton.textContent = 'Güncelle';
         } else {
             aracFormModalBaslik.textContent = 'Yeni Araç Ekle';
@@ -301,9 +377,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Araçları Yükleme ve Listeleme ---
     const renderAracKarti = (arac) => {
         const kart = document.createElement('div');
-        // Ana sınıfı .card olarak ayarlıyoruz, stiller enjekte edilen CSS'den gelecek.
         kart.className = 'card'; 
         kart.dataset.aracId = arac.id;
+
+        // Arka plan resmi varsa ayarla ve özel sınıf ekle
+        if (arac.resimyolu && arac.resimyolu.trim() !== '') {
+            kart.style.backgroundImage = `url('../${arac.resimyolu}')`; // resimyolu 'tools/images/foo.png' gibi olmalı, bu yüzden ../ ekliyoruz
+            kart.classList.add('has-background-image');
+        } else {
+            // Resim yoksa, varsayılan gradyan CSS üzerinden zaten uygulanıyor.
+            // Eğer metin tabanlı bir ikon (eski sistemden kalan) varsa onu gösterelim
+            // Bu kısım şimdilik yoruma alınıyor, çünkü API'den artık icon değil resimyolu geliyor.
+            // if (arac.eski_icon_verisi) { 
+            //    defaultIconHTML = `<div class="tool-icon-text">${arac.eski_icon_verisi}</div>`; 
+            // }
+        }
+
+        let defaultIconHTML = '<div class="tool-icon-text" style="height: 2em;"></div>'; // Resim yoksa ve metin ikonu da yoksa boşluk bırakır
+        // Eğer API'den gelen `arac` nesnesinde `icon` diye bir alan varsa ve bu resim yolu değilse (örn. emoji ise) onu kullanabiliriz.
+        // Şimdilik API sadece `resimyolu` döndürecek şekilde ayarlandı.
+        // Eğer resim varsa, bu tool-icon-text div'i görünmeyecek (CSS ile .has-background-image altında gizlenebilir ya da hiç eklenmeyebilir)
+        // Ancak, resim yoksa ve metin bazlı ikon da yoksa bir boşluk bırakmak için bu div'i kullanabiliriz.
+        // `arac.icon` artık `arac.resimyolu` olduğu için, metin ikonu için farklı bir alan adı gerekebilir ya da bu mantık kaldırılabilir.
+        // Şimdiki tasarımda metin ikonu, resim olmadığında CSS ile belirlenen renkte gösterilecek.
 
         kart.innerHTML = `
             <div class="action-buttons-wrapper">
@@ -312,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             <div class="card-content-wrapper">
-                ${arac.icon ? `<div class="tool-icon">${arac.icon}</div>` : '<div class="tool-icon" style="height: 1em;"></div>'}
+                ${!kart.classList.contains('has-background-image') ? defaultIconHTML : ''}
                 <div class="tool-name">${arac.ad}</div>
                 <p class="tool-description">${arac.aciklama || 'Açıklama bulunmuyor.'}</p>
             </div>
@@ -328,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Düzenle butonu
         const editButton = kart.querySelector('.btn-edit-arac');
         if (editButton) {
             editButton.addEventListener('click', () => {
@@ -336,7 +431,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Sil butonu
         const deleteButton = kart.querySelector('.btn-delete-arac');
         if (deleteButton) {
             deleteButton.addEventListener('click', async () => {
@@ -344,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         await deleteAracById(arac.id);
                         showToast(`'${arac.ad}' başarıyla silindi.`, 'success');
-                        loadAndDisplayAraclar(); // Listeyi yenile
+                        loadAndDisplayAraclar();
                     } catch (error) {
                         console.error('Araç silinirken hata:', error);
                         showToast(`Araç silinirken bir hata oluştu: ${error.message}`, 'error');
@@ -398,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ad: aracAdiInput.value.trim(),
                 yol: aracYoluInput.value.trim(),
                 aciklama: aracAciklamaInput.value.trim(),
-                icon: aracIconInput.value.trim()
+                resimyolu: aracIconInput.value.trim()
             };
 
             if (!aracData.ad || !aracData.yol) {

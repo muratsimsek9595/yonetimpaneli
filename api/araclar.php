@@ -66,18 +66,12 @@ try {
                 exit();
             }
 
-            $stmt = $conn->prepare("INSERT INTO araclar (ad, yol, aciklama, icon, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())");
-            $stmt->bind_param("ssss", 
-                $data['ad'], 
-                $data['yol'], 
-                $data['aciklama'], // mysqli için ?? null operatörü doğrudan kullanılamaz, önceden ayarlanmalı
-                $data['icon']
-            );
+            $stmt = $conn->prepare("INSERT INTO araclar (ad, yol, aciklama, resimyolu, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())");
             // ?? null yerine değişken ataması
             $aciklama = $data['aciklama'] ?? null;
-            $icon = $data['icon'] ?? null;
+            $resimyolu_data = $data['resimyolu'] ?? null; // 'icon' yerine 'resimyolu'
             // bind_param için değişkenleri yeniden atayalım
-            $stmt->bind_param("ssss", $data['ad'], $data['yol'], $aciklama, $icon);
+            $stmt->bind_param("ssss", $data['ad'], $data['yol'], $aciklama, $resimyolu_data);
 
             if ($stmt->execute()) {
                 $lastId = $conn->insert_id;
@@ -108,10 +102,10 @@ try {
             }
             
             $aciklama = $data['aciklama'] ?? null;
-            $icon = $data['icon'] ?? null;
+            $resimyolu_data = $data['resimyolu'] ?? null; // 'icon' yerine 'resimyolu'
 
-            $stmt = $conn->prepare("UPDATE araclar SET ad = ?, yol = ?, aciklama = ?, icon = ?, updated_at = NOW() WHERE id = ?");
-            $stmt->bind_param("ssssi", $data['ad'], $data['yol'], $aciklama, $icon, $id_url);
+            $stmt = $conn->prepare("UPDATE araclar SET ad = ?, yol = ?, aciklama = ?, resimyolu = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->bind_param("ssssi", $data['ad'], $data['yol'], $aciklama, $resimyolu_data, $id_url);
 
             if ($stmt->execute()) {
                 if ($stmt->affected_rows > 0) {
