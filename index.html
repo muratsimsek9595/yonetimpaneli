@@ -866,8 +866,12 @@
                             <textarea id="aracAciklamaInput" name="aciklama" rows="3" placeholder="Bu araç ne işe yarar?"></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="aracIconInput">İkon (Emoji veya FontAwesome):</label>
-                            <input type="text" id="aracIconInput" name="icon" placeholder="Örn: 🔧 veya fas fa-calculator">
+                            <label for="aracIconInput">Arka Plan Resmi:</label>
+                            <div style="display: flex; align-items: center;">
+                                <input type="text" id="aracIconInput" name="resimyolu" class="form-control" placeholder="tools/images/resim.jpg" readonly>
+                                <button type="button" id="aracResimGozatButton" class="btn btn-outline-secondary btn-sm" style="margin-left: 8px; white-space: nowrap;">Gözat...</button>
+                            </div>
+                            <small class="form-text text-muted">Araç kartı için arka plan resmi seçin (tools/images/ altında olmalıdır).</small>
                         </div>
                         <div class="modal-footer" style="text-align: right;">
                             <button type="submit" id="aracKaydetButton" class="btn btn-primary">Kaydet</button>
