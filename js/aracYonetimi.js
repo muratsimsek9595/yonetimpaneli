@@ -45,8 +45,102 @@ document.addEventListener('DOMContentLoaded', () => {
     const aracFormIptalButton = document.getElementById('aracFormIptalButton');
     const modalKapatXButton = aracFormModal ? aracFormModal.querySelector('.modal-kapat-buton') : null;
     
-    // Modal kapatma butonları (ui.js'deki genel event listener halletmiyorsa diye)
-    // const modalKapatButonlari = aracFormModal.querySelectorAll('.modal-kapat-buton');
+    // Dosya Tarayıcı Modal Elementleri
+    const aracYoluGozatButton = document.getElementById('aracYoluGozatButton');
+    const fileBrowserModal = document.getElementById('fileBrowserModal');
+    const fileBrowserModalCloseX = document.getElementById('fileBrowserModalCloseX');
+    const fileBrowserModalKapatButton = document.getElementById('fileBrowserModalKapatButton');
+    const fileBrowserSelectButton = document.getElementById('fileBrowserSelectButton');
+    const fileListContainer = document.getElementById('fileListContainer');
+    const currentFilePathDisplay = document.getElementById('currentFilePathDisplay');
+    const selectedFilePathInput = document.getElementById('selectedFilePathInput');
+    const fileBrowserUpButton = document.getElementById('fileBrowserUpButton');
+
+    let currentDirectory = ''; // Dosya tarayıcısının o an bulunduğu dizin
+    const FILE_BROWSER_BASE_PATH = 'tools/'; // Sunucuda taranacak ana klasör. API script'i de bunu dikkate almalı.
+
+    // --- Dosya Tarayıcı İşlevleri ---
+    const openFileBrowserModal = () => {
+        selectedFilePathInput.value = ''; // Her açılışta seçili dosya alanını temizle
+        fileBrowserSelectButton.disabled = true;
+        loadDirectoryContents(); // Kök dizini yükle
+        showModal('fileBrowserModal');
+    };
+
+    const closeFileBrowserModal = () => {
+        hideModal('fileBrowserModal');
+    };
+
+    const loadDirectoryContents = async (path = '') => {
+        currentDirectory = path;
+        currentFilePathDisplay.textContent = FILE_BROWSER_BASE_PATH + (path ? path + '/' : '');
+        fileListContainer.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"><span class="sr-only">Yükleniyor...</span></div></div>'; // Yükleniyor göstergesi
+        fileBrowserUpButton.disabled = !path; // Kök dizindeyken yukarı gitme butonu pasif
+
+        try {
+            // API_BASE_URL burada tanımlı olmalı veya doğrudan URL yazılmalı
+            const response = await fetchWrapper(`${API_BASE_URL}/list_files.php?path=${encodeURIComponent(path)}`);
+            fileListContainer.innerHTML = ''; // Temizle
+
+            if (response.success && response.data) {
+                if (response.data.length === 0) {
+                    fileListContainer.innerHTML = '<li class="list-group-item text-muted">Bu klasör boş.</li>';
+                }
+                response.data.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item list-group-item-action';
+                    listItem.style.cursor = 'pointer';
+                    listItem.textContent = item.name;
+                    listItem.dataset.type = item.type;
+                    listItem.dataset.path = item.path; // Tam yolu (base path hariç)
+
+                    if (item.type === 'directory') {
+                        listItem.innerHTML = `📁 ${item.name}`;
+                        listItem.addEventListener('click', () => loadDirectoryContents(item.path));
+                    } else {
+                        listItem.innerHTML = `📄 ${item.name}`;
+                        listItem.addEventListener('click', () => {
+                            // Önceki seçili elemandan active sınıfını kaldır
+                            const currentlyActive = fileListContainer.querySelector('.active');
+                            if (currentlyActive) {
+                                currentlyActive.classList.remove('active');
+                            }
+                            // Tıklanan elemana active sınıfını ekle
+                            listItem.classList.add('active');
+                            selectedFilePathInput.value = FILE_BROWSER_BASE_PATH + item.path;
+                            fileBrowserSelectButton.disabled = false;
+                        });
+                    }
+                    fileListContainer.appendChild(listItem);
+                });
+            } else {
+                fileListContainer.innerHTML = `<li class="list-group-item list-group-item-danger">Dosyalar yüklenemedi: ${response.message || 'Bilinmeyen hata'}</li>`;
+            }
+        } catch (error) {
+            console.error("Dosya listesi yüklenirken hata:", error);
+            fileListContainer.innerHTML = `<li class="list-group-item list-group-item-danger">Dosyalar yüklenirken bir hata oluştu: ${error.message}</li>`;
+            showToast('Dosya listesi yüklenirken bir hata oluştu.', 'error');
+        }
+    };
+
+    if (fileBrowserUpButton) {
+        fileBrowserUpButton.addEventListener('click', () => {
+            if (currentDirectory) {
+                const parts = currentDirectory.split('/').filter(p => p);
+                parts.pop(); // Son kısmı çıkar
+                loadDirectoryContents(parts.join('/'));
+            }
+        });
+    }
+
+    if (fileBrowserSelectButton) {
+        fileBrowserSelectButton.addEventListener('click', () => {
+            if (selectedFilePathInput.value) {
+                aracYoluInput.value = selectedFilePathInput.value;
+                closeFileBrowserModal();
+            }
+        });
+    }
 
     // --- Modal İşlevleri ---
     const openAracModal = (arac = null) => {
@@ -194,6 +288,19 @@ document.addEventListener('DOMContentLoaded', () => {
             yeniAracEkleButton.addEventListener('click', () => openAracModal());
         }
 
+        // "Araç Yolu" alanı yanındaki "Gözat..." butonu
+        if (aracYoluGozatButton) {
+            aracYoluGozatButton.addEventListener('click', () => openFileBrowserModal());
+        }
+
+        // Dosya Tarayıcı Modal kapatma butonları
+        if (fileBrowserModalCloseX) {
+            fileBrowserModalCloseX.addEventListener('click', () => closeFileBrowserModal());
+        }
+        if (fileBrowserModalKapatButton) {
+            fileBrowserModalKapatButton.addEventListener('click', () => closeFileBrowserModal());
+        }
+
         // Modal kapatma işlevleri için event listener'lar
         if (aracFormIptalButton) {
             aracFormIptalButton.addEventListener('click', () => closeAracModal());
@@ -202,12 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modalKapatXButton) {
             modalKapatXButton.addEventListener('click', () => closeAracModal());
         }
-
-        // ui.js'deki genel modal kapatma dinleyicileri yeterli olabilir.
-        // Değilse, burada özel kapatma butonlarına dinleyici eklenebilir:
-        // modalKapatButonlari.forEach(button => {
-        //    button.addEventListener('click', () => closeAracModal());
-        // });
 
         // Araçlar sekmesi aktif olduğunda araçları yükle
         // Bu, script.js'deki navigasyon mantığına entegre edilebilir

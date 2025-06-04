@@ -854,8 +854,12 @@
                             <input type="text" id="aracAdiInput" name="ad" required>
                         </div>
                         <div class="form-group">
-                            <label for="aracYoluInput">Araç Yolu/URL'si (*):</label>
-                            <input type="text" id="aracYoluInput" name="yol" required placeholder="Örn: tools/hesap.html veya https://site.com">
+                            <label for="aracYoluInput">Araç Yolu/URL\'si (*):</label>
+                            <div style="display: flex; align-items: center;">
+                                <input type="text" class="form-control" id="aracYoluInput" name="yol" required placeholder="Örn: tools/hesap.html veya https://...">
+                                <button type="button" id="aracYoluGozatButton" class="btn btn-outline-secondary btn-sm" style="margin-left: 8px; white-space: nowrap;">Gözat...</button>
+                            </div>
+                            <small class="form-text text-muted">Örn: tools/hesap.html veya https://site.com/arac</small>
                         </div>
                         <div class="form-group">
                             <label for="aracAciklamaInput">Açıklama:</label>
@@ -867,13 +871,49 @@
                         </div>
                         <div class="modal-footer" style="text-align: right;">
                             <button type="submit" id="aracKaydetButton" class="btn btn-primary">Kaydet</button>
-                            <button type="button" class="btn-secondary modal-kapat-buton" data-modal-id="aracFormModal">İptal</button>
+                            <button type="button" id="aracFormIptalButton" class="btn-secondary">İptal</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Dosya Tarayıcı Modal Başlangıcı -->
+    <div id="fileBrowserModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="fileBrowserModalLabel" aria-hidden="true" style="display:none;">
+        <div class="modal-dialog modal-lg" role="document"> <!-- modal-lg daha geniş bir pencere için -->
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fileBrowserModalLabel">Sunucudan Dosya Seç</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Kapat" id="fileBrowserModalCloseX">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Geçerli Klasör:</strong> <code id="currentFilePathDisplay">/</code>
+                        </div>
+                        <button type="button" id="fileBrowserUpButton" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-up"></i> Üst Klasör
+                        </button>
+                    </div>
+                    <div id="fileListContainer" style="list-style-type: none; padding: 0; height: 350px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 10px;">
+                        <!-- Dosyalar ve klasörler buraya JS ile eklenecek -->
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <label for="selectedFilePathInput">Seçilen Dosya Yolu:</label>
+                        <input type="text" id="selectedFilePathInput" class="form-control" readonly placeholder="Henüz dosya seçilmedi...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="fileBrowserModalKapatButton">Vazgeç</button>
+                    <button type="button" id="fileBrowserSelectButton" class="btn btn-primary" disabled>Bu Dosyayı Seç</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Dosya Tarayıcı Modal Sonu -->
 
 </body>
 </html> 
