@@ -169,29 +169,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Araçları Yükleme ve Listeleme ---
     const renderAracKarti = (arac) => {
         const kart = document.createElement('div');
-        kart.className = 'arac-karti card';
-        kart.style.padding = '15px';
-        kart.style.borderRadius = '8px';
+        kart.className = 'arac-karti card shadow-sm'; // Bootstrap card ve hafif gölge
+        kart.style.borderRadius = '12px'; // Daha yuvarlak köşeler
+        kart.style.marginBottom = '20px'; // Kartlar arası boşluk
+        kart.style.backgroundColor = '#f8f9fa'; // Açık gri bir arka plan, görsele benzer
+        kart.style.overflow = 'hidden'; // İçerik taşmasını engelle
         kart.dataset.aracId = arac.id;
 
-        // Kart içeriği (basit haliyle)
         kart.innerHTML = `
-            <div class="arac-karti-baslik" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin: 0;">
-                    ${arac.icon ? `<span style="margin-right: 8px;">${arac.icon}</span>` : ''}
-                    ${arac.ad}
-                </h3>
-                <div class="arac-karti-actions">
-                    <button class="btn-icon btn-edit-arac" title="Düzenle" style="background: none; border: none; cursor: pointer; font-size: 1.2em; margin-left: 5px;">✏️</button>
-                    <button class="btn-icon btn-delete-arac" title="Sil" style="background: none; border: none; cursor: pointer; font-size: 1.2em; margin-left: 5px;">🗑️</button>
+            <div class="card-body" style="padding: 20px;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="arac-baslik d-flex align-items-center">
+                        ${arac.icon ? `<span class="arac-icon" style="font-size: 1.8em; margin-right: 12px; color: #007bff;">${arac.icon}</span>` : '<span class="arac-icon-placeholder" style="width: 2em; height: 1.8em; margin-right: 12px; display: inline-block;"></span>'}
+                        <h5 class="card-title mb-0" style="font-size: 1.25rem; font-weight: 500;">${arac.ad}</h5>
+                    </div>
+                    <div class="arac-karti-actions">
+                        <button class="btn btn-sm btn-outline-primary btn-edit-arac" title="Düzenle" style="margin-left: 5px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">✏️</button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete-arac" title="Sil" style="margin-left: 5px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">🗑️</button>
+                    </div>
                 </div>
+                <p class="card-text arac-karti-aciklama" style="font-size: 0.95em; color: #6c757d; min-height: 40px; margin-bottom: 20px;">
+                    ${arac.aciklama || 'Açıklama bulunmuyor.'}
+                </p>
+                <a href="${arac.yol}" target="_blank" class="btn btn-primary" style="text-decoration: none; padding: 10px 15px; border-radius: 8px; font-size: 0.9em; display: inline-block;">
+                    <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> Aracı Aç
+                </a>
             </div>
-            <p class="arac-karti-aciklama" style="font-size: 0.9em; margin-bottom: 15px; min-height: 40px; color: #555;">
-                ${arac.aciklama || 'Açıklama bulunmuyor.'}
-            </p>
-            <a href="${arac.yol}" target="_blank" class="btn btn-secondary" style="text-decoration: none; padding: 8px 12px; border-radius: 5px; display: inline-block;">
-                Aracı Aç
-            </a>
         `;
 
         // Düzenle butonu
