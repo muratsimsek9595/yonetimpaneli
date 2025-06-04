@@ -8,6 +8,11 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 // Veritabanı bağlantısını dahil et (kendi bağlantı dosyanızın yolunu belirtin)
 require_once '../config/db.php'; // Örnek yol, projenize göre ayarlayın
 
+// ---- REQUIRE_ONCE TESTİ ----
+echo json_encode(["success" => true, "message" => "require_once '../config/db.php' satırı çalıştı, dosya muhtemelen bulundu ve ölümcül bir hata vermedi."]);
+exit(); // Testten sonra bu satırı kaldırın
+// ---- TEST SONU ----
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 // OPTIONS isteğini işle (CORS preflight için)
