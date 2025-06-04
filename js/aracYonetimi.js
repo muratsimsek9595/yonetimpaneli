@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Arka plan resmi varsa ayarla ve özel sınıf ekle
         if (arac.resimyolu && arac.resimyolu.trim() !== '') {
-            kart.style.backgroundImage = `url('../${arac.resimyolu}')`; // resimyolu 'tools/images/foo.png' gibi olmalı, bu yüzden ../ ekliyoruz
+            kart.style.backgroundImage = `url('${arac.resimyolu}')`; 
             kart.classList.add('has-background-image');
         } else {
             // Resim yoksa, varsayılan gradyan CSS üzerinden zaten uygulanıyor.
