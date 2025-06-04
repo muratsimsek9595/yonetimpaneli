@@ -237,6 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedFilePathInput = document.getElementById('selectedFilePathInput');
     const fileBrowserUpButton = document.getElementById('fileBrowserUpButton');
 
+    // Yeni: Resim yolu için gözat butonu
+    const aracResimGozatButton = document.getElementById('aracResimGozatButton');
+
     let currentDirectory = ''; // Dosya tarayıcısının o an bulunduğu dizin
     const FILE_BROWSER_ROOT_PATH = 'tools/'; // Ana tarama kök dizini
     let fileBrowserActiveBasePath = 'images/'; // Varsayılan olarak images altındayız
@@ -249,48 +252,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Dosya Tarayıcı İşlevleri ---
-    const openFileBrowserModal = () => {
+    const openFileBrowserModal = (targetInputId) => {
         selectedFilePathInput.value = ''; 
         fileBrowserSelectButton.disabled = true;
-        loadDirectoryContents(fileBrowserActiveBasePath); // Başlangıçta images klasörünü yükle
+        // Hedef input'a göre başlangıç klasörünü ve filtreleri ayarla
+        if (targetInputId === 'aracIconInput') { // aracIconInput artık resim yolu için
+            fileBrowserActiveBasePath = 'images/';
+            // Resim filtreleri zaten loadDirectoryContents içinde uygulanıyor.
+        } else if (targetInputId === 'aracYoluInput') {
+            fileBrowserActiveBasePath = ''; // tools/ klasörünün kökünü göster
+             // HTML/JS dosyalarını filtrelemek için bir extension listesi eklenebilir
+        }
+        loadDirectoryContents(fileBrowserActiveBasePath, targetInputId);
         showModal('fileBrowserModal');
+        // Dosya tarayıcısının hangi input için açıldığını kaydet
+        fileBrowserModal.dataset.targetInput = targetInputId;
     };
 
     const closeFileBrowserModal = () => {
         hideModal('fileBrowserModal');
     };
 
-    const loadDirectoryContents = async (relativePathFromTools = '') => {
+    const loadDirectoryContents = async (relativePathFromTools = '', targetInputId) => {
         // relativePathFromTools, FILE_BROWSER_ROOT_PATH ('tools/') altına eklenen yoldur.
         currentDirectory = relativePathFromTools;
         currentFilePathDisplay.textContent = FILE_BROWSER_ROOT_PATH + (currentDirectory ? currentDirectory + '/' : '');
         fileListContainer.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"><span class="sr-only">Yükleniyor...</span></div></div>'; 
         
-        // Yukarı git butonu: Eğer images klasörünün kökündeysek (yani relativePathFromTools 'images' veya 'images/' ise) veya daha üstte isek (boş string)
-        // ya da tools/ içindeysek ama images/ içinde değilsek, butonu pasif yapmalıyız.
-        // Sadece images ve alt klasörlerinde gezinmeye izin veriyoruz.
-        const isInsideImagesFolder = currentDirectory.startsWith('images');
-        fileBrowserUpButton.disabled = !currentDirectory || currentDirectory === 'images' || currentDirectory === 'images/';
+        const isRootOfTools = !relativePathFromTools;
+        const isRootOfImages = relativePathFromTools === 'images' || relativePathFromTools === 'images/';
+
+        if (targetInputId === 'aracIconInput') { // Resim yolu için açıldıysa
+            fileBrowserUpButton.disabled = isRootOfImages;
+        } else if (targetInputId === 'aracYoluInput') { // Araç yolu/URL için açıldıysa
+            fileBrowserUpButton.disabled = isRootOfTools;
+        }
 
         try {
-            // API'ye gönderilen yol her zaman 'tools/' altından tam yol olmalı
             const apiPath = currentDirectory; 
             const response = await fetchWrapper(`${API_BASE_URL}/list_files.php?path=${encodeURIComponent(apiPath)}`);
             fileListContainer.innerHTML = ''; 
 
             if (response.success && response.data) {
-                const filteredData = response.data.filter(item => {
-                    if (item.type === 'directory') {
-                        // images klasörü veya altındaki klasörler gösterilebilir.
-                        // Kullanıcının images dışına çıkmasını engellemek için base path kontrolü önemli.
-                        return item.path.startsWith('images');
-                    }
-                    // Sadece izin verilen uzantılara sahip dosyaları göster
-                    return ALLOWED_IMAGE_EXTENSIONS.some(ext => ext.test(item.name));
-                });
+                let filteredData = response.data;
+                if (targetInputId === 'aracIconInput') {
+                    filteredData = response.data.filter(item => {
+                        if (item.type === 'directory') {
+                            return item.path.startsWith('images');
+                        }
+                        return ALLOWED_IMAGE_EXTENSIONS.some(ext => ext.test(item.name));
+                    });
+                } else if (targetInputId === 'aracYoluInput') {
+                     // Araç yolu için filtreleme (örneğin sadece .html, .php veya klasörler)
+                     // Şimdilik tüm dosya ve klasörleri gösteriyor, gerekirse filtrelenebilir.
+                }
 
                 if (filteredData.length === 0) {
-                    fileListContainer.innerHTML = '<li class="list-group-item text-muted">Bu klasörde uygun resim dosyası bulunmuyor veya klasör boş.</li>';
+                    let message = 'Bu klasör boş.';
+                    if (targetInputId === 'aracIconInput') message = 'Bu klasörde uygun resim dosyası bulunmuyor.';
+                    else if (targetInputId === 'aracYoluInput') message = 'Bu klasörde dosya bulunmuyor.';
+                    fileListContainer.innerHTML = `<li class="list-group-item text-muted">${message}</li>`;
                 }
                 filteredData.forEach(item => {
                     const listItem = document.createElement('li');
@@ -298,17 +319,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     listItem.style.cursor = 'pointer';
                     listItem.textContent = item.name;
                     listItem.dataset.type = item.type;
-                    // item.path API'den 'tools/images/foo.jpg' gibi gelebilir veya sadece 'images/foo.jpg' (apiPath'e bağlı)
-                    // Biz API'ye 'images' veya 'images/altklasor' gönderiyoruz, dönen path de buna göre olmalı.
-                    // Gelen item.path'in tools/ içermediğini varsayarak devam edelim.
                     listItem.dataset.path = item.path; 
 
                     if (item.type === 'directory') {
                         listItem.innerHTML = `📁 ${item.name}`;
-                        // Klasöre tıklanınca yeni yolu yükle (tools/ altındaki göreceli yol)
-                        listItem.addEventListener('click', () => loadDirectoryContents(item.path)); 
+                        listItem.addEventListener('click', () => loadDirectoryContents(item.path, targetInputId)); 
                     } else {
-                        listItem.innerHTML = `🖼️ ${item.name}`;
+                        // İkonu dosya tipine göre ayarla (resim veya genel dosya)
+                        let fileIcon = '📄';
+                        if (targetInputId === 'aracIconInput' && ALLOWED_IMAGE_EXTENSIONS.some(ext => ext.test(item.name))) {
+                            fileIcon = '🖼️';
+                        }
+                        listItem.innerHTML = `${fileIcon} ${item.name}`;
                         listItem.addEventListener('click', () => {
                             const currentlyActive = fileListContainer.querySelector('.active');
                             if (currentlyActive) {
@@ -344,7 +366,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fileBrowserSelectButton) {
         fileBrowserSelectButton.addEventListener('click', () => {
             if (selectedFilePathInput.value) {
-                aracYoluInput.value = selectedFilePathInput.value;
+                // Hangi input için dosya seçildiğini belirle
+                const targetInputId = fileBrowserModal.dataset.targetInput;
+                const targetInputElement = document.getElementById(targetInputId);
+                if (targetInputElement) {
+                    targetInputElement.value = selectedFilePathInput.value;
+                }
                 closeFileBrowserModal();
             }
         });
@@ -532,8 +559,13 @@ document.addEventListener('DOMContentLoaded', () => {
             yeniAracEkleButton.addEventListener('click', () => openAracModal());
         }
 
+        // "Araç Yolu" alanı yanındaki "Gözat..." butonu
         if (aracYoluGozatButton) {
-            aracYoluGozatButton.addEventListener('click', () => openFileBrowserModal());
+            aracYoluGozatButton.addEventListener('click', () => openFileBrowserModal('aracYoluInput'));
+        }
+        // Yeni: "Arka Plan Resmi" alanı yanındaki "Gözat..." butonu
+        if (aracResimGozatButton) {
+            aracResimGozatButton.addEventListener('click', () => openFileBrowserModal('aracIconInput'));
         }
 
         if (fileBrowserModalCloseX) {

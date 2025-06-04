@@ -145,9 +145,9 @@ Kullanıcı tanımlı araçların (örneğin hesaplama araçları, faydalı link
 |---------------|---------------|------------------------------------------------------------------------|
 | `id`          | INT           | Primary Key, AUTO_INCREMENT                                            |
 | `ad`          | VARCHAR(255)  | NOT NULL, Aracın kullanıcı dostu adı                                   |
-| `yol`         | VARCHAR(1024) | NOT NULL, Araca ait dosya yolu veya URL'i                              |
+| `yol`         | VARCHAR(1024) | NOT NULL, Araca ait dosya yolu veya URL\'i                              |
 | `aciklama`    | TEXT          | NULL, Araç hakkında kısa açıklama                                      |
-| `icon`        | VARCHAR(50)   | NULL, Araç kartında gösterilecek ikon (örn: 'fas fa-calculator', '🔧') |
+| `resimyolu`   | VARCHAR(1024) | NULL, Araç kartının arka planında gösterilecek resmin yolu (örn: tools/images/resim.jpg) |
 | `created_at`  | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP                                              |
 | `updated_at`  | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP                  |
 
