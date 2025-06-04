@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const aracKaydetButton = document.getElementById('aracKaydetButton');
     const araclarKartContainer = document.getElementById('araclarKartContainer');
     const aracYokMesaji = document.getElementById('aracYokMesaji');
+    const aracFormIptalButton = document.getElementById('aracFormIptalButton');
+    const modalKapatXButton = aracFormModal ? aracFormModal.querySelector('.modal-kapat-buton') : null;
     
     // Modal kapatma butonları (ui.js'deki genel event listener halletmiyorsa diye)
     // const modalKapatButonlari = aracFormModal.querySelectorAll('.modal-kapat-buton');
@@ -190,6 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (yeniAracEkleButton) {
             yeniAracEkleButton.addEventListener('click', () => openAracModal());
+        }
+
+        // Modal kapatma işlevleri için event listener'lar
+        if (aracFormIptalButton) {
+            aracFormIptalButton.addEventListener('click', () => closeAracModal());
+        }
+
+        if (modalKapatXButton) {
+            modalKapatXButton.addEventListener('click', () => closeAracModal());
         }
 
         // ui.js'deki genel modal kapatma dinleyicileri yeterli olabilir.
