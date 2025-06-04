@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fileBrowserSelectButton.disabled = true;
         // Hedef input'a göre başlangıç klasörünü ve filtreleri ayarla
         if (targetInputId === 'aracIconInput') { // aracIconInput artık resim yolu için
-            fileBrowserActiveBasePath = 'images/';
+            fileBrowserActiveBasePath = 'images'; // DÜZELTİLDİ: 'images/' değil, 'images'
             // Resim filtreleri zaten loadDirectoryContents içinde uygulanıyor.
         } else if (targetInputId === 'aracYoluInput') {
             fileBrowserActiveBasePath = ''; // tools/ klasörünün kökünü göster
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadDirectoryContents = async (relativePathFromTools = '', targetInputId) => {
         // relativePathFromTools, FILE_BROWSER_ROOT_PATH ('tools/') altına eklenen yoldur.
         currentDirectory = relativePathFromTools;
-        currentFilePathDisplay.textContent = FILE_BROWSER_ROOT_PATH + (currentDirectory ? currentDirectory + '/' : '');
+        currentFilePathDisplay.textContent = FILE_BROWSER_ROOT_PATH + (currentDirectory ? currentDirectory : ''); // DÜZELTİLDİ: Sonuna '/' eklenmiyor
         fileListContainer.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"><span class="sr-only">Yükleniyor...</span></div></div>'; 
         
         const isRootOfTools = !relativePathFromTools;
@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const apiPath = currentDirectory; 
-            const response = await fetchWrapper(`${API_BASE_URL}/list_files.php?path=${encodeURIComponent(apiPath)}`);
+            const response = await fetchWrapper(`${API_BASE_URL}/list_files.php?path=${encodeURIComponent(apiPath)}`); // apiPath zaten doğru, fazladan '/' yok
             fileListContainer.innerHTML = ''; 
 
             if (response.success && response.data) {
