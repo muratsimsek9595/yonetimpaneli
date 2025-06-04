@@ -1,8 +1,4 @@
 <?php
-// BU SATIRLARI EN BAŞA EKLEYİN
-echo json_encode(["success" => true, "message" => "api/araclar.php TEST OK"]);
-exit();
-// ---
 
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *"); // Geliştirme için, canlıda kısıtlayın
