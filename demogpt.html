@@ -2,90 +2,46 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Tomris Asistan - Teklif Sistemi</title>
-  <style>
-    body { font-family: sans-serif; margin: 30px; }
-    input, button { font-size: 16px; padding: 8px; }
-    pre { background: #f5f5f5; padding: 10px; border-radius: 6px; white-space: pre-wrap; }
-    #apiBox ul { padding-left: 20px; }
-  </style>
+  <title>Tomris Teklif Listesi</title>
 </head>
 <body>
   <h2>Tomris'e Komut Ver</h2>
-  <input type="text" id="userInput" placeholder="örnek: Barış Yıldız'ın son teklifini göster" style="width: 400px;">
-  <button onclick="sendToGPT()">Gönder</button>
+  <input type="text" id="command" placeholder="örnek: tüm teklifleri getir">
+  <button onclick="sendCommand()">Gönder</button>
 
   <h3>GPT Yanıtı (Ham JSON):</h3>
-  <pre id="gptBox">Henüz bir şey gelmedi.</pre>
+  <pre id="gpt-json"></pre>
 
-  <h3>API Yanıtı:</h3>
-  <div id="apiBox">Henüz veri çekilmedi.</div>
+  <h3>API Yanıtı (İşlenmiş):</h3>
+  <div id="api-response"></div>
 
   <script>
-    async function sendToGPT() {
-      const userText = document.getElementById('userInput').value;
-      const gptBox = document.getElementById('gptBox');
-      const apiBox = document.getElementById('apiBox');
-      gptBox.textContent = "GPT yanıtlanıyor...";
-      apiBox.innerHTML = "";
+    async function sendCommand() {
+      const command = document.getElementById("command").value;
 
-      const gptResponse = await fetch("chatgpt_bridge.php", {
+      const response = await fetch("chatgpt_bridge.php", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ prompt: userText })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command })
       });
 
-      const gptData = await gptResponse.json();
-      const content = gptData.choices?.[0]?.message?.content;
-      gptBox.textContent = content;
+      const result = await response.json();
+      document.getElementById("gpt-json").textContent = JSON.stringify(result.gpt_raw, null, 2);
 
-      try {
-        const parsed = JSON.parse(content);
-
-        // Tek bir endpoint olabilir veya birden fazla API çağrısı içerebilir
-        if (Array.isArray(parsed)) {
-          for (const call of parsed) {
-            await handleApiCall(call, apiBox);
-          }
-        } else {
-          await handleApiCall(parsed, apiBox);
+      if (result.api && result.api.success && Array.isArray(result.api.data)) {
+        let html = "<table border='1'><tr><th>Teklif No</th><th>Müşteri</th><th>Tarih</th><th>Toplam</th></tr>";
+        for (let teklif of result.api.data) {
+          html += `<tr>
+                     <td>${teklif.teklifNo}</td>
+                     <td>${teklif.musteriAdi || '-'}</td>
+                     <td>${teklif.teklifTarihi}</td>
+                     <td>${teklif.genelToplamSatis} ${teklif.paraBirimi}</td>
+                   </tr>`;
         }
-
-      } catch (err) {
-        apiBox.textContent = "Yanıt JSON olarak işlenemedi: " + err.message;
-      }
-    }
-
-    async function handleApiCall(call, apiBox) {
-      try {
-        const url = "api/" + call.endpoint + (call.query ? ("?" + new URLSearchParams(call.query).toString()) : "");
-        const options = {
-          method: call.method || "GET",
-          headers: {"Content-Type": "application/json"},
-        };
-        if (call.method === "POST" || call.method === "PUT") {
-          options.body = JSON.stringify(call.body);
-        }
-
-        const res = await fetch(url, options);
-        const result = await res.json();
-
-        if (result.status === "success") {
-          if (Array.isArray(result.data)) {
-            let html = "<ul>";
-            result.data.forEach(item => {
-              html += `<li><b>${item.ad || item.teklifNo}</b> – ${item.projeAdi || ''}</li>`;
-            });
-            html += "</ul>";
-            apiBox.innerHTML += html;
-          } else {
-            apiBox.innerHTML += `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
-          }
-        } else {
-          apiBox.innerHTML += `<pre>Hata: ${JSON.stringify(result, null, 2)}</pre>`;
-        }
-      } catch (e) {
-        apiBox.innerHTML += `<pre>API hatası: ${e.message}</pre>`;
+        html += "</table>";
+        document.getElementById("api-response").innerHTML = html;
+      } else {
+        document.getElementById("api-response").textContent = JSON.stringify(result.api, null, 2);
       }
     }
   </script>
