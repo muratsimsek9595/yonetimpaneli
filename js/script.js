@@ -694,11 +694,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody tıklandı. Raw Event Target:', event.target);
                 const target = event.target;
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] Target Detayları -> TagName:', target.tagName, 'ClassName:', target.className, 'ID:', target.id);
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] target.className TAM DEĞERİ (tırnaklar arasında):', `"${target.className}"`);
 
-                const editButton = target.classList.contains('edit-isci-btn') ? target : null;
-                const deleteButton = target.classList.contains('delete-isci-btn') ? target : null;
+                const editButton = typeof target.className === 'string' && target.className.includes('edit-isci-btn') ? target : null;
+                const deleteButton = typeof target.className === 'string' && target.className.includes('delete-isci-btn') ? target : null;
 
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Değişken Değerleri Kontrolü (classList ile) ---');
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Değişken Değerleri Kontrolü (className.includes ile) ---');
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] \'editButton\' değişkeninin değeri:', editButton);
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] \'deleteButton\' değişkeninin değeri:', deleteButton);
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Kontrol Sonu ---');
