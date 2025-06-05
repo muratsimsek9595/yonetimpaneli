@@ -2,75 +2,92 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Tomris Komut Paneli</title>
+  <title>Tomris Asistan</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    input, button { padding: 8px; font-size: 14px; margin-right: 5px; }
-    table { border-collapse: collapse; margin-top: 10px; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    pre { background-color: #f9f9f9; padding: 10px; overflow-x: auto; }
+    body { font-family: sans-serif; padding: 20px; }
+    input[type="text"] { width: 60%; padding: 8px; margin-right: 8px; }
+    button { padding: 8px 16px; }
+    table { border-collapse: collapse; margin-top: 16px; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background: #eee; }
+    pre { background: #f9f9f9; padding: 10px; border: 1px solid #ddd; }
   </style>
 </head>
 <body>
   <h2>Tomris'e Komut Ver</h2>
-  <input type="text" id="command" placeholder="Örnek: tüm teklifleri göster">
+  <input type="text" id="command" placeholder="örnek: son teklifi göster">
   <button onclick="sendCommand()">Gönder</button>
 
   <h3>GPT Yanıtı (Ham JSON):</h3>
-  <pre id="gpt-json">Henüz komut girilmedi...</pre>
+  <pre id="gpt-json"></pre>
 
   <h3>API Yanıtı (Tablo):</h3>
-  <div id="api-response">Henüz veri yok...</div>
+  <div id="api-response"></div>
 
   <script>
     async function sendCommand() {
-      const command = document.getElementById("command").value;
+      const command = document.getElementById("command").value.trim();
+      if (!command) return;
 
-      const response = await fetch("chatgpt_bridge.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
-      });
+      const gptBox = document.getElementById("gpt-json");
+      const responseBox = document.getElementById("api-response");
 
-      const result = await response.json();
-      document.getElementById("gpt-json").textContent = JSON.stringify(result.gpt_raw, null, 2);
+      gptBox.textContent = "Bekleniyor...";
+      responseBox.textContent = "İşleniyor...";
 
-      const container = document.getElementById("api-response");
-      container.innerHTML = "";
-
-      if (result.api && result.api.success && Array.isArray(result.api.data) && result.api.data.length > 0) {
-        const data = result.api.data;
-        const keys = Object.keys(data[0]);
-        const table = document.createElement("table");
-        const thead = document.createElement("thead");
-        const tbody = document.createElement("tbody");
-
-        // Header
-        const headerRow = document.createElement("tr");
-        keys.forEach(key => {
-          const th = document.createElement("th");
-          th.textContent = key;
-          headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-
-        // Body
-        data.forEach(row => {
-          const tr = document.createElement("tr");
-          keys.forEach(key => {
-            const td = document.createElement("td");
-            td.textContent = typeof row[key] === 'object' ? '[Obje]' : row[key];
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
+      try {
+        const res = await fetch("chatgpt_bridge.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command })
         });
 
-        table.appendChild(thead);
-        table.appendChild(tbody);
-        container.appendChild(table);
-      } else {
-        container.textContent = "Veri bulunamadı veya format hatası.";
+        const result = await res.json();
+        gptBox.textContent = JSON.stringify(result.gpt_raw, null, 2);
+
+        let data = result.api?.data;
+
+        if (result.api?.success) {
+          if (!Array.isArray(data)) data = [data];
+
+          if (data.length > 0) {
+            const keys = Object.keys(data[0]);
+            const table = document.createElement("table");
+            const thead = document.createElement("thead");
+            const tbody = document.createElement("tbody");
+
+            const headerRow = document.createElement("tr");
+            keys.forEach(key => {
+              const th = document.createElement("th");
+              th.textContent = key;
+              headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            data.forEach(row => {
+              const tr = document.createElement("tr");
+              keys.forEach(key => {
+                const td = document.createElement("td");
+                td.textContent = typeof row[key] === "object" ? JSON.stringify(row[key]) : row[key];
+                tr.appendChild(td);
+              });
+              tbody.appendChild(tr);
+            });
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            responseBox.innerHTML = "";
+            responseBox.appendChild(table);
+          } else {
+            responseBox.textContent = "Veri boş.";
+          }
+        } else {
+          responseBox.textContent = "Veri alınamadı veya format hatalı.";
+        }
+
+      } catch (err) {
+        gptBox.textContent = "İstek sırasında hata oluştu.";
+        responseBox.textContent = err.message;
       }
     }
   </script>
