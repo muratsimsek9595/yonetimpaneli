@@ -691,13 +691,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isciListesiTablosuBody) {
             console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody bulundu, olay dinleyici ekleniyor...');
             isciListesiTablosuBody.addEventListener('click', async function(event) {
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody tıklandı.', event.target);
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody tıklandı. Raw Event Target:', event.target);
                 const target = event.target;
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] Target Detayları -> TagName:', target.tagName, 'ClassName:', target.className, 'ID:', target.id);
+
                 const editButton = target.closest('.edit-isci-btn');
                 const deleteButton = target.closest('.delete-isci-btn');
 
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Değişken Değerleri Kontrolü ---');
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] \'editButton\' değişkeninin değeri:', editButton);
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] \'deleteButton\' değişkeninin değeri:', deleteButton);
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Kontrol Sonu ---');
+
                 if (editButton) {
-                    console.log('[İşçi Tıklama Dinleyici Kontrolü] Düzenle butonu tıklandı.');
+                    console.log('[İşçi Tıklama Dinleyici Kontrolü] >>> BLOK: if (editButton) İÇİNDE <<<');
+                    // console.log('[İşçi Tıklama Dinleyici Kontrolü] Düzenle butonu tıklandı.');
                     const isciId = editButton.dataset.id;
                     // Düzenleme için gerekli elemanları ve fonksiyonları kontrol et
                     console.log('[İşçi Tıklama Dinleyici Kontrolü] Düzenleme fonksiyon/eleman kontrolü: isciForm:', !!isciForm, 'isciIdInput:', !!isciIdInput, 'getIsciById:', typeof getIsciById, 'doldurIsciFormu:', typeof doldurIsciFormu);
@@ -715,7 +723,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         showToast('Düzenleme formu yüklenemedi. Lütfen konsolu kontrol edin.', 'error');
                     }
                 } else if (deleteButton) {
-                    console.log('[İşçi Tıklama Dinleyici Kontrolü] Silme fonksiyon kontrolü: getIsciById:', typeof getIsciById, 'deleteIsciAPI:', typeof deleteIsciAPI, 'removeIsciFromStore:', typeof removeIsciFromStore);
+                    console.log('[İşçi Tıklama Dinleyici Kontrolü] >>> BLOK: else if (deleteButton) İÇİNDE <<<');
+                    // console.log('[İşçi Tıklama Dinleyici Kontrolü] Silme fonksiyon kontrolü: getIsciById:', typeof getIsciById, 'deleteIsciAPI:', typeof deleteIsciAPI, 'removeIsciFromStore:', typeof removeIsciFromStore);
                     const isciId = deleteButton.dataset.id;
                     // Silme için gerekli fonksiyonları kontrol et
                     if (getIsciById && typeof deleteIsciAPI === 'function' && typeof removeIsciFromStore === 'function') {
@@ -748,6 +757,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         console.warn('İşçi silme butonu için gerekli fonksiyonlar (getIsciById, deleteIsciAPI, removeIsciFromStore) bulunamadı/tanımlanmadı.');
                         showToast('Silme işlemi gerçekleştirilemedi. Lütfen konsolu kontrol edin.', 'error');
+                    }
+                } else {
+                    console.log('[İşçi Tıklama Dinleyici Kontrolü] !!! BLOK: NE editButton NE deleteButton BULUNDU !!!');
+                    console.log('[İşçi Tıklama Dinleyici Kontrolü] Kontrol edilen target:', target);
+                    if (target.parentNode) {
+                        console.log('[İşçi Tıklama Dinleyici Kontrolü] Kontrol edilen target\'ın parentNode\'u:', target.parentNode, 'Parent ClassName:', target.parentNode.className);
                     }
                 }
             });
