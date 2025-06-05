@@ -66,6 +66,7 @@ import { initTeklifYonetimi } from './teklifYonetimi.js?v=1.0';
 import { initTeklifListeleme } from './teklifListeleme.js';
 import { initMusteriYonetimi } from './musteriYonetimi.js';
 import { initMusteriListeleme } from './musteriListeleme.js';
+import { initIsciYonetimi } from './isciYonetimi.js';
 
 // Genel JavaScript fonksiyonları ve olay dinleyicileri buraya gelecek.
 // Chart.js DataLabels eklentisini global olarak kaydet
@@ -80,6 +81,7 @@ let isTeklifYonetimiInitialized = false;
 let isTeklifListelemeInitialized = false;
 let isMusteriYonetimiInitialized = false;
 let isMusteriListelemeInitialized = false;
+let isIsciYonetimiInitialized = false;
 // Diğer modüller için ayrı ayrı de benzer flag'ler eklenebilir
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -163,6 +165,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (targetId === 'musteriler' && !isMusteriListelemeInitialized) {
             initMusteriListeleme();
             isMusteriListelemeInitialized = true;
+        } else if (targetId === 'isciler' && !isIsciYonetimiInitialized) {
+            initIsciYonetimi();
+            isIsciYonetimiInitialized = true;
         }
         // Diğer bölümler için de benzer else if blokları eklenebilir
     }
@@ -254,12 +259,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const statsToplamIsciEl = document.getElementById('statsToplamIsci');
     const statsToplamMusteriEl = document.getElementById('statsToplamMusteri');
     const statsToplamTeklifEl = document.getElementById('statsToplamTeklif');
-
-    const isciForm = document.getElementById('isciForm');
-    const isciIdInput = document.getElementById('isciIdInput');
-    const isciListesiTablosuBody = document.querySelector('#isciListesiTablosu tbody');
-    const isciFormTemizleButton = document.getElementById('isciFormTemizleButton');
-    const isciKaydetBtn = isciForm ? isciForm.querySelector('button[type="submit"]') : null;
 
     let fiyatGrafigi;
 
@@ -426,8 +425,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     subscribe('iscilerChanged', (guncelIscilerListesi) => {
-        if (isciListesiTablosuBody) {
-            guncelleIscilerTablosu(guncelIscilerListesi, isciListesiTablosuBody);
+        const localIsciListesiTablosuBody = document.querySelector('#isciListesiTablosu tbody');
+        if (localIsciListesiTablosuBody) {
+            guncelleIscilerTablosu(guncelIscilerListesi, localIsciListesiTablosuBody);
         }
         guncelleAnasayfaIstatistikleri();
     });
@@ -682,182 +682,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     if(fiyatGirisMalzemeSecimi) fiyatGirisMalzemeSecimi.addEventListener('change', guncelleFiyatGirisBirimGostergesi);
-
-    // --- İşçi Yönetimi Başlangıcı ---
-    // if (isciForm && isciListesiTablosuBody && isciKaydetBtn && isciFormTemizleButton && isciIdInput) { // ESKİ BİRLEŞİK IF
-
-        // Tablo Üzerindeki Butonlar için Olay Dinleyicisi (Düzenle/Sil)
-        console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody DOM elementi:', isciListesiTablosuBody);
-        if (isciListesiTablosuBody) {
-            console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody bulundu, olay dinleyici ekleniyor...');
-            isciListesiTablosuBody.addEventListener('click', async function(event) {
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody tıklandı. Raw Event Target:', event.target);
-                const target = event.target;
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] Target Detayları -> TagName:', target.tagName, 'ClassName:', target.className, 'ID:', target.id);
-                // console.log('[İşçi Tıklama Dinleyici Kontrolü] target.className TAM DEĞERİ (tırnaklar arasında):', `"${target.className}"`); // Bu log artık gerekmeyebilir
-
-                const editButton = typeof target.className === 'string' && target.className.includes('isci-edit-btn') ? target : null; // Düzeltilmiş sınıf adı
-                const deleteButton = typeof target.className === 'string' && target.className.includes('isci-delete-btn') ? target : null; // Düzeltilmiş sınıf adı
-
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Değişken Değerleri Kontrolü (Düzeltilmiş Sınıf Adı ile) ---');
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] \'editButton\' değişkeninin değeri:', editButton);
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] \'deleteButton\' değişkeninin değeri:', deleteButton);
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Kontrol Sonu ---');
-
-                if (editButton) {
-                    console.log('[İşçi Tıklama Dinleyici Kontrolü] >>> BLOK: if (editButton) İÇİNDE <<<');
-                    // console.log('[İşçi Tıklama Dinleyici Kontrolü] Düzenle butonu tıklandı.');
-                    const isciId = editButton.dataset.id;
-                    // Düzenleme için gerekli elemanları ve fonksiyonları kontrol et
-                    console.log('[İşçi Tıklama Dinleyici Kontrolü] Düzenleme fonksiyon/eleman kontrolü: isciForm:', !!isciForm, 'isciIdInput:', !!isciIdInput, 'getIsciById:', typeof getIsciById, 'doldurIsciFormu:', typeof doldurIsciFormu);
-                    if (isciForm && isciIdInput && getIsciById && typeof doldurIsciFormu === 'function') {
-                        const isci = getIsciById(isciId); // Store'dan al
-                        if (isci) {
-                            doldurIsciFormu(isci, isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
-                            isciForm.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-                            showToast(`${isci.adSoyad} düzenleniyor...`, 'info', 2000);
-                        } else {
-                            showToast('Düzenlenecek işçi bulunamadı.', 'error');
-                        }
-                    } else {
-                        console.warn('İşçi düzenleme butonu için gerekli form elemanları (isciForm, isciIdInput) veya fonksiyonlar (getIsciById, doldurIsciFormu) bulunamadı/tanımlanmadı.');
-                        showToast('Düzenleme formu yüklenemedi. Lütfen konsolu kontrol edin.', 'error');
-                    }
-                } else if (deleteButton) {
-                    console.log('[İşçi Tıklama Dinleyici Kontrolü] >>> BLOK: else if (deleteButton) İÇİNDE <<<');
-                    // console.log('[İşçi Tıklama Dinleyici Kontrolü] Silme fonksiyon kontrolü: getIsciById:', typeof getIsciById, 'deleteIsciAPI:', typeof deleteIsciAPI, 'removeIsciFromStore:', typeof removeIsciFromStore);
-                    const isciId = deleteButton.dataset.id;
-                    // Silme için gerekli fonksiyonları kontrol et
-                    if (getIsciById && typeof deleteIsciAPI === 'function' && typeof removeIsciFromStore === 'function') {
-                        const isci = getIsciById(isciId); // Store'dan al
-
-                        if (isci && confirm(`'${isci.adSoyad}' adlı işçiyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
-                            const originalIconHTML = deleteButton.innerHTML;
-                            // setButtonLoading ve resetButtonLoading fonksiyonlarının varlığını kontrol etmek iyi bir pratik olabilir
-                            if (typeof setButtonLoading === 'function') setButtonLoading(deleteButton, '...');
-                            deleteButton.disabled = true;
-
-                            try {
-                                await deleteIsciAPI(isciId);
-                                removeIsciFromStore(isciId); // Store'dan sil
-                                showToast('İşçi başarıyla silindi.', 'success');
-                                if (isciIdInput && isciIdInput.value === isciId && isciForm && typeof temizleIsciFormu === 'function' && isciKaydetBtn && isciFormTemizleButton) {
-                                    temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
-                                }
-                            } catch (error) {
-                                console.error('İşçi silme hatası:', error);
-                                showToast(error.message || 'İşçi silinirken bir hata oluştu.', 'error');
-                            } finally {
-                                if (typeof resetButtonLoading === 'function') resetButtonLoading(deleteButton);
-                                deleteButton.innerHTML = originalIconHTML;
-                                deleteButton.disabled = false;
-                            }
-                        } else if (!isci && !editButton) { 
-                            showToast('Silinecek işçi bulunamadı.', 'error');
-                        }
-                    } else {
-                        console.warn('İşçi silme butonu için gerekli fonksiyonlar (getIsciById, deleteIsciAPI, removeIsciFromStore) bulunamadı/tanımlanmadı.');
-                        showToast('Silme işlemi gerçekleştirilemedi. Lütfen konsolu kontrol edin.', 'error');
-                    }
-                } else {
-                    console.log('[İşçi Tıklama Dinleyici Kontrolü] !!! BLOK: NE editButton NE deleteButton BULUNDU !!!');
-                    console.log('[İşçi Tıklama Dinleyici Kontrolü] Kontrol edilen target:', target);
-                    if (target.parentNode) {
-                        console.log('[İşçi Tıklama Dinleyici Kontrolü] Kontrol edilen target\'ın parentNode\'u:', target.parentNode, 'Parent ClassName:', target.parentNode.className);
-                    }
-                }
-            });
-        } else {
-            console.warn("DOM Elementi bulunamadı: isciListesiTablosuBody. İşçi listesi tablo butonları çalışmayacaktır.");
-        }
-        
-        // Form Gönderme (Ekleme/Güncelleme)
-        console.log('[İşçi Form Gönderme Kontrolü] Gerekli elemanlar/fonksiyonlar: isciForm:', !!isciForm, 'isciKaydetBtn:', !!isciKaydetBtn, 'isciIdInput:', !!isciIdInput, 'addIsciAPI:', typeof addIsciAPI, 'updateIsciAPI:', typeof updateIsciAPI, 'addIsci:', typeof addIsci, 'updateIsci:', typeof updateIsci, 'temizleIsciFormu:', typeof temizleIsciFormu);
-        if (isciForm && isciKaydetBtn && isciIdInput && typeof addIsciAPI === 'function' && typeof updateIsciAPI === 'function' && typeof addIsci === 'function' && typeof updateIsci === 'function' && typeof temizleIsciFormu === 'function') {
-            console.log('[İşçi Form Gönderme Kontrolü] Olay dinleyici ekleniyor...');
-            isciForm.addEventListener('submit', async function(event) {
-                console.log('[İşçi Form Gönderme Kontrolü] Form gönderildi.');
-                event.preventDefault();
-                if (typeof setButtonLoading === 'function') setButtonLoading(isciKaydetBtn, 'Kaydediliyor...');
-
-                const id = isciIdInput.value;
-                const adSoyad = isciForm.elements.adSoyad.value.trim();
-                const pozisyon = isciForm.elements.pozisyon.value.trim() || null;
-                
-                const gunlukUcretValue = isciForm.elements.gunlukUcret.value.trim();
-                const gunlukUcret = gunlukUcretValue ? parseFloat(gunlukUcretValue) : null;
-                
-                const saatlikUcretValue = isciForm.elements.saatlikUcret.value.trim();
-                const saatlikUcret = saatlikUcretValue ? parseFloat(saatlikUcretValue) : null;
-                
-                const paraBirimi = isciForm.elements.paraBirimi.value || 'TL';
-                
-                let iseBaslamaTarihi = isciForm.elements.iseBaslamaTarihi.value.trim();
-                if (iseBaslamaTarihi && !/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/.test(iseBaslamaTarihi)) {
-                    showToast('İşe başlama tarihi geçerli bir formatta (YYYY-AA-GG) olmalıdır.', 'error');
-                    if (typeof resetButtonLoading === 'function') resetButtonLoading(isciKaydetBtn);
-                    return;
-                }
-                iseBaslamaTarihi = iseBaslamaTarihi || null;
-
-                const aktif = isciForm.elements.aktif.checked;
-                const telefon = isciForm.elements.telefon.value.trim() || null;
-                const email = isciForm.elements.email.value.trim() || null;
-                const adres = isciForm.elements.adres.value.trim() || null;
-                const notlar = isciForm.elements.notlar.value.trim() || null;
-
-                if (!adSoyad) {
-                    showToast('Ad Soyad alanı zorunludur.', 'error');
-                    if (typeof resetButtonLoading === 'function') resetButtonLoading(isciKaydetBtn);
-                    isciForm.elements.adSoyad.focus();
-                    return;
-                }
-
-                const isciData = {
-                    adSoyad, pozisyon, gunlukUcret, saatlikUcret, paraBirimi,
-                    iseBaslamaTarihi, aktif, telefon, email, adres, notlar
-                };
-
-                try {
-                    let savedIsci;
-                    if (id) {
-                        isciData.id = parseInt(id, 10);
-                        savedIsci = await updateIsciAPI(isciData);
-                        updateIsci(savedIsci); // Store'u güncelle
-                        showToast('İşçi başarıyla güncellendi.', 'success');
-                    } else {
-                        savedIsci = await addIsciAPI(isciData);
-                        addIsci(savedIsci); // Store'u güncelle
-                        showToast('İşçi başarıyla eklendi.', 'success');
-                    }
-                    if (isciFormTemizleButton) { // Check if temizle button exists for the call
-                        temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
-                    } else {
-                        temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, null); // Call without it if not
-                    }
-                } catch (error) {
-                    console.error('İşçi kaydetme/güncelleme hatası:', error);
-                    showToast(error.message || 'İşçi kaydedilirken bir hata oluştu.', 'error');
-                } finally {
-                    if (typeof resetButtonLoading === 'function') resetButtonLoading(isciKaydetBtn);
-                }
-            });
-        } else {
-            console.warn("İşçi formu gönderme (submit) için gerekli DOM elementleri (isciForm, isciKaydetBtn, isciIdInput) veya API/store fonksiyonları bulunamadı/tanımlanmadı.");
-        }
-
-        // Form Temizleme Butonu
-        console.log('[İşçi Form Temizleme Kontrolü] Gerekli elemanlar/fonksiyonlar: isciFormTemizleButton:', !!isciFormTemizleButton, 'isciForm:', !!isciForm, 'isciIdInput:', !!isciIdInput, 'isciKaydetBtn:', !!isciKaydetBtn, 'temizleIsciFormu:', typeof temizleIsciFormu);
-        if (isciFormTemizleButton && isciForm && isciIdInput && isciKaydetBtn && typeof temizleIsciFormu === 'function') {
-            console.log('[İşçi Form Temizleme Kontrolü] Olay dinleyici ekleniyor...');
-            isciFormTemizleButton.addEventListener('click', function() {
-                console.log('[İşçi Form Temizleme Kontrolü] Temizle butonu tıklandı.');
-                temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
-            });
-        } else {
-            console.warn("İşçi formu temizleme butonu (isciFormTemizleButton) veya ilişkili DOM/fonksiyonlar bulunamadı/tanımlanmadı.");
-        }
-    // ESKİ BİRLEŞİK IF KAPANIŞI DEĞİL, YENİ YAPI BURADA SONLANIYOR
-    // --- İşçi Yönetimi Sonu ---
 
 }); // Tek DOMContentLoaded Kapanışı
