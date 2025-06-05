@@ -2,7 +2,7 @@
     "isciler": {
         "file": "api/isciler.php",
         "methods": {
-            "GET_ALL": {
+            "GET": {
                 "description": "Tüm işçileri listeler.",
                 "requires_id": false,
                 "response_structure": [
