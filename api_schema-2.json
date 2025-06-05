@@ -1,0 +1,481 @@
+    {
+        "isciler": {
+            "file": "api/isciler.php",
+            "methods": {
+                "GET": {
+                    "description": "Tüm işçileri listeler.",
+                    "requires_id": false,
+                    "response_structure": [
+                        "id",
+                        "adSoyad",
+                        "pozisyon",
+                        "gunlukUcret",
+                        "saatlikUcret",
+                        "paraBirimi",
+                        "iseBaslamaTarihi",
+                        "aktif",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "notlar"
+                    ]
+                },
+                "GET_ONE": {
+                    "description": "Tek bir işçinin detaylarını getirir.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "response_structure": [
+                        "id",
+                        "adSoyad",
+                        "pozisyon",
+                        "gunlukUcret",
+                        "saatlikUcret",
+                        "paraBirimi",
+                        "iseBaslamaTarihi",
+                        "aktif",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "notlar"
+                    ]
+                },
+                "POST": {
+                    "description": "Yeni işçi ekler.",
+                    "requires_body": true,
+                    "body_fields": [
+                        "adSoyad",
+                        "pozisyon",
+                        "gunlukUcret",
+                        "saatlikUcret",
+                        "paraBirimi",
+                        "iseBaslamaTarihi",
+                        "aktif",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "notlar"
+                    ]
+                },
+                "PUT": {
+                    "description": "Mevcut işçiyi günceller. ID'nin request body içinde gönderilmesi gerekir.",
+                    "requires_id": false,
+                    "requires_body": true,
+                    "body_fields": [
+                        "id",
+                        "adSoyad",
+                        "pozisyon",
+                        "gunlukUcret",
+                        "saatlikUcret",
+                        "paraBirimi",
+                        "iseBaslamaTarihi",
+                        "aktif",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "notlar"
+                    ]
+                },
+                "DELETE": {
+                    "description": "İşçiyi siler.",
+                    "requires_id": true,
+                    "id_location": "query"
+                }
+            }
+        },
+        "musteriler": {
+            "file": "api/musteriler.php",
+            "methods": {
+                "GET_ALL": {
+                    "description": "Tüm müşterileri listeler.",
+                    "requires_id": false,
+                    "response_structure": [
+                        "id",
+                        "ad",
+                        "yetkiliKisi",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "vergiNo",
+                        "notlar",
+                        "created_at",
+                        "updated_at"
+                    ]
+                },
+                "GET_ONE": {
+                    "description": "Tek bir müşterinin detaylarını getirir.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "response_structure": [
+                        "id",
+                        "ad",
+                        "yetkiliKisi",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "vergiNo",
+                        "notlar",
+                        "created_at",
+                        "updated_at"
+                    ]
+                },
+                "POST": {
+                    "description": "Yeni müşteri ekler.",
+                    "requires_body": true,
+                    "body_fields": [
+                        "ad",
+                        "yetkiliKisi",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "vergiNo",
+                        "notlar"
+                    ]
+                },
+                "PUT": {
+                    "description": "Mevcut müşteriyi günceller.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "requires_body": true,
+                    "body_fields": [
+                        "ad",
+                        "yetkiliKisi",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "vergiNo",
+                        "notlar"
+                    ]
+                },
+                "DELETE": {
+                    "description": "Müşteriyi siler.",
+                    "requires_id": true,
+                    "id_location": "query"
+                }
+            }
+        },
+        "teklifler": {
+            "file": "api/teklifler.php",
+            "methods": {
+                "GET_ALL": {
+                    "description": "Tüm teklifleri listeler. Her teklif 'urunler' adında bir kalem dizisi içerir.",
+                    "requires_id": false,
+                    "response_structure": [
+                        "id",
+                        "teklifNo",
+                        "musteri_id",
+                        "musteriAdi",
+                        "musteriIletisim",
+                        "projeAdi",
+                        "teklifTarihi",
+                        "gecerlilikTarihi",
+                        "hazirlayan",
+                        "paraBirimi",
+                        "araToplamMaliyet",
+                        "araToplamSatis",
+                        "indirimOrani",
+                        "indirimTutari",
+                        "kdvOrani",
+                        "kdvTutari",
+                        "genelToplamSatis",
+                        "durum",
+                        "notlar",
+                        "created_at",
+                        "updated_at",
+                        "urunler"
+                    ]
+                },
+                "GET_ONE": {
+                    "description": "Tek bir teklifin detaylarını getirir. Teklif 'urunler' adında bir kalem dizisi içerir.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "response_structure": [
+                        "id",
+                        "teklifNo",
+                        "musteri_id",
+                        "musteriAdi",
+                        "musteriIletisim",
+                        "projeAdi",
+                        "teklifTarihi",
+                        "gecerlilikTarihi",
+                        "hazirlayan",
+                        "paraBirimi",
+                        "araToplamMaliyet",
+                        "araToplamSatis",
+                        "indirimOrani",
+                        "indirimTutari",
+                        "kdvOrani",
+                        "kdvTutari",
+                        "genelToplamSatis",
+                        "durum",
+                        "notlar",
+                        "created_at",
+                        "updated_at",
+                        "urunler"
+                    ]
+                },
+                "POST": {
+                    "description": "Yeni teklif oluşturur. 'urunler' dizisi zorunludur.",
+                    "requires_body": true,
+                    "body_fields": [
+                        "teklifNo",
+                        "musteriId",
+                        "musteriAdi",
+                        "musteriIletisim",
+                        "projeAdi",
+                        "teklifTarihi",
+                        "gecerlilikTarihi",
+                        "hazirlayan",
+                        "paraBirimi",
+                        "araToplam",
+                        "indirimOrani",
+                        "indirimTutari",
+                        "kdvOrani",
+                        "kdvTutari",
+                        "genelToplamSatis",
+                        "hesaplanan_toplamProjeMaliyetiKdvDahil",
+                        "durum",
+                        "notlar",
+                        "urunler"
+                    ]
+                },
+                "PUT": {
+                    "description": "Mevcut teklifi günceller. ID URL'de veya body'de gönderilebilir. 'urunler' dizisi gönderilirse eski kalemler silinir ve yenileri eklenir.",
+                    "requires_id": true,
+                    "id_location": "query_or_body",
+                    "requires_body": true,
+                    "body_fields": [
+                        "id",
+                        "teklifNo",
+                        "musteriId",
+                        "musteriAdi",
+                        "musteriIletisim",
+                        "projeAdi",
+                        "teklifTarihi",
+                        "gecerlilikTarihi",
+                        "hazirlayan",
+                        "paraBirimi",
+                        "araToplam",
+                        "indirimOrani",
+                        "indirimTutari",
+                        "kdvOrani",
+                        "kdvTutari",
+                        "genelToplamSatis",
+                        "hesaplanan_toplamProjeMaliyetiKdvDahil",
+                        "durum",
+                        "notlar",
+                        "urunler"
+                    ]
+                },
+                "DELETE": {
+                    "description": "Teklifi ve ilişkili tüm kalemleri siler.",
+                    "requires_id": true,
+                    "id_location": "query"
+                }
+            }
+        },
+        "tedarikciler": {
+            "file": "api/tedarikciler.php",
+            "methods": {
+                "GET_ALL": {
+                    "description": "Tüm tedarikçileri listeler.",
+                    "requires_id": false,
+                    "response_structure": [
+                        "id",
+                        "ad",
+                        "yetkili_kisi",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "not_alani"
+                    ]
+                },
+                "GET_ONE": {
+                    "description": "Tek bir tedarikçinin bilgilerini getirir.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "response_structure": [
+                        "id",
+                        "ad",
+                        "yetkili_kisi",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "not_alani"
+                    ]
+                },
+                "POST": {
+                    "description": "Yeni tedarikçi ekler.",
+                    "requires_body": true,
+                    "body_fields": [
+                        "ad",
+                        "yetkili_kisi",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "not_alani"
+                    ]
+                },
+                "PUT": {
+                    "description": "Tedarikçiyi günceller.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "requires_body": true,
+                    "body_fields": [
+                        "ad",
+                        "yetkili_kisi",
+                        "telefon",
+                        "email",
+                        "adres",
+                        "not_alani"
+                    ]
+                },
+                "DELETE": {
+                    "description": "Tedarikçiyi siler.",
+                    "requires_id": true,
+                    "id_location": "query"
+                }
+            }
+        },
+        "araclar": {
+            "file": "api/araclar.php",
+            "methods": {
+                "GET_ALL": {
+                    "description": "Tüm araçları listeler.",
+                    "requires_id": false,
+                    "response_structure": [
+                        "id",
+                        "ad",
+                        "yol",
+                        "aciklama",
+                        "resimyolu",
+                        "created_at",
+                        "updated_at"
+                    ]
+                },
+                "GET_ONE": {
+                    "description": "Tek bir aracın bilgilerini getirir.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "response_structure": [
+                        "id",
+                        "ad",
+                        "yol",
+                        "aciklama",
+                        "resimyolu",
+                        "created_at",
+                        "updated_at"
+                    ]
+                },
+                "POST": {
+                    "description": "Yeni araç ekler.",
+                    "requires_body": true,
+                    "body_fields": [
+                        "ad",
+                        "yol",
+                        "aciklama",
+                        "resimyolu"
+                    ]
+                },
+                "PUT": {
+                    "description": "Mevcut aracı günceller.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "requires_body": true,
+                    "body_fields": [
+                        "ad",
+                        "yol",
+                        "aciklama",
+                        "resimyolu"
+                    ]
+                },
+                "DELETE": {
+                    "description": "Aracı siler.",
+                    "requires_id": true,
+                    "id_location": "query"
+                }
+            }
+        },
+        "fiyatlar": {
+            "file": "api/fiyatlar.php",
+            "methods": {
+                "GET": {
+                    "description": "Fiyatları listeler. Filtreleme için `malzeme_id`, `tedarikci_id`, `tarih_baslangic`, `tarih_bitis`, `limit` query parametreleri kullanılabilir.",
+                    "requires_id": false,
+                    "query_params": [ "malzeme_id", "tedarikci_id", "tarih_baslangic", "tarih_bitis", "limit" ],
+                    "response_structure": [
+                        "id",
+                        "malzeme_id",
+                        "malzeme_adi",
+                        "malzeme_birim_adi",
+                        "tedarikci_id",
+                        "tedarikci_adi",
+                        "fiyat",
+                        "tarih"
+                    ]
+                },
+                "POST": {
+                    "description": "Yeni bir fiyat kaydı ekler.",
+                    "requires_body": true,
+                    "body_fields": [
+                        "malzeme_id",
+                        "tedarikci_id",
+                        "fiyat",
+                        "tarih"
+                    ]
+                },
+                "DELETE": {
+                    "description": "Fiyat kaydını siler. `id` ile tek bir kayıt, `malzeme_id` ile bir malzemeye ait tüm kayıtlar, `tedarikci_id` ile bir tedarikçiye ait tüm kayıtlar silinebilir.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "query_params": ["id", "malzeme_id", "tedarikci_id"]
+                }
+            }
+        },
+        "malzemeler": {
+            "file": "api/malzemeler.php",
+            "methods": {
+                "GET_ALL": {
+                    "description": "Tüm malzemeleri listeler.",
+                    "requires_id": false,
+                    "response_structure": [
+                        "id",
+                        "ad",
+                        "birim_adi"
+                    ]
+                },
+                "GET_ONE": {
+                    "description": "Tek bir malzemenin bilgilerini getirir.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "response_structure": [
+                        "id",
+                        "ad",
+                        "birim_adi"
+                    ]
+                },
+                "POST": {
+                    "description": "Yeni malzeme ekler.",
+                    "requires_body": true,
+                    "body_fields": [
+                        "ad",
+                        "birim_adi"
+                    ]
+                },
+                "PUT": {
+                    "description": "Mevcut malzemeyi günceller.",
+                    "requires_id": true,
+                    "id_location": "query",
+                    "requires_body": true,
+                    "body_fields": [
+                        "ad",
+                        "birim_adi"
+                    ]
+                },
+                "DELETE": {
+                    "description": "Malzemeyi siler.",
+                    "requires_id": true,
+                    "id_location": "query"
+                }
+            }
+        }
+    }
