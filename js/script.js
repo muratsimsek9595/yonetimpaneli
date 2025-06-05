@@ -687,15 +687,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // if (isciForm && isciListesiTablosuBody && isciKaydetBtn && isciFormTemizleButton && isciIdInput) { // ESKİ BİRLEŞİK IF
 
         // Tablo Üzerindeki Butonlar için Olay Dinleyicisi (Düzenle/Sil)
+        console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody DOM elementi:', isciListesiTablosuBody);
         if (isciListesiTablosuBody) {
+            console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody bulundu, olay dinleyici ekleniyor...');
             isciListesiTablosuBody.addEventListener('click', async function(event) {
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] isciListesiTablosuBody tıklandı.', event.target);
                 const target = event.target;
                 const editButton = target.closest('.edit-isci-btn');
                 const deleteButton = target.closest('.delete-isci-btn');
 
                 if (editButton) {
+                    console.log('[İşçi Tıklama Dinleyici Kontrolü] Düzenle butonu tıklandı.');
                     const isciId = editButton.dataset.id;
                     // Düzenleme için gerekli elemanları ve fonksiyonları kontrol et
+                    console.log('[İşçi Tıklama Dinleyici Kontrolü] Düzenleme fonksiyon/eleman kontrolü: isciForm:', !!isciForm, 'isciIdInput:', !!isciIdInput, 'getIsciById:', typeof getIsciById, 'doldurIsciFormu:', typeof doldurIsciFormu);
                     if (isciForm && isciIdInput && getIsciById && typeof doldurIsciFormu === 'function') {
                         const isci = getIsciById(isciId); // Store'dan al
                         if (isci) {
@@ -710,6 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         showToast('Düzenleme formu yüklenemedi. Lütfen konsolu kontrol edin.', 'error');
                     }
                 } else if (deleteButton) {
+                    console.log('[İşçi Tıklama Dinleyici Kontrolü] Silme fonksiyon kontrolü: getIsciById:', typeof getIsciById, 'deleteIsciAPI:', typeof deleteIsciAPI, 'removeIsciFromStore:', typeof removeIsciFromStore);
                     const isciId = deleteButton.dataset.id;
                     // Silme için gerekli fonksiyonları kontrol et
                     if (getIsciById && typeof deleteIsciAPI === 'function' && typeof removeIsciFromStore === 'function') {
@@ -750,8 +756,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Form Gönderme (Ekleme/Güncelleme)
+        console.log('[İşçi Form Gönderme Kontrolü] Gerekli elemanlar/fonksiyonlar: isciForm:', !!isciForm, 'isciKaydetBtn:', !!isciKaydetBtn, 'isciIdInput:', !!isciIdInput, 'addIsciAPI:', typeof addIsciAPI, 'updateIsciAPI:', typeof updateIsciAPI, 'addIsci:', typeof addIsci, 'updateIsci:', typeof updateIsci, 'temizleIsciFormu:', typeof temizleIsciFormu);
         if (isciForm && isciKaydetBtn && isciIdInput && typeof addIsciAPI === 'function' && typeof updateIsciAPI === 'function' && typeof addIsci === 'function' && typeof updateIsci === 'function' && typeof temizleIsciFormu === 'function') {
+            console.log('[İşçi Form Gönderme Kontrolü] Olay dinleyici ekleniyor...');
             isciForm.addEventListener('submit', async function(event) {
+                console.log('[İşçi Form Gönderme Kontrolü] Form gönderildi.');
                 event.preventDefault();
                 if (typeof setButtonLoading === 'function') setButtonLoading(isciKaydetBtn, 'Kaydediliyor...');
 
@@ -822,8 +831,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Form Temizleme Butonu
+        console.log('[İşçi Form Temizleme Kontrolü] Gerekli elemanlar/fonksiyonlar: isciFormTemizleButton:', !!isciFormTemizleButton, 'isciForm:', !!isciForm, 'isciIdInput:', !!isciIdInput, 'isciKaydetBtn:', !!isciKaydetBtn, 'temizleIsciFormu:', typeof temizleIsciFormu);
         if (isciFormTemizleButton && isciForm && isciIdInput && isciKaydetBtn && typeof temizleIsciFormu === 'function') {
+            console.log('[İşçi Form Temizleme Kontrolü] Olay dinleyici ekleniyor...');
             isciFormTemizleButton.addEventListener('click', function() {
+                console.log('[İşçi Form Temizleme Kontrolü] Temizle butonu tıklandı.');
                 temizleIsciFormu(isciForm, isciIdInput, isciKaydetBtn, isciFormTemizleButton);
             });
         } else {
