@@ -695,10 +695,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const target = event.target;
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] Target Detayları -> TagName:', target.tagName, 'ClassName:', target.className, 'ID:', target.id);
 
-                const editButton = target.closest('.edit-isci-btn');
-                const deleteButton = target.closest('.delete-isci-btn');
+                const editButton = target.classList.contains('edit-isci-btn') ? target : null;
+                const deleteButton = target.classList.contains('delete-isci-btn') ? target : null;
 
-                console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Değişken Değerleri Kontrolü ---');
+                console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Değişken Değerleri Kontrolü (classList ile) ---');
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] \'editButton\' değişkeninin değeri:', editButton);
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] \'deleteButton\' değişkeninin değeri:', deleteButton);
                 console.log('[İşçi Tıklama Dinleyici Kontrolü] --- Kontrol Sonu ---');
