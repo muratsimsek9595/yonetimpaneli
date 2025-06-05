@@ -2,18 +2,26 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Tomris Teklif Listesi</title>
+  <title>Tomris Komut Paneli</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button { padding: 8px; font-size: 14px; margin-right: 5px; }
+    table { border-collapse: collapse; margin-top: 10px; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    pre { background-color: #f9f9f9; padding: 10px; overflow-x: auto; }
+  </style>
 </head>
 <body>
   <h2>Tomris'e Komut Ver</h2>
-  <input type="text" id="command" placeholder="örnek: tüm teklifleri getir">
+  <input type="text" id="command" placeholder="Örnek: tüm teklifleri göster">
   <button onclick="sendCommand()">Gönder</button>
 
   <h3>GPT Yanıtı (Ham JSON):</h3>
-  <pre id="gpt-json"></pre>
+  <pre id="gpt-json">Henüz komut girilmedi...</pre>
 
-  <h3>API Yanıtı (İşlenmiş):</h3>
-  <div id="api-response"></div>
+  <h3>API Yanıtı (Tablo):</h3>
+  <div id="api-response">Henüz veri yok...</div>
 
   <script>
     async function sendCommand() {
@@ -28,20 +36,41 @@
       const result = await response.json();
       document.getElementById("gpt-json").textContent = JSON.stringify(result.gpt_raw, null, 2);
 
-      if (result.api && result.api.success && Array.isArray(result.api.data)) {
-        let html = "<table border='1'><tr><th>Teklif No</th><th>Müşteri</th><th>Tarih</th><th>Toplam</th></tr>";
-        for (let teklif of result.api.data) {
-          html += `<tr>
-                     <td>${teklif.teklifNo}</td>
-                     <td>${teklif.musteriAdi || '-'}</td>
-                     <td>${teklif.teklifTarihi}</td>
-                     <td>${teklif.genelToplamSatis} ${teklif.paraBirimi}</td>
-                   </tr>`;
-        }
-        html += "</table>";
-        document.getElementById("api-response").innerHTML = html;
+      const container = document.getElementById("api-response");
+      container.innerHTML = "";
+
+      if (result.api && result.api.success && Array.isArray(result.api.data) && result.api.data.length > 0) {
+        const data = result.api.data;
+        const keys = Object.keys(data[0]);
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        const tbody = document.createElement("tbody");
+
+        // Header
+        const headerRow = document.createElement("tr");
+        keys.forEach(key => {
+          const th = document.createElement("th");
+          th.textContent = key;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        // Body
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          keys.forEach(key => {
+            const td = document.createElement("td");
+            td.textContent = typeof row[key] === 'object' ? '[Obje]' : row[key];
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        container.appendChild(table);
       } else {
-        document.getElementById("api-response").textContent = JSON.stringify(result.api, null, 2);
+        container.textContent = "Veri bulunamadı veya format hatası.";
       }
     }
   </script>
