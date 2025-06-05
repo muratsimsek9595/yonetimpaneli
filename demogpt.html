@@ -26,14 +26,18 @@
 
   <script>
     async function sendCommand() {
-      const command = document.getElementById("command").value.trim();
-      if (!command) return;
-
+      const commandInput = document.getElementById("command");
+      const command = commandInput.value.trim();
       const gptBox = document.getElementById("gpt-json");
       const responseBox = document.getElementById("api-response");
 
-      gptBox.textContent = "Bekleniyor...";
-      responseBox.textContent = "İşleniyor...";
+      if (!command) {
+        responseBox.textContent = "Komut girilmedi.";
+        return;
+      }
+
+      gptBox.textContent = "GPT çalışıyor...";
+      responseBox.textContent = "API bekleniyor...";
 
       try {
         const res = await fetch("chatgpt_bridge.php", {
@@ -43,51 +47,54 @@
         });
 
         const result = await res.json();
+
         gptBox.textContent = JSON.stringify(result.gpt_raw, null, 2);
 
-        let data = result.api?.data;
+        const api = result.api;
+        const data = api?.data;
 
-        if (result.api?.success) {
-          if (!Array.isArray(data)) data = [data];
+        if (api?.success && data) {
+          const rows = Array.isArray(data) ? data : [data];
 
-          if (data.length > 0) {
-            const keys = Object.keys(data[0]);
-            const table = document.createElement("table");
-            const thead = document.createElement("thead");
-            const tbody = document.createElement("tbody");
-
-            const headerRow = document.createElement("tr");
-            keys.forEach(key => {
-              const th = document.createElement("th");
-              th.textContent = key;
-              headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-
-            data.forEach(row => {
-              const tr = document.createElement("tr");
-              keys.forEach(key => {
-                const td = document.createElement("td");
-                td.textContent = typeof row[key] === "object" ? JSON.stringify(row[key]) : row[key];
-                tr.appendChild(td);
-              });
-              tbody.appendChild(tr);
-            });
-
-            table.appendChild(thead);
-            table.appendChild(tbody);
-            responseBox.innerHTML = "";
-            responseBox.appendChild(table);
-          } else {
-            responseBox.textContent = "Veri boş.";
+          if (rows.length === 0) {
+            responseBox.textContent = "Hiç veri gelmedi.";
+            return;
           }
-        } else {
-          responseBox.textContent = "Veri alınamadı veya format hatalı.";
-        }
 
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const tbody = document.createElement("tbody");
+
+          const keys = Object.keys(rows[0]);
+          const headerRow = document.createElement("tr");
+          keys.forEach(key => {
+            const th = document.createElement("th");
+            th.textContent = key;
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+
+          rows.forEach(row => {
+            const tr = document.createElement("tr");
+            keys.forEach(key => {
+              const td = document.createElement("td");
+              const value = row[key];
+              td.textContent = typeof value === "object" ? JSON.stringify(value) : value;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+
+          table.appendChild(thead);
+          table.appendChild(tbody);
+          responseBox.innerHTML = "";
+          responseBox.appendChild(table);
+        } else {
+          responseBox.textContent = api?.message || "Veri alınamadı.";
+        }
       } catch (err) {
-        gptBox.textContent = "İstek sırasında hata oluştu.";
-        responseBox.textContent = err.message;
+        gptBox.textContent = "GPT hatası!";
+        responseBox.textContent = `İstek sırasında hata: ${err.message}`;
       }
     }
   </script>
