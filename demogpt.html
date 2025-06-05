@@ -39,7 +39,7 @@
         const res = await fetch("chatgpt_bridge.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ command })
+          body: JSON.stringify({ message: command }) // <<< Güncellendi!
         });
 
         const result = await res.json();
