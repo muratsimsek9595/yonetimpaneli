@@ -15,7 +15,7 @@
 </head>
 <body>
   <h2>Tomris'e Komut Ver</h2>
-  <input type="text" id="command" placeholder="örnek: son teklifi göster">
+  <input type="text" id="command" placeholder="örnek: tüm işçileri listele">
   <button onclick="sendCommand()">Gönder</button>
 
   <h3>GPT Yanıtı (Ham JSON):</h3>
@@ -26,18 +26,14 @@
 
   <script>
     async function sendCommand() {
-      const commandInput = document.getElementById("command");
-      const command = commandInput.value.trim();
+      const command = document.getElementById("command").value.trim();
+      if (!command) return;
+
       const gptBox = document.getElementById("gpt-json");
       const responseBox = document.getElementById("api-response");
 
-      if (!command) {
-        responseBox.textContent = "Komut girilmedi.";
-        return;
-      }
-
-      gptBox.textContent = "GPT çalışıyor...";
-      responseBox.textContent = "API bekleniyor...";
+      gptBox.textContent = "Bekleniyor...";
+      responseBox.textContent = "İşleniyor...";
 
       try {
         const res = await fetch("chatgpt_bridge.php", {
@@ -50,14 +46,11 @@
 
         gptBox.textContent = JSON.stringify(result.gpt_raw, null, 2);
 
-        const api = result.api;
-        const data = api?.data;
-
-        if (api?.success && data) {
-          const rows = Array.isArray(data) ? data : [data];
-
-          if (rows.length === 0) {
-            responseBox.textContent = "Hiç veri gelmedi.";
+        // Veriyi kontrol et
+        let data = result.api?.data;
+        if (result.api?.success && Array.isArray(data)) {
+          if (data.length === 0) {
+            responseBox.textContent = "Veri bulunamadı.";
             return;
           }
 
@@ -65,7 +58,7 @@
           const thead = document.createElement("thead");
           const tbody = document.createElement("tbody");
 
-          const keys = Object.keys(rows[0]);
+          const keys = Object.keys(data[0]);
           const headerRow = document.createElement("tr");
           keys.forEach(key => {
             const th = document.createElement("th");
@@ -74,15 +67,14 @@
           });
           thead.appendChild(headerRow);
 
-          rows.forEach(row => {
-            const tr = document.createElement("tr");
+          data.forEach(item => {
+            const row = document.createElement("tr");
             keys.forEach(key => {
               const td = document.createElement("td");
-              const value = row[key];
-              td.textContent = typeof value === "object" ? JSON.stringify(value) : value;
-              tr.appendChild(td);
+              td.textContent = typeof item[key] === "object" ? JSON.stringify(item[key]) : item[key];
+              row.appendChild(td);
             });
-            tbody.appendChild(tr);
+            tbody.appendChild(row);
           });
 
           table.appendChild(thead);
@@ -90,11 +82,12 @@
           responseBox.innerHTML = "";
           responseBox.appendChild(table);
         } else {
-          responseBox.textContent = api?.message || "Veri alınamadı.";
+          responseBox.textContent = result.api?.error || "Veri alınamadı.";
         }
+
       } catch (err) {
-        gptBox.textContent = "GPT hatası!";
-        responseBox.textContent = `İstek sırasında hata: ${err.message}`;
+        gptBox.textContent = "Hata oluştu.";
+        responseBox.textContent = err.message;
       }
     }
   </script>
